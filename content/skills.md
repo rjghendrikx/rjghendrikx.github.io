@@ -1,75 +1,111 @@
 ---
-title: "Publications & Skills"
+title: "Skills & Experience"
 description: "Technical skills, work experience, publications, and awards of Ruud Hendrikx."
 ---
 
-## Technical Skills
+```
+ruud@hendrikx:~$ whoami
+```
 
-### AI & ML
-Generative AI, Agentic AI, LLM Engineering, RAG (Hybrid), LangChain, LangGraph, Azure OpenAI, Topic Modelling, Supervised Learning, Bayesian Statistics
+Physics researcher turned data scientist turned AI engineer. Background in experimental
+physics means I think in first principles, not cargo cult. Decade of shipping AI/ML in
+production across airports, energy, finance, steel, and telecom.
 
-### Python & Data
-Python, FastAPI, Pandas, NumPy, Scikit-learn, XGBoost, SimPy, Spark, SQL, Databricks
+---
 
-### Infrastructure & DevOps
-Docker, Kubernetes, OpenShift, Azure, AWS, CI/CD, Git, GitLab
+```
+ruud@hendrikx:~$ cat /etc/skills.conf
+```
 
-### Methods
-Agile, Scrum, Kanban, Lean Start-up, Business Model Canvas
+```ini
+[ai_ml]
+skills = generative-ai  llm-engineering  rag-hybrid  agentic-ai
+         langchain  langgraph  azure-openai  topic-modelling
+         supervised-learning  bayesian-statistics
 
-## Work Experience
+[python_data]
+skills = python  fastapi  pandas  numpy  scikit-learn  xgboost
+         simpy  spark  sql  databricks
 
-### AI Solution Engineer — Schiphol (2025Q2–2025Q4)
-Design, implement and deploy scalable LLM-powered CX assistants on Azure OpenAI Service. Custom modular framework on LangChain, LangGraph, Redis memory, FastAPI. Architecting intent classification, hybrid RAG, and agentic tool use. Productizing the stack into a multi-tenant, airport-ready solution.
+[infra_devops]
+skills = docker  kubernetes  openshift  azure  aws  ci-cd  git  gitlab
 
-### Lead Data Scientist — Eneco (2023Q4–2025Q1)
-Built the company's first Data Science squad. Designed and delivered the first fully automated end-to-end topic modelling pipeline for CX using voice transcription at scale, embedding, clustering and summarisation AI pipelines. Led solution design and production rollout of scalable AI services.
+[methods]
+skills = agile  scrum  kanban  lean-startup  business-model-canvas
+```
 
-### Technical Lead Steel Plant Simulation — Danieli Corus (2023Q1–2023Q4)
-Architected a modular, real-time steel-plant digital twin for what-if simulations, enabling capacity-planning and scheduling decisions. Developed a digital-shadow based decision-support tool for bottleneck detection.
+---
 
-### Senior Data Scientist — Royal Schiphol Group (2021Q1–2023Q1)
-Architected and led airport operational simulation and forecasting. Passenger departure-flow simulation, queue lengths, waiting time and demand capacity prediction, and runway capacity modeling.
+```
+ruud@hendrikx:~$ git log --oneline --reverse
+```
 
-### Chapter Lead Data Science — ING (2019Q2–2021Q1)
-Designed and implemented ML to scale Collections operations, leading a data science/analytics chapter. Delivered likelihood-to-pay and early-intervention prevention models.
+```
+a1f3c9e  2013  AMOLF          — built real-time control software for quantum optomechanics experiments
+b72d881  2014  VU Amsterdam   — wrote analysis platform revealing quantum effects in photosynthetic systems
+c3a51f2  2016  PGGM           — bootstrapped one of their first data-science teams, shipped 5 prototypes
+d9e204b  2018  Wärtsilä       — turned a market-prediction PoC into a production Python package
+e441b3c  2018  Tele2          — end-to-end 4G voice-quality analytics from call detail records
+f0c88a7  2019  ING            — ML for collections at scale, led data science chapter
+071c19d  2021  Schiphol RSG   — simulated airport passenger flow, queues, and runway capacity
+1a2b3c4  2023  Danieli Corus  — digital twin of a steel plant, real-time what-if simulations
+2d4e5f6  2024  Eneco          — built their first DS squad, automated CX topic modelling from call audio
+3f5a7b8  2025  Schiphol       — LLM-powered airport assistants that actually work in production
+```
 
-### Lead Data Scientist — Tele2 (2018Q3–2019Q1)
-Architected an end-to-end 4G voice-quality analytics solution, integrating Call Detail Records for performance monitoring, root-cause analysis, and degradation modelling.
+---
 
-### Machine Learning Engineer — Wärtsilä (2018Q1–2018Q3)
-Architected a reusable market-prediction ML solution, turning a PoC into a client-ready Python package with production-ready ML pipeline.
+```
+ruud@hendrikx:~$ cat /etc/education
+```
 
-### Data Science Consultant — PGGM (2016Q4–2017Q4)
-Led early build-out of one of PGGM's first data-science teams. Delivered prototypes for call-centre forecasting, fraud & bankruptcy risk, client profiling, and micro-targeted marketing.
+| degree | field | institution | year |
+|--------|-------|-------------|------|
+| MSc | Physics — Advanced Matter & Energy | University of Amsterdam | 2012–2014 |
+| BSc | Bèta-gamma (Physics + Philosophy) | University of Amsterdam | 2007–2011 |
+| BSc | Civil Engineering | Technical University Delft | 2004–2007 |
 
-### Physics Researcher 2D Electronic Spectroscopy — Vrije Universiteit / Laserlab Amsterdam (2014Q2–2016Q3)
-Designed software platform for state-of-the-art 2D electronic spectroscopy setup. Developed calibration, signal-optimization, and global-analysis algorithms revealing quantum effects in photosynthetic systems.
+---
 
-### Physics Researcher Optomechanics — AMOLF (2013Q1–2014Q2)
-Built software platform for real-time signal acquisition and analysis for light-matter experiments. Automated a nanophotonic optomechanical setup for quantum-state control.
+```
+ruud@hendrikx:~$ cat /publications
+```
 
-## Education
+Ferretti, M., **Hendrikx, R.**, et al. (2016).
+**Dark States in the Light-Harvesting complex 2 Revealed by Two-dimensional Electronic Spectroscopy.**
+*Scientific Reports, 6.* [doi:10.1038/srep20834](https://dx.doi.org/10.1038/srep20834)
 
-- **MSc Physics** — Advanced Matter and Energy Physics Track, University of Amsterdam (2012–2014)
-- **BSc Bèta-gamma** (Major: Physics, Minor: Philosophy) — University of Amsterdam (2007–2011)
-- **BSc Civil Engineering** — Technical University Delft (2004–2007)
+Ma, F., Yu, L. J., **Hendrikx, R.**, et al. (2016).
+**Direct Observation of Energy Detrapping in LH1-RC Complex by Two-Dimensional Electronic Spectroscopy.**
+*JACS.* [doi:10.1021/jacs.6b11017](https://dx.doi.org/10.1021/jacs.6b11017)
 
-## Publications
+Ruesink, F., Doeleman, H. M., **Hendrikx, R.**, et al. (2015).
+**Perturbing open cavities: Anomalous resonance frequency shifts in a hybrid cavity-nanoantenna system.**
+*PRL, 115(20), 203904.* [doi:10.1103/PhysRevLett.115.203904](https://dx.doi.org/10.1103/PhysRevLett.115.203904)
 
-1. Ferretti, M., Hendrikx, R., et al. (2016). **Dark States in the Light-Harvesting complex 2 Revealed by Two-dimensional Electronic Spectroscopy.** Scientific Reports, 6. [doi:10.1038/srep20834](https://dx.doi.org/10.1038/srep20834)
+**Hendrikx, R.**, Doeleman, H., Ruesink, F., et al. (2015).
+**Optical antennas in hybrid photonic systems.**
+*EuMIC 2015 (pp. 397–400). IEEE.* [doi:10.1109/EuMIC.2015.7345153](https://dx.doi.org/10.1109/EuMIC.2015.7345153)
 
-2. Ma, F., Yu, L. J., Hendrikx, R., et al. (2016). **Direct Observation of Energy Detrapping in LH1-RC Complex by Two-Dimensional Electronic Spectroscopy.** JACS. [doi:10.1021/jacs.6b11017](https://dx.doi.org/10.1021/jacs.6b11017)
+Ruesink, F., Doeleman, H. M., **Hendrikx, R.**, et al. (2015).
+**Coupling nanoantennas to microcavities.**
+*CLEO: QELS (pp. FTu2E-6). OSA.* [doi:10.1364/CLEO_QELS.2015.FTu2E.6](https://dx.doi.org/10.1364/CLEO_QELS.2015.FTu2E.6)
 
-3. Ruesink, F., Doeleman, H. M., Hendrikx, R., et al. (2015). **Perturbing open cavities: Anomalous resonance frequency shifts in a hybrid cavity-nanoantenna system.** PRL, 115(20), 203904. [doi:10.1103/PhysRevLett.115.203904](https://dx.doi.org/10.1103/PhysRevLett.115.203904)
+---
 
-4. Hendrikx, R., Doeleman, H., Ruesink, F., et al. (2015). **Optical antennas in hybrid photonic systems.** EuMIC 2015 (pp. 397-400). IEEE. [doi:10.1109/EuMIC.2015.7345153](https://dx.doi.org/10.1109/EuMIC.2015.7345153)
+```
+ruud@hendrikx:~$ cat /awards
+```
 
-5. Ruesink, F., Doeleman, H. M., Hendrikx, R., et al. (2015). **Coupling nanoantennas to microcavities.** CLEO: QELS (pp. FTu2E-6). OSA. [doi:10.1364/CLEO_QELS.2015.FTu2E.6](https://dx.doi.org/10.1364/CLEO_QELS.2015.FTu2E.6)
+```
+[✓] University Research Fellow 2015–2016 — Faculty of Sciences, Vrije Universiteit Amsterdam
+[✓] Editorial highlight in Physical Review Letters — for research at AMOLF
+[✓] FOM news feature: "Nanoparticles unexpectedly make light move faster" — 2015
+[✓] Aristotle Award for Best Interdisciplinary Research — University of Amsterdam, 2008
+```
 
-## Awards & Achievements
+---
 
-- University Research Fellow 2015-2016, Faculty of Sciences, Vrije Universiteit Amsterdam
-- Editorial highlight in Physical Review Letters for research at AMOLF
-- FOM news feature: 'Nanoparticles unexpectedly make light move faster', 2015
-- Aristotle Award for Best Interdisciplinary Research, University of Amsterdam, 2008
+```
+ruud@hendrikx:~$ █
+```
