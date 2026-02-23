@@ -1,37 +1,38 @@
 /* ============================================================
-   Tokyo Night — Terminal Aesthetic
+   VS Code Dark+ — Terminal Aesthetic (BOLD edition)
    ruudhendrikx.nl
    ============================================================ */
 
 /* ----------------------------------------------------------
-   Custom Properties (Tokyo Night palette)
+   Custom Properties
    ---------------------------------------------------------- */
 :root {
-  --bg:          #1a1b26;
-  --surface:     #24283b;
-  --overlay:     #292e42;
-  --border:      #3b4261;
-  --fg:          #c0caf5;
-  --fg-dim:      #565f89;
-  --fg-subtle:   #414868;
+  --bg:          #111111;
+  --surface:     #1a1a1a;
+  --overlay:     #222222;
+  --border:      #333333;
+  --fg:          #e8e8e8;
+  --fg-dim:      #999999;
+  --fg-subtle:   #555555;
 
-  --cyan:        #7dcfff;
-  --green:       #9ece6a;
-  --magenta:     #bb9af7;
+  --cyan:        #00e5ff;
+  --green:       #73e060;
+  --magenta:     #e47eff;
   --orange:      #ff9e64;
-  --red:         #f7768e;
-  --blue:        #7aa2f7;
-  --yellow:      #e0af68;
+  --red:         #ff5555;
+  --blue:        #6aafff;
+  --yellow:      #ffe066;
+  --accent:      #0098ff;
 
-  --link:        #7aa2f7;
-  --link-hover:  #7dcfff;
+  --link:        #6aafff;
+  --link-hover:  #00e5ff;
 
-  --font-mono: "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+  --font-mono: "Hack Nerd Font", "Hack", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
 
   --radius: 4px;
-  --max-width: 860px;
-  --gutter: clamp(1rem, 4vw, 2.5rem);
-  --section-gap: 3rem;
+  --max-width: 920px;
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --section-gap: 3.5rem;
 }
 
 /* ----------------------------------------------------------
@@ -44,7 +45,7 @@
 }
 
 html {
-  font-size: 16px;
+  font-size: 18px;
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
 }
@@ -53,8 +54,8 @@ body {
   background-color: var(--bg);
   color: var(--fg);
   font-family: var(--font-mono);
-  font-size: 0.9rem;
-  line-height: 1.75;
+  font-size: 1.1rem;
+  line-height: 1.8;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -73,9 +74,9 @@ body {
   background: repeating-linear-gradient(
     to bottom,
     transparent 0px,
-    transparent 2px,
-    rgba(0, 0, 0, 0.04) 2px,
-    rgba(0, 0, 0, 0.04) 4px
+    transparent 3px,
+    rgba(0, 0, 0, 0.03) 3px,
+    rgba(0, 0, 0, 0.03) 6px
   );
   mix-blend-mode: multiply;
 }
@@ -85,31 +86,56 @@ body {
    ---------------------------------------------------------- */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-mono);
-  font-weight: 500;
+  font-weight: 700;
   line-height: 1.3;
-  color: var(--cyan);
+  letter-spacing: -0.01em;
 }
 
-h1 { font-size: clamp(1.3rem, 3vw, 1.75rem); }
-h2 { font-size: clamp(1.1rem, 2.5vw, 1.3rem); color: var(--green); margin-top: var(--section-gap); margin-bottom: 1.25rem; }
-h3 { font-size: 1rem; color: var(--magenta); margin-top: 1.75rem; margin-bottom: 0.6rem; }
-h4, h5, h6 { font-size: 0.9rem; color: var(--yellow); margin-top: 1.25rem; margin-bottom: 0.5rem; }
+h1 {
+  font-size: clamp(2rem, 5vw, 2.8rem);
+  color: #ffffff;
+  text-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
+}
 
-/* Terminal-style prompt before h2 headings */
+h2 {
+  font-size: clamp(1.4rem, 3vw, 1.8rem);
+  color: var(--blue);
+  margin-top: var(--section-gap);
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+h3 {
+  font-size: 1.25rem;
+  color: var(--cyan);
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+}
+
+h4, h5, h6 {
+  font-size: 1.1rem;
+  color: var(--yellow);
+  margin-top: 1.5rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
+/* Terminal-style prompt before headings */
 h2::before {
   content: "# ";
-  color: var(--fg-dim);
-  font-weight: 300;
+  color: var(--accent);
+  font-weight: 400;
 }
 
 h3::before {
   content: "## ";
   color: var(--fg-subtle);
-  font-weight: 300;
+  font-weight: 400;
 }
 
 p {
-  margin-bottom: 1rem;
+  margin-bottom: 1.1rem;
   color: var(--fg);
 }
 
@@ -119,7 +145,7 @@ p:last-child {
 
 strong {
   font-weight: 700;
-  color: var(--fg);
+  color: #ffffff;
 }
 
 em {
@@ -133,14 +159,16 @@ em {
 a {
   color: var(--link);
   text-decoration: none;
-  transition: color 0.15s ease;
+  font-weight: 500;
+  transition: color 0.15s ease, text-shadow 0.15s ease;
 }
 
 a:hover,
 a:focus-visible {
   color: var(--link-hover);
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-underline-offset: 4px;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
 }
 
 a:focus-visible {
@@ -153,8 +181,8 @@ a:focus-visible {
    Lists
    ---------------------------------------------------------- */
 ul, ol {
-  padding-left: 1.5rem;
-  margin-bottom: 1rem;
+  padding-left: 1.75rem;
+  margin-bottom: 1.25rem;
 }
 
 ul {
@@ -163,27 +191,28 @@ ul {
 }
 
 ul > li {
-  padding-left: 1.25rem;
+  padding-left: 1.5rem;
   position: relative;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.4rem;
 }
 
 ul > li::before {
-  content: ">";
-  color: var(--green);
+  content: "▸";
+  color: var(--cyan);
   position: absolute;
   left: 0;
-  font-weight: 500;
+  font-weight: 700;
+  font-size: 1.1em;
 }
 
 ol > li {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.6rem;
   padding-left: 0.25rem;
 }
 
 ol > li::marker {
   color: var(--cyan);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 /* ----------------------------------------------------------
@@ -191,22 +220,23 @@ ol > li::marker {
    ---------------------------------------------------------- */
 code {
   font-family: var(--font-mono);
-  font-size: 0.85em;
+  font-size: 0.9em;
   background: var(--surface);
   color: var(--orange);
-  padding: 0.15em 0.4em;
+  padding: 0.2em 0.5em;
   border-radius: var(--radius);
   border: 1px solid var(--border);
+  font-weight: 500;
 }
 
 pre {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--cyan);
+  border-left: 4px solid var(--accent);
   border-radius: var(--radius);
-  padding: 1.25rem 1.5rem;
+  padding: 1.5rem 1.75rem;
   overflow-x: auto;
-  margin: 1.5rem 0;
+  margin: 1.75rem 0;
 }
 
 pre code {
@@ -214,7 +244,8 @@ pre code {
   border: none;
   padding: 0;
   color: var(--fg);
-  font-size: 0.875rem;
+  font-size: 0.95rem;
+  font-weight: 400;
 }
 
 /* ----------------------------------------------------------
@@ -222,8 +253,8 @@ pre code {
    ---------------------------------------------------------- */
 hr {
   border: none;
-  border-top: 1px solid var(--border);
-  margin: 2rem 0;
+  border-top: 2px solid var(--border);
+  margin: 2.5rem 0;
 }
 
 hr::before {
@@ -244,16 +275,17 @@ hr::before {
    Blockquote
    ---------------------------------------------------------- */
 blockquote {
-  border-left: 3px solid var(--magenta);
-  padding: 0.5rem 1.25rem;
-  margin: 1.5rem 0;
-  color: var(--fg-dim);
+  border-left: 4px solid var(--accent);
+  padding: 0.75rem 1.5rem;
+  margin: 1.75rem 0;
+  color: var(--fg);
   background: var(--surface);
   border-radius: 0 var(--radius) var(--radius) 0;
+  font-size: 1.05em;
 }
 
 blockquote p {
-  color: var(--fg-dim);
+  color: var(--fg);
 }
 
 /* ----------------------------------------------------------
@@ -264,7 +296,7 @@ blockquote p {
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 2rem var(--gutter) 3rem;
+  padding: 3rem var(--gutter) 4rem;
 }
 
 /* ----------------------------------------------------------
@@ -273,7 +305,7 @@ blockquote p {
 .site-header {
   width: 100%;
   background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 3px solid var(--accent);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -282,10 +314,10 @@ blockquote p {
 .site-nav {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0.75rem var(--gutter);
+  padding: 1rem var(--gutter);
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
@@ -294,13 +326,14 @@ blockquote p {
   align-items: center;
   gap: 0;
   white-space: nowrap;
-  font-size: 0.85rem;
+  font-size: 1rem;
   flex-shrink: 0;
+  font-weight: 700;
 }
 
 .nav-user {
   color: var(--green);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .nav-at {
@@ -316,7 +349,7 @@ blockquote p {
 }
 
 .nav-dollar {
-  color: var(--fg-dim);
+  color: var(--yellow);
   margin-left: 0.5rem;
   margin-right: 0.25rem;
 }
@@ -342,26 +375,29 @@ blockquote p {
 
 .nav-cmd {
   color: var(--fg-dim);
-  font-size: 0.85rem;
-  padding: 0.2rem 0.4rem;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.3rem 0.6rem;
   border-radius: var(--radius);
   border: 1px solid transparent;
-  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+  transition: all 0.15s ease;
   text-decoration: none;
 }
 
 .nav-cmd:hover,
 .nav-cmd:focus-visible {
-  color: var(--cyan);
-  border-color: var(--border);
+  color: #ffffff;
+  border-color: var(--accent);
   background: var(--overlay);
   text-decoration: none;
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
 }
 
 .nav-cmd--active {
-  color: var(--cyan);
-  border-color: var(--border);
-  background: var(--overlay);
+  color: #ffffff;
+  border-color: var(--accent);
+  background: var(--accent);
+  font-weight: 700;
 }
 
 /* ----------------------------------------------------------
@@ -370,35 +406,37 @@ blockquote p {
 .page {}
 
 .page-header {
-  margin-bottom: 2.5rem;
-  padding-bottom: 1.25rem;
-  border-bottom: 1px solid var(--border);
+  margin-bottom: 3rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border);
 }
 
 .page-title {
   display: flex;
   align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
 }
 
 .prompt-char {
   color: var(--green);
   font-size: inherit;
-  font-weight: 500;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
 .title-text {
-  color: var(--cyan);
+  color: #ffffff;
+  text-shadow: 0 0 30px rgba(0, 229, 255, 0.15);
 }
 
 .page-tagline {
   color: var(--fg-dim);
-  font-size: 0.9rem;
-  margin-top: 0.4rem;
+  font-size: 1.05rem;
+  margin-top: 0.5rem;
   margin-bottom: 0;
-  padding-left: 1.25rem;
+  padding-left: 1.5rem;
+  font-weight: 400;
 }
 
 /* ----------------------------------------------------------
@@ -408,8 +446,9 @@ blockquote p {
   display: inline-block;
   color: var(--cyan);
   animation: blink 1.1s step-end infinite;
-  margin-left: 2px;
+  margin-left: 4px;
   font-weight: 300;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
 }
 
 @keyframes blink {
@@ -421,14 +460,14 @@ blockquote p {
    Page content — section spacing
    ---------------------------------------------------------- */
 .page-content > * + * {
-  margin-top: 0.75rem;
+  margin-top: 0.85rem;
 }
 
 .page-content h2:first-child {
   margin-top: 0;
 }
 
-/* Work experience / skills entries — the h3 items */
+/* Work experience / skills entries */
 .page-content h3 {
   position: relative;
   padding-left: 0;
@@ -438,9 +477,9 @@ blockquote p {
    Footer
    ---------------------------------------------------------- */
 .site-footer {
-  border-top: 1px solid var(--border);
+  border-top: 2px solid var(--border);
   background: var(--surface);
-  padding: 1rem var(--gutter);
+  padding: 1.25rem var(--gutter);
 }
 
 .footer-inner {
@@ -449,7 +488,7 @@ blockquote p {
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--fg-dim);
   flex-wrap: wrap;
 }
@@ -465,7 +504,7 @@ blockquote p {
 .footer-top {
   color: var(--fg-dim);
   margin-left: auto;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .footer-top:hover {
@@ -477,34 +516,36 @@ blockquote p {
    Responsive
    ---------------------------------------------------------- */
 @media (max-width: 640px) {
+  html { font-size: 16px; }
+
   .site-nav {
     gap: 0.5rem;
-    padding: 0.6rem var(--gutter);
+    padding: 0.75rem var(--gutter);
   }
 
   .nav-prompt {
-    font-size: 0.8rem;
+    font-size: 0.9rem;
   }
 
   .nav-links {
     gap: 0.25rem;
   }
 
-  h2 { margin-top: 2rem; }
+  h2 { margin-top: 2.5rem; }
 
   .page-header {
-    margin-bottom: 1.75rem;
+    margin-bottom: 2rem;
   }
 
   pre {
     padding: 1rem;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
   }
 }
 
 @media (max-width: 400px) {
   body {
-    font-size: 0.85rem;
+    font-size: 1rem;
   }
 
   .nav-path,
@@ -533,4 +574,24 @@ blockquote p {
     color: black;
     text-decoration: underline;
   }
+}
+
+/* ----------------------------------------------------------
+   LLM generation cursor (typing animation)
+   ---------------------------------------------------------- */
+.gen-cursor {
+  display: inline;
+  color: var(--cyan);
+  font-weight: 300;
+  line-height: 1;
+  animation: gen-cursor-blink 0.7s step-end infinite;
+  vertical-align: baseline;
+  pointer-events: none;
+  user-select: none;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+
+@keyframes gen-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
 }
