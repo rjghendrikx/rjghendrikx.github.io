@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}" id="top">
+<head>
+  {{ partial "head.html" . }}
+</head>
+<body>
+  <div class="scanline" aria-hidden="true"></div>
+  {{ partial "header.html" . }}
+  <main class="site-main" id="main-content">
+    {{ block "main" . }}{{ end }}
+  </main>
+  {{ partial "footer.html" . }}
+  <script src="{{ "js/main.js" | relURL }}" defer></script>
+</body>
+</html>

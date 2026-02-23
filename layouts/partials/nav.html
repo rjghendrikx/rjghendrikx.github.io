@@ -1,0 +1,10 @@
+<nav class="site-nav" aria-label="Main navigation">
+  <div class="nav-prompt">
+    <span class="nav-user">ruud<span class="nav-at">@</span>hendrikx</span><span class="nav-sep">:</span><span class="nav-path">~</span><span class="nav-dollar">$</span>
+  </div>
+  <ul class="nav-links" role="list">
+    <li><a href="{{ "/" | relURL }}" class="nav-cmd{{ if .IsHome }} nav-cmd--active{{ end }}">[home]</a></li>
+    <li><a href="{{ "/skills" | relURL }}" class="nav-cmd{{ if eq .RelPermalink "/skills/" }} nav-cmd--active{{ end }}">[skills]</a></li>
+    <li><a href="{{ "/contact" | relURL }}" class="nav-cmd{{ if eq .RelPermalink "/contact/" }} nav-cmd--active{{ end }}">[contact]</a></li>
+  </ul>
+</nav>
