@@ -1,0 +1,85 @@
+# Ruud Hendrikx
+
+> Data Scientist & Tech Lead based in Amsterdam area, Netherlands.
+
+Results-driven and highly motivated problem solver with a strong curiosity and an entrepreneurial growth mindset. Thrives in hands-on environments, tackling challenges with a pragmatic, solution-oriented approach. Background in experimental physics, trained in applying first principles thinking to complex problems across disciplines and domains.
+
+Bridges deep technical expertise with strategic insight to drive high-impact machine learning solutions with a strong focus on execution and real-world results. Extensive experience in data-driven research at top-tier institutes and hands-on implementation in business environments. Operates at the intersection of technical execution and business translation.
+
+## Technical Skills
+
+### Python
+Pandas, NumPy, Scikit-learn, XGBoost, SimPy, Jupyter Labs, FastAPI
+
+### Analytics
+Bayesian Statistics, Machine Learning, Monte Carlo Markov Chain (MCMC)
+
+### Ledger & Data
+SQL, NoSQL, Blockchain, Ethereum, Bitcoin, IOTA Tangle, AWS S3
+
+### Programming Languages
+Python, R, MATLAB, Mathematica, Solidity, PHP, HTML, JSON
+
+### Repository & Infrastructure
+Git, Mercurial, Subversion, Docker, Amazon Web Services (AWS)
+
+### Hardware
+Raspberry Pi, Arduino, Home Automation, Network Security
+
+### Creative
+Photoshop, Lightroom, After Effects, Quartz Composer, Resolume, Madmapper
+
+### Methods
+Lean Start-up, Business Model Canvas, Kanban, Agile, Scrum
+
+## Professional Skills
+
+- Leadership
+- Strategy
+- Coaching
+- Team Building
+- Recruitment
+- Project Management
+
+## Languages
+
+- Native: Dutch
+- Academic: English
+- Basic: French/German
+
+## Clients
+
+- Eneco
+- Danieli Corus
+- Royal Schiphol Group
+- ING
+- Tele2
+- Wärtsilä
+- PGGM
+- QNH ilionx
+- Laserlab Vrije Universiteit
+- AMOLF
+
+## Publications
+
+1. Ferretti, M., Hendrikx, R., Romero, E., Southall, J., Cogdell, R. J., Novoderezhkin, V. I., ... & van Grondelle, R. (2016). **Dark States in the Light-Harvesting complex 2 Revealed by Two-dimensional Electronic Spectroscopy.** Scientific Reports, 6. https://dx.doi.org/10.1038/srep20834
+
+2. Ma, F., Yu, L. J., Hendrikx, R., Wang-Otomo, Z. Y., & van Grondelle, R. (2016). **Direct Observation of Energy Detrapping in LH1-RC Complex by Two-Dimensional Electronic Spectroscopy.** Journal of the American Chemical Society (JACS). https://dx.doi.org/10.1021/jacs.6b11017
+
+3. Ruesink, F., Doeleman, H. M., Hendrikx, R., Koenderink, A. F., & Verhagen, E. (2015). **Perturbing open cavities: Anomalous resonance frequency shifts in a hybrid cavity-nanoantenna system.** Physical Review Letters (PRL), 115(20), 203904. https://dx.doi.org/10.1103/PhysRevLett.115.203904
+
+4. Hendrikx, R., Doeleman, H., Ruesink, F., Koenderink, A. F., & Verhagen, E. (2015). **Optical antennas in hybrid photonic systems.** In Microwave Integrated Circuits Conference (EuMIC), 2015 10th European (pp. 397-400). IEEE. http://dx.doi.org/10.1109/EuMIC.2015.7345153
+
+5. Ruesink, F., Doeleman, H. M., Hendrikx, R., Koenderink, F., & Verhagen, E. (2015). **Coupling nanoantennas to microcavities: radiative interactions cause strong and tunable frequency shifts.** In CLEO: QELS_Fundamental Science (pp. FTu2E-6). Optical Society. https://dx.doi.org/10.1364/CLEO_QELS.2015.FTu2E.6
+
+## Awards & Achievements
+
+- Third prize in energy track of Blockchaingers Hackathon 2018, Dutchchain
+- University Research Fellow 2015-2016, Faculty of Sciences, Vrije Universiteit Amsterdam (VUA)
+
+## Contact
+
+- Email: info@ruudhendrikx.nl
+- Phone: +316 14 28 61 45
+- LinkedIn: https://linkedin.com/in/rjghx/
+- Website: https://ruudhendrikx.nl
