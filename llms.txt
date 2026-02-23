@@ -1,0 +1,29 @@
+# Ruud Hendrikx, MSc
+
+> AI Solution Engineer & Technical Leader based in Haarlem area, Netherlands.
+
+Problem solver with a background in experimental physics, trained in first-principles thinking across complex technical challenges. I work hands-on, pragmatically, focused on what actually ships.
+
+I build end-to-end AI/ML solutions from research through production deployment. My work spans top-tier research institutes and industry environments, where I've led teams through technical product development—balancing what's technically feasible with what the business actually needs. I focus on building autonomous teams where people can do their best work and products scale sustainably.
+
+## Principles
+
+- Ship early, learn fast — perfect is the enemy of shipped
+- Simple > clever — write code your future self can read
+- Production-first — if it can't run reliably, it doesn't count
+- Start with the simplest model that could work
+- Data quality beats model complexity
+- Trust and autonomy over process and control
+- Reversible decisions fast, irreversible decisions carefully
+- Default to action — bias towards trying over planning
+
+## Pages
+
+- [Home](https://ruudhendrikx.nl/): About Ruud Hendrikx
+- [Publications and Skills](https://ruudhendrikx.nl/skills): Technical skills, clients, publications, and awards
+- [Contact](https://ruudhendrikx.nl/contact): Get in touch
+
+## Contact
+
+- Email: info@ruudhendrikx.nl
+- LinkedIn: https://linkedin.com/in/rjghx/
