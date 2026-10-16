@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colophon · Ruud Hendrikx</title>
+<meta name="description" content="How the room was made: a fleet of agents writing Python for Blender, directed by Ruud Hendrikx, checked by gates instead of code review.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#14110f">
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #14110f; --bg-2: #1c1815; --rule: rgba(239, 230, 218, .12);
+    --ink: #efe6da; --muted: #b9ab98; --faint: #8f8272; --accent: #e3a35b; --check: #f0c674;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Charter, "Bitstream Charter", Georgia, serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --measure: 36rem; --wide: 60rem;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { background: var(--bg); color: var(--ink); -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body { margin: 0; font: 1.125rem/1.6 var(--serif); font-kerning: normal; font-variant-numeric: oldstyle-nums proportional-nums;
+    background: radial-gradient(120% 60% at 50% -10%, #2a1f16 0%, var(--bg) 60%) no-repeat, var(--bg); }
+  main, header, footer { padding: 0 1rem; }
+  .col { max-width: var(--measure); margin: 0 auto; }
+  .wide { max-width: var(--wide); margin: 0 auto; }
+  a { color: var(--ink); text-decoration-color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: .18em; }
+  a:hover { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+  .skip { position: absolute; left: -999px; }
+  .skip:focus { left: 1rem; top: 1rem; background: var(--bg-2); padding: .4rem .7rem; z-index: 1; }
+
+  nav.top { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 1.25rem 0 0;
+    font: .8125rem/1.4 var(--sans); letter-spacing: .04em; color: var(--muted); }
+  nav.top a { color: var(--muted); text-decoration: none; }
+  nav.top a:hover { color: var(--ink); }
+
+  .kicker { font: 600 .75rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 4.5rem 0 1rem; }
+  h1 { font-weight: 400; font-size: clamp(2.4rem, 7vw, 3.6rem); line-height: 1.05; letter-spacing: -.015em; margin: 0 0 1.5rem;
+    font-variant-numeric: lining-nums; text-wrap: balance; }
+  h1 em { color: var(--accent); }
+  .lede { font-size: 1.3rem; line-height: 1.5; color: var(--ink); margin: 0 0 1rem; text-wrap: pretty; }
+  h2 { font: 600 .8125rem/1.3 var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--muted);
+    margin: 5rem 0 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--rule); }
+  h2 .n { color: var(--accent); margin-right: .6em; font-variant-numeric: tabular-nums; }
+  h3 { font-size: 1.2rem; font-weight: 600; margin: 2rem 0 .4rem; line-height: 1.3; }
+  p { margin: 0 0 1rem; text-wrap: pretty; hyphens: auto; }
+  .muted { color: var(--muted); }
+  code { font: .85em/1 var(--mono); color: var(--ink); background: rgba(239, 230, 218, .06); padding: .1em .3em; border-radius: 3px; }
+  .check { font: 600 .7rem/1 var(--sans); letter-spacing: .06em; color: var(--bg); background: var(--check); padding: .15em .35em; border-radius: 3px;
+    vertical-align: .15em; white-space: nowrap; }
+
+  /* the numbers */
+  .numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 1.75rem 1.25rem; margin: 2rem 0 .75rem; }
+  .numbers div { border-top: 1px solid var(--rule); padding-top: .75rem; }
+  .numbers dt { font: .8125rem/1.35 var(--sans); color: var(--muted); }
+  .numbers dd { margin: 0 0 .1rem; font-size: clamp(1.9rem, 6vw, 2.4rem); line-height: 1.05; font-variant-numeric: lining-nums tabular-nums; letter-spacing: -.01em; }
+  .numbers dd small { font-size: .9rem; color: var(--faint); letter-spacing: 0; }
+  .numbers div { display: flex; flex-direction: column; }
+  .numbers dd { order: -1; }
+  .asof { font: .8125rem/1.5 var(--sans); color: var(--faint); }
+
+  /* the loop */
+  ol.loop { list-style: none; counter-reset: step; padding: 0; margin: 0; }
+  ol.loop li { counter-increment: step; position: relative; padding-left: 2.75rem; margin: 0 0 1.6rem; }
+  ol.loop li::before { content: counter(step); position: absolute; left: 0; top: .1rem; width: 1.9rem; height: 1.9rem; border: 1px solid var(--accent);
+    border-radius: 50%; color: var(--accent); font: 600 .85rem/1.8rem var(--sans); text-align: center; font-variant-numeric: lining-nums; }
+  ol.loop strong { font-weight: 600; }
+
+  /* gates */
+  .tablewrap { overflow-x: auto; margin: 1.5rem 0 1rem; }
+  table { width: 100%; border-collapse: collapse; font: .9rem/1.45 var(--sans); font-variant-numeric: tabular-nums lining-nums; }
+  caption { text-align: left; color: var(--faint); font-size: .8125rem; padding-bottom: .75rem; caption-side: bottom; padding-top: .75rem; }
+  th, td { text-align: left; vertical-align: top; padding: .65rem .75rem .65rem 0; border-bottom: 1px solid var(--rule); }
+  thead th { font-weight: 600; color: var(--muted); font-size: .75rem; letter-spacing: .1em; text-transform: uppercase; border-bottom-color: rgba(239,230,218,.25); }
+  tbody th { font-weight: 600; color: var(--ink); }
+  td.m { color: var(--accent); white-space: nowrap; }
+  td.m.un { color: var(--faint); font-style: italic; }
+
+  figure { margin: 2rem 0; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 4px; background: var(--bg-2); }
+  figcaption { font: .875rem/1.5 var(--sans); color: var(--muted); margin-top: .6rem; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  @media (max-width: 40rem) { .pair { grid-template-columns: 1fr; } }
+
+  /* timeline */
+  ol.timeline { list-style: none; padding: 0; margin: 2rem 0 0; position: relative; }
+  ol.timeline > li { display: grid; grid-template-columns: 7.5rem 1fr; gap: 0 2rem; padding: 0 0 3rem; position: relative; }
+  ol.timeline > li::before { content: ""; position: absolute; left: 7.5rem; margin-left: 1rem; top: .5rem; bottom: 0; width: 1px; background: var(--rule); }
+  ol.timeline > li::after { content: ""; position: absolute; left: 7.5rem; margin-left: calc(1rem - 4px); top: .45rem; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+  ol.timeline > li.dropped::after { background: var(--bg); border: 1px solid var(--faint); }
+  ol.timeline > li:last-child { padding-bottom: 0; }
+  ol.timeline > li:last-child::before { display: none; }
+  .when { font: .8125rem/1.4 var(--sans); color: var(--muted); text-align: right; padding-top: .2rem; font-variant-numeric: tabular-nums lining-nums; }
+  .when b { display: block; color: var(--ink); font-weight: 600; font-size: .95rem; }
+  .entry h3 { margin-top: 0; }
+  .entry > p { max-width: var(--measure); }
+  @media (min-width: 62rem) {
+    .entry { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 0 2rem; align-items: start; }
+    .entry > h3, .entry > p { grid-column: 1; }
+    .entry > figure { grid-column: 2; grid-row: 1 / span 3; margin-top: .3rem; }
+  }
+  .entry p { color: var(--ink); }
+  .entry figure { margin: 1rem 0 0; }
+  .tag { font: 600 .68rem/1 var(--sans); letter-spacing: .1em; text-transform: uppercase; color: var(--faint); border: 1px solid var(--rule);
+    border-radius: 999px; padding: .25em .6em; margin-left: .4em; vertical-align: .2em; }
+  @media (max-width: 40rem) {
+    ol.timeline > li { grid-template-columns: 1fr; padding-left: 1.5rem; }
+    ol.timeline > li::before { left: 0; margin-left: 4px; }
+    ol.timeline > li::after { left: 0; margin-left: 0; }
+    .when { text-align: left; margin-bottom: .3rem; }
+    .when b { display: inline; margin-right: .5em; }
+    body { font-size: 1.0625rem; }
+    .lede { font-size: 1.175rem; }
+  }
+
+  /* failures */
+  .failed { list-style: none; padding: 0; margin: 0; }
+  .failed li { margin: 0 0 1.5rem; padding-left: 1.25rem; border-left: 2px solid rgba(227, 163, 91, .4); }
+  .failed b { font-weight: 600; }
+
+  .credits { font: .9rem/1.6 var(--sans); color: var(--muted); }
+  .credits dt { color: var(--ink); font-weight: 600; margin-top: .9rem; }
+  .credits dd { margin: 0; }
+
+  .back { display: inline-block; margin: 3rem 0 0; font: 600 .95rem/1 var(--sans); padding: .85rem 1.2rem; border: 1px solid var(--accent);
+    border-radius: 999px; text-decoration: none; color: var(--ink); }
+  .back:hover { background: rgba(227, 163, 91, .12); color: var(--ink); }
+  footer { padding-bottom: 4rem; }
+  footer p { font: .8125rem/1.5 var(--sans); color: var(--faint); margin-top: 3rem; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the text</a>
+<header>
+  <nav class="top col" aria-label="Site">
+    <a href="./">&larr; The room</a>
+    <span>Colophon</span>
+  </nav>
+</header>
+
+<main id="main">
+<article>
+<div class="col">
+  <p class="kicker">Colophon</p>
+  <h1>Made by <em>mechanical</em> means</h1>
+  <p class="lede">The room on the front page is a canal house at night, with a workbench and the instruments of a physicist in it. Nobody modelled it by hand. A fleet of Claude agents wrote Python that drives Blender, Blender baked the light, and three.js shows the result in your browser. Ruud set the direction and judged the pictures; the code was checked by gates, not by reading it.</p>
+  <p class="muted">The method is borrowed from Felix Rieseberg’s <a href="https://felixrieseberg.com/made-by-mechanical-means/">“Made by mechanical means”</a>, in which he rebuilt his homepage, a Blender-rendered room, without writing or reading the code himself. This page is the build log of the same idea; the room itself was built in one evening.</p>
+</div>
+
+<section class="col" aria-labelledby="h-numbers">
+  <h2 id="h-numbers"><span class="n">01</span>The numbers</h2>
+  <dl class="numbers">
+    <div><dt>commits on the room branch</dt><dd data-k="commits">56</dd></div>
+    <div><dt>from first commit to this page</dt><dd><span data-k="hours">3¾</span> <small>hours</small></dd></div>
+    <div><dt>Python modules, one per object</dt><dd data-k="objects">53</dd></div>
+    <div><dt>meshes in the canal house</dt><dd data-k="meshes">30</dd></div>
+    <div><dt>lines of Python · JavaScript</dt><dd><span data-k="py_lines">8,783</span> <small>· <span data-k="js_lines">2,112</span></small></dd></div>
+    <div><dt>triangles, of 150,000 allowed</dt><dd data-k="tris">83,303</dd></div>
+    <div><dt>megabytes to load, of 8 allowed</dt><dd data-k="mb">7.1</dd></div>
+    <div><dt>draw calls, of 60 allowed</dt><dd data-k="draw_calls">33</dd></div>
+    <div><dt>iterations, from 2D to the canal house</dt><dd data-k="iterations">11</dd></div>
+    <div><dt>agents</dt><dd data-k="agents"><span class="check">check</span></dd></div>
+  </dl>
+  <p class="asof"><span data-k="asof">Read from the repository at commit 473b75f, 15 October 2026, 23:47. Room figures are the canal-house gate run.</span> Agent count: <span class="check">check</span></p>
+</section>
+
+<section class="col" aria-labelledby="h-loop">
+  <h2 id="h-loop"><span class="n">02</span>The loop</h2>
+  <ol class="loop">
+    <li><strong>Spike end to end first.</strong> One object, an amplifier, taken through the whole path: Python model, Blender bake, web viewer, measured in a browser. Only then a second object. The spike surfaced delivery bugs that would otherwise have hit every agent after it.</li>
+    <li><strong>The code is the scene.</strong> Blender runs headless as a Python library. Every object is one module with real-world dimensions in metres, each dimension a named constant with its source, or marked <em>unmeasured</em> when estimated. The same assembly feeds the reference render and the web export, so the two cannot drift apart.</li>
+    <li><strong>Gates, not reading.</strong> A single script, <code>gates.py</code>, exits red on any miss: file size, triangles, draw calls, console errors, phone layout, and a pixel diff between Blender’s render and the browser’s frame. An agent is done when the gates pass, not when its code looks right.</li>
+    <li><strong>The agent checks itself.</strong> Each agent drives a real Chrome with Playwright, on a desktop window and an emulated iPhone, captures the console, and looks at its own downscaled screenshots before reporting. Ruud is asked only for what a browser cannot observe: taste.</li>
+    <li><strong>Broad, then double down.</strong> Several directions from one brief, built in parallel with little guidance. Ruud picks; the next round goes deeper on what landed. Objects are built the same way: parallel agents, one file each, one Blender at a time behind a lock so the machine does not run out of memory.</li>
+    <li><strong>Outside judges.</strong> The builder never grades its own work. A depth pass asked what top practitioners measure; a red-team pass argued the strongest case against the whole site. A cold five-second test with people who know Ruud’s work is planned <span class="check">check: has a panel run?</span></li>
+  </ol>
+</section>
+
+<section class="col" aria-labelledby="h-gates">
+  <h2 id="h-gates"><span class="n">03</span>The gates</h2>
+  <p>The thresholds below are the constants in <code>gates.py</code>. Pixel differences are measured on a 320×180 greyscale downscale, in 8-bit levels, so they catch camera, geometry and colour errors rather than render noise.</p>
+  <div class="tablewrap">
+  <table>
+    <caption>Measured: the canal-house run, except the live-layer rows, which come from the dusk-room run that introduced them.</caption>
+    <thead><tr><th scope="col">Gate</th><th scope="col">Threshold</th><th scope="col">Measured</th></tr></thead>
+    <tbody>
+      <tr><th scope="row">Assets</th><td>≤ 8 MB for the room, ≤ 3 MB per object</td><td class="m">7.11 MB</td></tr>
+      <tr><th scope="row">Triangles</th><td>≤ 150,000, plus a budget per object</td><td class="m">83,303</td></tr>
+      <tr><th scope="row">Draw calls</th><td>≤ 60, in the model and in the browser</td><td class="m">30 · 33</td></tr>
+      <tr><th scope="row">Console and network</th><td>zero errors, zero failed requests</td><td class="m">clean</td></tr>
+      <tr><th scope="row">Alignment: browser vs baked render</th><td>mean error ≤ 2.0, 99th percentile ≤ 16</td><td class="m">0.47 · 6.0</td></tr>
+      <tr><th scope="row">Fidelity: browser vs full Cycles render</th><td>mean error ≤ 2.5, a ratchet that only goes down</td><td class="m">3.26</td></tr>
+      <tr><th scope="row">Viewpoints</th><td>reached by click, tap and with reduced motion; pose within 10 mm</td><td class="m">7 · 0.0 mm</td></tr>
+      <tr><th scope="row">Phone</th><td>WebGL, touch orbit, no sideways scroll</td><td class="m">pass</td></tr>
+      <tr><th scope="row">Point cloud</th><td>≤ 30,000 points, ≤ 300 kB</td><td class="m">16,384 · 197 kB</td></tr>
+      <tr><th scope="row">Geiger counter</th><td>20 counts per minute: 60 s within Poisson bounds 8–34</td><td class="m">24 in 60 s</td></tr>
+      <tr><th scope="row">Cloud chamber</th><td>0.5 visible tracks per second, within 3σ over 120 s</td><td class="m">59 (37–83)</td></tr>
+      <tr><th scope="row">60 fps on a mid-range phone</th><td>≥ 58 fps</td><td class="m un">unmeasured</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>The fidelity gate is the honest one. Baking stores light in textures, which is what makes the room cheap enough for a phone, but a baked texture cannot know where you stand: shine that depends on the viewing angle is lost. On the first three-object slice the error was 12.3. On the dusk room it was 2.49, and the ratchet was set there. The canal house measures 3.26, above it; layout runs report fidelity rather than fail on it, so this one is still open.</p>
+</section>
+
+<div class="wide" style="padding: 0">
+  <figure>
+    <div class="pair">
+      <img src="colophon/diff-align.webp" width="960" height="540" loading="lazy" decoding="async" alt="Near-black difference image of the dusk room: only faint object edges show.">
+      <img src="colophon/diff-truth.webp" width="960" height="540" loading="lazy" decoding="async" alt="Difference image of the dusk room: brighter outlines on the projector, the lamp and the metal on the bench.">
+    </div>
+    <figcaption>Difference images, four times amplified (dusk room). First, alignment: the browser against a render of exactly what was exported; only antialiased edges remain. Second, fidelity: the browser against the full Cycles render; what lights up is view-dependent shine on metal and glass that the bake cannot carry.</figcaption>
+  </figure>
+</div>
+
+<section aria-labelledby="h-time">
+  <div class="col"><h2 id="h-time"><span class="n">04</span>Eleven iterations</h2>
+  <p>After every milestone a script tags the commit, saves a runnable copy of the site and takes desktop and phone screenshots, so any step can be reopened and branched from. Times are the commit times on 15 October 2026.</p></div>
+  <ol class="timeline wide">
+    <li>
+      <div class="when"><b>001</b>before 20:00</div>
+      <div class="entry"><h3>Five directions in 2D</h3>
+        <p>Five parallel agents, one brief, each its own direction: a career drawn as an emission spectrum, a C64-to-terminal story, a live simulation of agents and gates, a maker’s workbench, and a field manual. The workbench won, and Ruud asked for more: Blender, a real 3D room.</p></div>
+    </li>
+    <li>
+      <div class="when"><b>002</b>20:00</div>
+      <div class="entry"><h3>The spike: one amplifier</h3>
+        <p>Python drives Blender, Cycles bakes, three.js displays. The amp has VU meters: a guess, made before anyone looked up the real one.</p>
+        <figure><img src="colophon/002.webp" width="960" height="600" loading="lazy" decoding="async" alt="A seventies-style silver amplifier with two VU meters and wooden side panels on a light wooden shelf."></figure></div>
+    </li>
+    <li>
+      <div class="when"><b>003</b>20:09</div>
+      <div class="entry"><h3>Floor and sideboard</h3>
+        <p>The scene ships as embedded glTF and three.js loads without an import map, after the preview sandbox turned out to ignore it.</p>
+        <figure><img src="colophon/003.webp" width="960" height="600" loading="lazy" decoding="async" alt="The same amplifier, now on a sideboard above a floor."></figure></div>
+    </li>
+    <li>
+      <div class="when"><b>004</b>20:32</div>
+      <div class="entry"><h3>Seven objects in parallel</h3>
+        <p>Agents each own one file and build on a neutral studio set: a Luxman L-308 amplifier, an installation laser projector, a diffusion cloud chamber, a Geiger counter and an oscilloscope, an optical table with a quantum eraser, a Commodore 64 with a TI-83, a bookshelf.</p>
+        <figure><img src="colophon/004.webp" width="960" height="600" loading="lazy" decoding="async" alt="A grid of nine small studio renders: amplifier, projector, cloud chamber, Geiger counter, oscilloscope, optics board, C64, TI-83 and bookshelf."></figure></div>
+    </li>
+    <li>
+      <div class="when"><b>005</b>21:03</div>
+      <div class="entry"><h3>The dusk room</h3>
+        <p>Everything placed on one workbench under a window at dusk, with seven viewpoints you can jump between and glass on the cloud chamber.</p>
+        <figure><img src="colophon/005.webp" width="960" height="600" loading="lazy" decoding="async" alt="A dim room at dusk: a projector on a road case at left, a workbench with instruments under a window, a stool, a wall shelf with books."></figure></div>
+    </li>
+    <li>
+      <div class="when"><b>006</b>21:37</div>
+      <div class="entry"><h3>Live layers</h3>
+        <p>The instruments start measuring. The projector throws Gray-code stripes through haze and a vase dissolves into its own point cloud; muon tracks follow the measured cos²θ distribution; the Geiger counter ticks at about 20 counts a minute and each pulse shows on the scope; a polarizer brings the eraser’s fringes back.</p>
+        <figure>
+          <div class="pair">
+            <img src="colophon/006-still.webp" width="960" height="540" loading="lazy" decoding="async" alt="Blender’s reference render of the dusk room.">
+            <img src="colophon/006.webp" width="960" height="600" loading="lazy" decoding="async" alt="The same room as drawn by the browser.">
+          </div>
+          <figcaption>First Blender’s reference render, then the same view drawn by the browser. The pixel-diff gate compares the two.</figcaption>
+        </figure></div>
+    </li>
+    <li class="dropped">
+      <div class="when"><b>007</b>22:10</div>
+      <div class="entry"><h3>The big space <span class="tag">dropped</span></h3>
+        <p>Four large atelier layouts: a black box, a scan stage, a ceiling rig, a long hall. All green on the gates; rejected by Ruud on sight. Too big, the coziness was gone.</p>
+        <figure><img src="colophon/007.webp" width="960" height="600" loading="lazy" decoding="async" alt="A large dark studio with a projector on a stand aimed at a white panel under a truss."></figure></div>
+    </li>
+    <li class="dropped">
+      <div class="when"><b>008</b>22:43</div>
+      <div class="entry"><h3>Cozy: the attic <span class="tag">not chosen</span></h3>
+        <p>An attic atelier with the projector on the rug, a hanging white form, stars in a skylight, a string of bulbs. The agents’ own recommendation.</p>
+        <figure><img src="colophon/008.webp" width="960" height="600" loading="lazy" decoding="async" alt="An attic room under sloping rafters with a projector on a tripod, a workbench under the eaves and a string of bulbs."></figure></div>
+    </li>
+    <li class="dropped">
+      <div class="when"><b>009</b>22:43</div>
+      <div class="entry"><h3>Cozy: a canal-house back room <span class="tag">not chosen</span></h3>
+        <p>Beamed ceiling, two sash windows over a canal at dusk, the projector on an oak table aimed at the vase in front of a full bookcase.</p>
+        <figure><img src="colophon/009.webp" width="960" height="600" loading="lazy" decoding="async" alt="A room with two tall windows over a canal at dusk, a projector on a large table, a vase on a white plinth and a full bookcase."></figure></div>
+    </li>
+    <li class="dropped">
+      <div class="when"><b>010</b>22:43</div>
+      <div class="entry"><h3>Cozy: the dusk room, pulled back <span class="tag">not chosen</span></h3>
+        <p>The dusk room Ruud liked, with a beamed ceiling and bulbs, and the projector throwing across the room onto a hanging form.</p>
+        <figure><img src="colophon/010.webp" width="960" height="600" loading="lazy" decoding="async" alt="The dusk room seen from further back, with a projector in the right foreground and a white form hanging in the middle."></figure></div>
+    </li>
+    <li>
+      <div class="when"><b>011</b>23:35</div>
+      <div class="entry"><h3>The canal house, at night</h3>
+        <p>None of the three. Ruud chose the front room of a canal house he once lived in, on the first floor, at night in a light rain. What is outside the windows is built from public open data <span class="check">check: say this?</span>, the boats follow his photos, and a live layer adds rain on the glass and reflections on the water.</p>
+        <figure><img src="colophon/011.webp" width="960" height="516" loading="lazy" decoding="async" alt="A warm front room at night: two tall windows onto lit houses across the water, a projector on a big table, a vase on a plinth, a full bookcase."></figure></div>
+    </li>
+  </ol>
+</section>
+
+<section class="col" aria-labelledby="h-failed">
+  <h2 id="h-failed"><span class="n">05</span>What failed</h2>
+  <ul class="failed">
+    <li><b>The amp was a guess.</b> The spike’s amplifier had big VU meters. Ruud’s own amplifier, the Luxman L-308, has none. The rule since: research the real object before modelling it, and put every dimension’s source next to the number.</li>
+    <li><b>The preview sandbox.</b> The first previews went out as private claude.ai artifacts. Their sandbox refused <code>.glb</code> and <code>.bin</code> files, ignored the import map, and quietly showed the still image instead of the 3D room. Nothing errored; it just looked fine. The fix was to embed the scene in JSON, load three.js without an import map, and then stop using the sandbox for 3D at all: previews are now served from Ruud’s own machine and checked by Playwright on exactly that address.</li>
+    <li><b>The big-space detour.</b> The agents tried four large atelier layouts, up to sixteen metres long. All four passed the size, draw-call, console and phone gates. Ruud’s verdict: “making it into a big room was a mistake”. He wanted it cozy. The gates measure whether a room works, not whether it is the right room. The modules are kept for reuse.</li>
+    <li><b>The agents’ taste lost.</b> Of the three cozy variants the agents recommended the attic, with a reasoned case. Ruud picked none of them and named a room he had lived in. No gate could have found that.</li>
+    <li><b>Fidelity is above its ratchet.</b> The canal house measures 3.26 against a ratchet of 2.5, mostly shine that a bake cannot carry. Three ways to close it are written down; none is built yet.</li>
+    <li><b>Some things no gate sees.</b> 60 fps on a real phone is unmeasured: the headless number is a software rasteriser’s. The eraser’s 1.27 mm fringes are about one pixel wide at the optics viewpoint, so on most screens you see them as a change in brightness, not as stripes.</li>
+  </ul>
+</section>
+
+<section class="col" aria-labelledby="h-credits">
+  <h2 id="h-credits"><span class="n">06</span>Made with</h2>
+  <dl class="credits">
+    <dt>Direction, taste, final say</dt><dd>Ruud Hendrikx</dd>
+    <dt>Code, models, gates, this page</dt><dd>Claude Opus 5.5 agents in Claude Code</dd>
+    <dt>Modelling and baking</dt><dd>Blender 5.2, Cycles, driven from Python</dd>
+    <dt>In the browser</dt><dd>three.js 0.160, no build step; the room falls back to a baked still without WebGL</dd>
+    <dt>Self-checks</dt><dd>Playwright for Python on Chrome; pixel diffs with Pillow and NumPy</dd>
+    <dt>Physics numbers</dt><dd>Particle Data Group, cosmic-ray review (muon flux, cos²θ); the SBM-20 Geiger tube datasheet and a hobbyist’s background measurement; standard double-slit optics for a 632.8 nm HeNe laser</dd>
+    <dt>Method</dt><dd>Felix Rieseberg, <a href="https://felixrieseberg.com/made-by-mechanical-means/">“Made by mechanical means”</a></dd>
+    <dt>Type</dt><dd>Your system’s serif and sans; no web fonts, so this page is text first</dd>
+  </dl>
+  <a class="back" href="./">Back to the room &rarr;</a>
+</section>
+</article>
+</main>
+
+<footer>
+  <p class="col">This page is static: no tracking, no web fonts, and it reads the same without JavaScript. When the build writes a newer <code>colophon/colophon.json</code>, a small script refreshes the numbers from it.</p>
+</footer>
+
+<script>
+  // Optional: refresh the numbers from colophon.json (written by the build). The page is complete without it.
+  // Shape: { "asof": "text", "numbers": { "commits": 42, "tris": 83303, ... } } or the numbers at top level.
+  fetch("colophon/colophon.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => {
+    if (!j) return;
+    const nums = j.numbers || j;
+    document.querySelectorAll("[data-k]").forEach(el => {
+      const v = el.dataset.k === "asof" ? j.asof : nums[el.dataset.k];
+      if (v === undefined || v === null || typeof v === "object") return;
+      el.textContent = typeof v === "number" ? v.toLocaleString("en-GB") : String(v);
+    });
+  }).catch(() => {});
+</script>
+</body>
+</html>

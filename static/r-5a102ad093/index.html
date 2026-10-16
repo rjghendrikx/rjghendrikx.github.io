@@ -1,0 +1,231 @@
+<!doctype html><html lang="en"><head>
+<meta name="robots" content="noindex, nofollow"><meta charset="utf-8">
+<title>Ruud Hendrikx</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2314110f'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23e3a35b'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- [check] link preview copy (panel 015 action 8); og.jpg is cropped from the poster still at stage time
+     (lib/site.py og_image). Relative URL: make it absolute once the room's public path is fixed. -->
+<meta name="description" content="Ruud Hendrikx, creative technologist: simulations and AI agents, made visible. Walk into his workroom, live in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ruud Hendrikx, creative technologist">
+<meta property="og:description" content="Simulations and AI agents, made visible. Walk into his workroom, live in the browser. Available for projects.">
+<meta property="og:image" content="og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A workroom at night: a desk of instruments under the window, a projector in the foreground and a white vase on a plinth.">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --bg: #14110f; --ink: #efe6da; --muted: #c4b7a5; --accent: #e3a35b; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+  body {
+    font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    overflow: hidden;
+  }
+  /* The still is the poster: visible until the first WebGL frame, and the fallback forever
+     when WebGL, JS or the CDN is unavailable. */
+  .stage, .stage img, .stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .stage img { object-fit: cover; }
+  .stage canvas { opacity: 0; transition: opacity .6s ease; touch-action: none; display: block; }
+  .ready .stage canvas { opacity: 1; }
+  /* Scrims: text sits on rgba(20,17,15,.8) at least, so --muted (#c4b7a5) keeps 4.5:1 even over a white pixel
+     (worst case: 4.5:1 at .8, computed; --ink 8:1). */
+  .caption { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); margin: 0;
+    margin-left: -10px; padding: 7px 10px; border-radius: 10px; background: rgba(20, 17, 15, .8);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .caption h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .02em; }
+  .caption { max-width: min(440px, calc(100vw - 32px)); }
+  .caption p { margin: 0; color: var(--muted); font-size: 13px; }
+  .caption .offer { color: var(--ink); font-size: 13.5px; margin-top: 2px; text-wrap: pretty; }
+  .caption .tagline { display: none; }
+  .caption .links { margin-top: 4px; }
+  .caption .links a { white-space: nowrap; }
+  .caption .links .colophon { color: var(--muted); }
+  /* the prompt: a quiet pill above the chips after the room is ready; gone after the first pick */
+  .prompt { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 52px); margin: 0; z-index: 3; }
+  .prompt button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); cursor: pointer; padding: 8px 13px; border-radius: 999px;
+    background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .prompt button::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; vertical-align: 1px;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .prompt button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* the case card: one project per work viewpoint, announced (aria-live) when the camera arrives; top right under
+     the controls, off the left window's pane (panel 013, action 4) */
+  .case { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(max(16px, env(safe-area-inset-top, 0px)) + 44px); z-index: 3;
+    box-sizing: border-box; width: min(340px, calc(100vw - 32px)); padding: 12px 15px 13px; border-radius: 10px; color: var(--ink);
+    background: rgba(20, 17, 15, .84); border: 1px solid rgba(239, 230, 218, .14); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35); transition: opacity .25s ease, transform .25s ease; }
+  .case:empty { display: none; }
+  .case .grip { display: none; }
+  .case .k, .work .k { margin: 0 0 3px; font-size: 10.5px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .case h2, .work h3 { margin: 0; font: 600 16px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .case p.b { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+  .case .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .case .acts a, .case .acts button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); text-decoration: none; cursor: pointer;
+    padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
+  .case .acts a::after { content: " \2197"; color: var(--accent); }
+  .case .acts :is(a, button) { display: inline-flex; align-items: center; box-sizing: border-box; }
+  .case .acts :is(a, button):hover { border-color: var(--accent); }
+  .case .acts :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Work: hidden until #work (no-JS) */
+  .work { display: none; position: fixed; inset: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) auto max(16px, env(safe-area-inset-left, 0px));
+    max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; box-sizing: border-box; z-index: 6; padding: 14px 18px 16px; border-radius: 10px;
+    background: rgba(20, 17, 15, .94); border: 1px solid rgba(239, 230, 218, .14); }
+  .work:target { display: block; }
+  .work h2 { margin: 0 0 6px; font-size: 15px; }
+  .work article { margin-top: 12px; }
+  .work article p:not(.k), .work .more { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
+  .work a { color: var(--ink); }
+  .work .work-close { position: absolute; right: 12px; top: 8px; font-size: 20px; text-decoration: none; }
+  /* with JS: a modal sheet (main.js openWork), the rest of the page inert behind it */
+  .work.open { display: block; background: rgba(20, 17, 15, .98); box-shadow: 0 0 0 100vmax rgba(10, 8, 7, .6), 0 18px 60px rgba(0, 0, 0, .55); }
+  .js .work:target:not(.open) { display: none; }   /* closed with JS while the URL still says #work */
+  .work h2:focus { outline: none; }
+  .work h2:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .work .show:not([hidden]) { display: inline-flex; align-items: center; margin-top: 8px; font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink);
+    cursor: pointer; padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
+  .work .show:hover { border-color: var(--accent); }
+  .work :is(.show, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .work .contact { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 218, .14); }
+  .work .contact h3 { margin: 0; font: 600 16px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .work .contact p { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
+  .work .contact .links a { color: var(--ink); }
+  .cap-head { display: flex; align-items: baseline; gap: 8px; }
+  .cap-more { display: none; }
+  .caption a { color: var(--ink); text-underline-offset: 2px; text-decoration-color: rgba(239, 230, 218, .4); }
+  .caption a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* Viewpoint nav: built by main.js from the scene's viewpoints; absent without JS/WebGL. */
+  .views { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0; padding: 0; max-width: min(560px, calc(100vw - 32px));
+    opacity: 0; transition: opacity .6s ease; }
+  .ready .views { opacity: 1; }
+  .views button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--muted);
+    border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 7px 11px; cursor: pointer; background: rgba(20, 17, 15, .8);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: color .2s, border-color .2s, background .2s; }
+  .views button:hover { color: var(--ink); border-color: rgba(239, 230, 218, .4); }
+  .views button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); background: rgba(20, 17, 15, .75); }
+  .views button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 640px) {
+    /* phone: the chips in one row that scrolls sideways and snaps, instead of a wrapped block over the room */
+    .views { left: 0; right: 0; max-width: none; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto;
+      scroll-snap-type: x proximity; scroll-padding-inline: max(16px, env(safe-area-inset-left, 0px));
+      padding: 4px max(16px, env(safe-area-inset-right, 0px)) 4px max(16px, env(safe-area-inset-left, 0px));
+      scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .views::-webkit-scrollbar { display: none; }
+    .views button { flex: none; scroll-snap-align: start; white-space: nowrap; }
+    /* the caption at the top keeps clear of the controls column (Sound, Lidar) on the right */
+    .caption { top: max(16px, env(safe-area-inset-top, 0px)); bottom: auto;
+      right: calc(max(16px, env(safe-area-inset-right, 0px)) + var(--controls-w, 96px)); max-width: none; }
+    .caption .offer { font-size: 12.5px; }
+    /* phone, with JS: name + the contact row; the offer opens behind "About" (panel 013, action 11) */
+    .js .cap-more { display: inline-flex; align-items: center; font: inherit; font-size: 12px; line-height: 1; color: var(--muted); cursor: pointer;
+      padding: 4px 8px; border-radius: 999px; background: none; border: 1px solid rgba(239, 230, 218, .22); }
+    .js .cap-more::after { content: ""; width: 5px; height: 5px; margin-left: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
+      transform: translateY(-2px) rotate(45deg); }
+    .js .caption.open .cap-more::after { transform: translateY(1px) rotate(-135deg); }
+    .js .cap-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .js .caption:not(.open) .offer { display: none; }
+    /* the one-line offer stays under the name while the long one is closed (panel 015 action 8) */
+    .js .caption:not(.open) .tagline { display: block; color: var(--ink); font-size: 12.5px; margin-top: 2px; text-wrap: pretty; }
+    .caption .links .colophon, .caption .links .colophon-sep { display: none; }
+    /* phone: the case card is a bottom sheet on the chip strip, about 25% of the screen until its grip (or the body)
+       is tapped, then up to 62% and scrollable (panel 013, action 11) */
+    .case { top: auto; left: 0; right: 0; width: auto; bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 52px); max-height: 25vh; overflow: hidden;
+      padding: 0 max(16px, env(safe-area-inset-right, 0px)) 11px max(16px, env(safe-area-inset-left, 0px)); border-radius: 14px 14px 0 0;
+      border-width: 1px 0 0; transition: max-height .25s ease; }
+    .case.open { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
+    .case .grip { display: block; width: 100%; height: 24px; margin: 0 0 2px; padding: 0; border: 0; background: none; cursor: pointer; }
+    .case .grip::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto; border-radius: 2px; background: rgba(239, 230, 218, .35); }
+    .case .grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    /* the body is two lines until opened, so the room stays in view */
+    .case p.b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; cursor: pointer; }
+    .case.open p.b { -webkit-line-clamp: unset; display: block; }
+    .case h2 { font-size: 15px; }
+    .prompt { bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 62px); }
+    .case:not(:empty) ~ .prompt, .has-case .prompt { display: none; }
+    .controls { flex-direction: column; align-items: flex-end; }
+  }
+  /* touch: every target at least 44 px high (WCAG 2.5.5 / Apple HIG) */
+  @media (pointer: coarse) {
+    .views button, .controls > button, .sound, .prompt button, .case .acts :is(a, button), .work .show:not([hidden]) { min-height: 44px; padding-top: 0; padding-bottom: 0; padding-inline: 14px; }
+    /* inline text links: at least 24 px targets (WCAG 2.5.8), was 16 px */
+    .caption .links a, .work .links a { display: inline-flex; align-items: center; min-height: 24px; vertical-align: middle; }
+    .js .cap-more { min-height: 24px; }
+    .work .work-close { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; right: 4px; top: 2px; }
+  }
+  /* Geiger click: off until the visitor turns it on (here or on the counter's toggle). */
+  /* Controls (Sound, and the toggles layers add, e.g. Lidar): one cluster top-right; main.js moves layer
+     buttons in here, and inside it a layer's own fixed positioning is overridden. */
+  .controls { position: fixed; top: max(16px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; gap: 6px; align-items: center; z-index: 5; }
+  .controls > button { position: static; margin: 0; }
+  .sound {
+    font: inherit; font-size: 12px; line-height: 1; color: var(--muted); background: rgba(20, 17, 15, .8); cursor: pointer;
+    border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 6px 10px; opacity: 0; transition: opacity .6s ease, color .2s, border-color .2s; }
+  .ready .sound { opacity: 1; }
+  .sound:hover { color: var(--ink); opacity: 1; }
+  .sound[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+  .sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sound[hidden] { display: none; }
+  .gate .caption, .gate .views, .gate .sound, .gate .prompt, .gate .case, .gate .work { display: none; }
+  .gate .stage canvas { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .stage canvas, .views, .views button { transition: none; } }
+</style>
+<div class="stage" aria-hidden="false">
+  <img src="still.jpg" alt="A canal house at night, seen from the front room&#x27;s table: past a projector in its black flight case, two tall sash windows with transom lights look out over a dark, rain-ruffled canal that mirrors the street lamps and the lit windows of the houses across the water, with moored boats along the quays; inside, a white vase on a plinth to the right, a workbench under the windows, in warm lamplight.">
+</div>
+<div class="caption">
+  <!-- phone: name + the contact row; the offer opens behind "About" (panel 013, action 11). Without JS the button is
+       display:none and the offer stays open. -->
+  <div class="cap-head"><h1>Ruud Hendrikx</h1><button type="button" class="cap-more" aria-expanded="false" aria-controls="offer">About</button></div>
+  <!-- [check] phone one-liner, new (panel 015 action 8); a div, so the classic script's '.caption p' stays the offer -->
+  <div class="tagline">Creative technologist: simulations and AI agents, made visible &middot; available for projects</div>
+  <!-- [check] offer line, Ruud reads all copy; facts from llms-full.txt (physics MSc + lab years, data science, Schiphol / Danieli Corus simulations, LLM agents) -->
+  <p class="offer" id="offer">Creative technologist. A physicist who builds simulations, data products and AI agents, and makes them something you can see and use.
+    <!-- [check] direct ask, new (panel 013, action 10): engagement type is not in llms-full.txt -->
+    <span class="ask">Available for freelance projects, hands-on or as technical lead.</span></p>
+  <p class="links"><a href="#work" data-work>Work</a> <span aria-hidden="true">&middot;</span> <a href="mailto:info@ruudhendrikx.nl?subject=Project%20inquiry">info@ruudhendrikx.nl</a> <span aria-hidden="true">&middot;</span> <a href="https://linkedin.com/in/rjghx/" rel="me noopener">LinkedIn</a> <span aria-hidden="true" class="colophon-sep">&middot;</span> <a href="colophon.html" class="colophon">How this was made</a></p>
+</div>
+<p class="prompt" hidden><button type="button">Click anything that glows</button></p>
+<aside class="case" aria-live="polite" aria-atomic="true" aria-label="Case"></aside>
+<!-- Work: the three cases and contact, readable without JS (#work opens it via :target); with JS main.js opens it as a
+     modal sheet (focus in, Esc closes, focus back) and un-hides "Show me in the room", which flies to the case's viewpoint
+     (data-view). This is the one copy of the cases: main.js builds the case cards from it (p.text). [check] all copy; the sentences changed in panel 013 action 10 are
+     marked below and in notes/captions.md, "Case copy". -->
+<section id="work" class="work" aria-labelledby="work-title">
+  <a class="work-close" href="#" aria-label="Close">&times;</a>
+  <h2 id="work-title" tabindex="-1">Work</h2>
+  <!-- [check] outcome first, the second sentence names the stack or the earlier job -->
+  <article data-view="chamber"><p class="k">Simulations</p><h3>Passenger flow at Schiphol</h3><p class="text">He led the operational simulation and forecasting Royal Schiphol Group plans the airport with: departure passenger flow, queues and waiting times, runway capacity. Before that, at Danieli Corus, a real-time digital twin of a steel plant for capacity and scheduling decisions.</p><button type="button" class="show" aria-label="Show me in the room: Passenger flow at Schiphol" hidden>Show me in the room</button></article>
+  <!-- [check] outcome first: "one multi-tenant stack" is llms-full.txt's "productizing the stack into a multi-tenant, airport-ready solution" -->
+  <article data-view="terminal"><p class="k">Agents</p><h3>LLM assistants in production</h3><p class="text">For Schiphol he designed and deployed LLM customer assistants, then turned them into one multi-tenant stack the airport can reuse. Under the hood: Azure OpenAI, LangGraph and FastAPI, with intent classification, hybrid RAG and agentic tool use.</p><button type="button" class="show" aria-label="Show me in the room: LLM assistants in production" hidden>Show me in the room</button></article>
+  <!-- [check] new case "This room", replaces "3D capture ... is next" (panel 013, action 10); facts from CONVENTIONS.md and colophon.html -->
+  <article data-view="experiment"><p class="k">This room</p><h3>A portfolio you can walk into</h3><p class="text">Nobody modelled this room by hand, and it runs live in a phone browser. Agents wrote the Python that drives Blender, one module per object, and automated gates checked every step; the scan, the cloud chamber and the Geiger counter are live simulations. The habit is older: at AMOLF and Laserlab Amsterdam he wrote the software that ran the experiments.</p><p><a href="colophon.html">How this was made</a></p><button type="button" class="show" aria-label="Show me in the room: A portfolio you can walk into" hidden>Show me in the room</button></article>
+  <!-- [check] direct ask, new (panel 013, action 10): engagement type is not in llms-full.txt -->
+  <div class="contact"><h3>Work with him</h3><p>Available for freelance projects: AI agents, simulations, or something people can see and use, hands-on or as technical lead.</p>
+    <p class="links"><a href="mailto:info@ruudhendrikx.nl?subject=Project%20inquiry">Mail info@ruudhendrikx.nl</a> <span aria-hidden="true">&middot;</span> <a href="https://linkedin.com/in/rjghx/" rel="noopener">Full history on LinkedIn</a></p></div>
+</section>
+<ul class="hs-static" aria-label="Objects in the room" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap">
+  <li><strong>Commodore 64</strong>: His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object.</li>
+  <li><strong>TI-83</strong>: The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time.</li>
+  <li><strong>Quantum eraser, classical version</strong>: Crossed polarizers on the two slits mark the path, so no fringes. Put the loose polarizer in at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics. <a href="https://doi.org/10.1038/srep20834">His 2D spectroscopy paper</a></li>
+  <li><strong>Cloud chamber</strong>: Dry ice, isopropanol, a cold black plate. At sea level a cosmic-ray muon crosses each square centimetre about once a minute, several a second through this plate. The vapour shows the ones it catches: steep ones as short stubs, shallow ones as long lines, the odd fat alpha and a curling beta. The flux is real, the tracks are simulated.</li>
+  <li><strong>Geiger counter</strong>: An SBM-20 tube at background: about 20 counts a minute, Poisson-timed. The rate is real, the counts are simulated. Flip the toggle to hear it.</li>
+  <li><strong>Oscilloscope</strong>: Its probe is hooked onto the Geiger counter&rsquo;s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other.</li>
+  <li><strong>Structured light</strong>: Gray-code stripes label every point with a projector column and row; a camera beside it triangulates the depth. Then the vase becomes its own point cloud.</li>
+  <li><strong>Luxman L-308</strong>: His own amplifier, last box in a chain he can name from library to speaker cone. The real one has no meters, so neither does this one.</li>
+  <li><strong>The shelf</strong>: McGilchrist, Abram, Lane, Koch, Kastrup, Faggin, and a binder of Levin papers: the thinkers he keeps whole collections of notes on.</li>
+  <li><strong>The principle of least action</strong>: Every path between two points gets one number, the action S = ∫L dt with L = T − V. Vary the path, q → q + εη with η zero at both ends, and ask that S does not change to first order, δS = 0. Integrate by parts: the boundary term vanishes and the Euler–Lagrange equation is left, d/dt ∂L/∂q̇ − ∂L/∂q = 0, which for L = ½mq̇² − V is F = ma. With p = ∂L/∂q̇ and H = Σ pq̇ − L, write S = ∫(Σ pq̇ − H) dt and vary q and p independently: integrating the p δq̇ term by parts gives Hamilton&rsquo;s equations, q̇ = ∂H/∂p and ṗ = −∂H/∂q. Why stationary? Feynman: every path counts, with a phase e^{iS/ħ}; near δS = 0 the phases agree and add up, elsewhere they cancel. The camera that brought you in rode such a path: a bead on a wire along its route, through an invented landscape. After a lecture by Erik Verlinde (University of Amsterdam). Sources: Goldstein, Poole &amp; Safko, Classical Mechanics, 3rd ed., ch. 2 and §8.5; Feynman Lectures on Physics, Vol. II, ch. 19; Thornton &amp; Marion, Classical Dynamics, 5th ed., ch. 7; Cline, Variational Principles in Classical Mechanics, ch. 9. <a href="https://arxiv.org/abs/1001.0785">Verlinde: F = ma from entropy</a></li>
+</ul>
+<nav class="views" aria-label="Viewpoints"></nav>
+<div class="controls">
+  <button class="sound" type="button" aria-pressed="false" aria-label="Geiger counter sound" hidden>Sound</button>
+</div>
+<script type="module" src="main.js"></script>
+<script>
+  // Classic-script guard: if the module never ran (blocked or failed to load), say so under #debug.
+  setTimeout(() => { if (!window.__room && location.hash === '#debug') document.querySelector('.caption p').textContent = 'viewer: module did not run'; }, 8000);
+</script>
+
+</head></html>
