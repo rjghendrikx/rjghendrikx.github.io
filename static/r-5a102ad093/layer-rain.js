@@ -59,17 +59,17 @@ export default function mount(live) {
   }
   const paneZ = d.rain_panes[2];
   const glassMat = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, side: THREE.DoubleSide,   // wet from outside too (the intro's approach)
-    // premultiplied: the drops replace what is behind them, the reflection adds to it
-    blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+    // a screen blend (1 - (1 - dst)(1 - src)): water on glass only ever adds light (the refracted city, the
+    // glints, the rims), so a drop over a lit arch can no longer darken it (panel 015 action 10)
+    ...SCREEN, side: THREE.DoubleSide,   // wet from outside too (the intro's approach)
     extensions: { derivatives: true },
     uniforms: { uTime: { value: 0 }, uLampPos: { value: lampPos }, uLampCol: { value: lampCol }, uPaneZ: { value: paneZ } },
     vertexShader: `attribute vec2 aP; varying vec2 vP; varying vec3 vW;
       void main() { vP = aP; vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz;
         gl_Position = projectionMatrix * viewMatrix * w; }`,
     // Drops on a vertical pane at night, as lenses: each is a small plano-convex lens that shows the outside
-    // upside down and minified (the lit cloud at its bottom, the warm quay lights at its top), rimmed dark
-    // where the curved edge reflects the unlit room back, and carrying a glint of each room lamp at the
+    // upside down and minified (the lit cloud at its bottom, the warm quay lights at its top) as a faint core,
+    // with a bright rim where the curved edge gathers the city glow, and carrying a glint of each room lamp at the
     // point where its surface normal halves lamp and eye. The pane itself mirrors the lamps at ~8 % (Fresnel,
     // rising at grazing angles), fading out when the eye is within ~2 m of the glass (the canal view).
     // Written for this room; the Heartfelt shader (CC BY-NC-SA) was not used.
@@ -109,11 +109,11 @@ export default function mount(live) {
         float see = smoothstep(3.0, 7.0, rpx);
         vec2 q = dp.xy;
         float r = length(q);
-        vec3 c = mix(LOW, SKY, smoothstep(0.7, -0.6, q.y));                       // inverted: sky at the bottom
+        vec3 c = mix(LOW, SKY, smoothstep(0.7, -0.6, q.y)) * 0.45;                // inverted: sky at the bottom, faint
         vec2 sp = vec2(dp.w - 0.5, 0.35 + 0.3 * fract(dp.w * 7.3)) * 0.9;        // a quay lamp, upside down
         c += WARM * smoothstep(0.2, 0.0, length(q - sp)) * 0.9 * see;
         c += WARM * smoothstep(0.16, 0.0, length(q - vec2(0.45 - dp.w, 0.5))) * 0.5 * see * step(0.5, fract(dp.w * 3.1));
-        c *= 1.0 - 0.55 * smoothstep(0.6, 0.98, r);                              // the dark rim
+        c += SKY * 1.3 * smoothstep(0.55, 0.9, r) * (1.0 - smoothstep(0.9, 1.0, r)) * (0.6 + 0.4 * smoothstep(0.3, -0.5, q.y));   // the bright rim, brightest below
         return c;
       }
       void main() {
@@ -127,8 +127,9 @@ export default function mount(live) {
         float dx = vP.x - xr;
         float speed = mix(0.05, 0.14, h21(vec2(col, 5.0)));
         float headY = 3.2 - mod(uTime * speed + hc * 9.0, 4.0), above = vP.y - headY, on = step(0.4, hc);
-        float tw = 0.0016 + px * 0.5;
-        float trail = on * step(0.0, above) * exp(-above / 0.5) * (1.0 - smoothstep(tw * 0.5, tw, abs(dx)));
+        float tw = max(0.0016, px * 1.6);                                        // never under ~1.5 px: no 1-px crawl
+        float trail = on * step(0.0, above) * exp(-above / 0.9) * (1.0 - smoothstep(tw * 0.35, tw, abs(dx)))
+                    * min(1.0, 0.0024 / tw * 1.5);                                // wider than the water: fainter, same light
         vec2 hq = vec2(dx, above * (above > 0.0 ? 0.55 : 0.9)) / 0.0042;
         vec4 hd = vec4(hq, on * (1.0 - smoothstep(0.85, 1.0 + px / 0.0042, length(hq))), hc);
         // the trail has swept the drops away
@@ -147,8 +148,9 @@ export default function mount(live) {
           tq = ds[i].xy; fw = w; fr0 = rp[i];
         }
         if (fw > 0.0) rgb += glint(tq, V) * fw * smoothstep(3.0, 7.0, fr0);   // a glint on a sub-4 px drop is a speck
-        float sheen = 0.035 + 0.05 * (1.0 - fa) + trail * 0.25;                   // wet film, unresolved drops
+        float sheen = 0.035 + 0.05 * (1.0 - fa);                                  // wet film, unresolved drops
         rgb += vec3(0.30, 0.31, 0.34) * sheen * (1.0 - al); al += sheen * (1.0 - al);
+        rgb += (vec3(0.30, 0.31, 0.34) * 0.35 + WARM * 0.12) * trail;            // a running streak: the city and the lamps along it
         // the pane as a faint mirror of the room: Fresnel ~8 % head-on, the lamps as soft discs
         float onRoom = step(uPaneZ, cameraPosition.z);
         float near = smoothstep(1.4, 2.4, abs(cameraPosition.z - uPaneZ));
@@ -161,7 +163,7 @@ export default function mount(live) {
           refl += uLampCol[i] * (exp(-pow(ang / rad, 2.0)) * 5.0 + exp(-ang / (rad * 5.0)) * 0.6);
         }
         rgb += refl * fr * onRoom * near * (1.0 - al * 0.6);
-        gl_FragColor = vec4(shoulder(rgb), al);   // premultiplied: the glints roll off, never past the drop's own alpha
+        gl_FragColor = vec4(shoulder(rgb), 1.0);  // screened over the scene: the glints roll off, nothing darkens
       }`,
   });
   const glass = noPick(new THREE.Mesh(gg, glassMat));
@@ -175,26 +177,38 @@ export default function mount(live) {
   const lamps = [];
   for (let k = 0; k < (d.rain_lamps?.length ?? 0); k += 3) lamps.push(d.rain_lamps.slice(k, k + 3));
   const nS = lamps.length ? STREAKS : 0;
-  const seeds = new Float32Array(nS * 2 * 3), ends = new Float32Array(nS * 2), at = new Float32Array(nS * 2 * 3);
+  // each streak is a camera-facing quad ~1.75 px wide with a soft profile across it (4 corners: end x side),
+  // not a 1-px line, which crawled and stair-stepped on the phone (panel 015 action 10)
+  const seeds = new Float32Array(nS * 4 * 3), ends = new Float32Array(nS * 4 * 2), at = new Float32Array(nS * 4 * 3);
+  const sidx = new Uint32Array(nS * 6);
   for (let i = 0; i < nS; i++) {
     const s = [rand(), rand(), rand()], L = lamps[Math.floor(rand() * lamps.length)];
-    for (let e = 0; e < 2; e++) { seeds.set(s, (2 * i + e) * 3); at.set(L, (2 * i + e) * 3); ends[2 * i + e] = e; }
+    for (let c = 0; c < 4; c++) {
+      seeds.set(s, (4 * i + c) * 3); at.set(L, (4 * i + c) * 3);
+      ends.set([c >> 1, (c & 1) * 2 - 1], (4 * i + c) * 2);
+    }
+    sidx.set([4 * i, 4 * i + 1, 4 * i + 3, 4 * i, 4 * i + 3, 4 * i + 2], 6 * i);
   }
   const rg = new THREE.BufferGeometry();
   rg.setAttribute('position', new THREE.BufferAttribute(seeds, 3));   // the seed doubles as the position slot
-  rg.setAttribute('aEnd', new THREE.BufferAttribute(ends, 1));
+  rg.setAttribute('aEnd', new THREE.BufferAttribute(ends, 2));        // (end 0/1, side -1/+1)
   rg.setAttribute('aLamp', new THREE.BufferAttribute(at, 3));
+  rg.setIndex(new THREE.BufferAttribute(sidx, 1));
   const rainMat = new THREE.ShaderMaterial({
     ...SCREEN,
-    uniforms: { uTime: { value: 0 } },
-    vertexShader: `uniform float uTime; attribute float aEnd; attribute vec3 aLamp; varying float vA;
+    uniforms: { uTime: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) } },
+    vertexShader: `uniform float uTime; uniform vec2 uRes; attribute vec2 aEnd; attribute vec3 aLamp; varying float vA; varying float vS;
+      vec3 at(vec3 s, float fall, float e) {
+        float a = 6.2832 * s.z, r = sqrt(s.x) * ${CONE_R.toFixed(2)};
+        return aLamp + vec3(cos(a) * r + (fall + e * ${STREAK_LEN.toFixed(2)}) * ${WIND.toFixed(2)},
+                            ${CONE_UP.toFixed(2)} - fall - e * ${STREAK_LEN.toFixed(2)}, sin(a) * r);
+      }
       void main() {
         vec3 s = position;
         float H = ${(CONE_UP + CONE_DOWN).toFixed(2)};
         float fall = mod(s.y * H + uTime * ${FALL.toFixed(2)}, H);
-        float a = 6.2832 * s.z, r = sqrt(s.x) * ${CONE_R.toFixed(2)};
-        vec3 p = aLamp + vec3(cos(a) * r + (fall + aEnd * ${STREAK_LEN.toFixed(2)}) * ${WIND.toFixed(2)},
-                              ${CONE_UP.toFixed(2)} - fall - aEnd * ${STREAK_LEN.toFixed(2)}, sin(a) * r);
+        float r = sqrt(s.x) * ${CONE_R.toFixed(2)};
+        vec3 p = at(s, fall, aEnd.x);
         float below = max(0.0, aLamp.y - p.y);
         float cone = 0.35 + 0.8 * below;                          // the lantern's reflector throws down and out
         float lit = exp(-r * r / (cone * cone)) * (p.y < aLamp.y ? 1.0 : exp(-(p.y - aLamp.y) * 2.5));
@@ -205,13 +219,19 @@ export default function mount(live) {
         float g = dot(normalize(pw - cameraPosition), normalize(lw - pw));
         lit *= 0.06 + 0.94 * smoothstep(0.55, 0.97, g);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
-        vA = lit * clamp(30.0 / -mv.z, 0.0, 1.0) * (1.0 - aEnd * 0.7);
-        gl_Position = projectionMatrix * mv;
+        vA = lit * clamp(30.0 / -mv.z, 0.0, 1.0) * (1.0 - aEnd.x * 0.7);
+        vec4 c0 = projectionMatrix * mv, c1 = projectionMatrix * (modelViewMatrix * vec4(at(s, fall, 1.0 - aEnd.x), 1.0));
+        vec2 d = (c1.xy / c1.w - c0.xy / c0.w) * uRes;                      // along the streak, in pixels
+        vec2 n = normalize(vec2(-d.y, d.x) + 1e-6);
+        c0.xy += n * aEnd.y * 0.875 / uRes * 2.0 * c0.w;                      // +-0.875 px: a 1.75 px band
+        vS = aEnd.y;
+        gl_Position = c0;
       }`,
-    fragmentShader: `varying float vA; ${SHOULDER}
-      void main() { gl_FragColor = vec4(shoulder(vec3(1.0, 0.8, 0.56) * vA * 1.8), 1.0); }`,
+    fragmentShader: `varying float vA; varying float vS; ${SHOULDER}
+      void main() { float k = 1.0 - vS * vS;                                  // soft across: mean 2/3, as bright as the old line
+        gl_FragColor = vec4(shoulder(vec3(1.0, 0.8, 0.56) * vA * 1.8 * k * 0.86), 1.0); }`,
   });
-  const rain = noPick(new THREE.LineSegments(rg, rainMat));
+  const rain = noPick(new THREE.Mesh(rg, rainMat));
   rain.name = 'rain_streaks';
   rain.frustumCulled = false;
   group.add(rain);
@@ -268,6 +288,7 @@ export default function mount(live) {
     boatT += dt;
     glassMat.uniforms.uTime.value = t;
     rainMat.uniforms.uTime.value = t;
+    live.renderer?.getDrawingBufferSize?.(rainMat.uniforms.uRes.value);
     place();
     return true;
   }

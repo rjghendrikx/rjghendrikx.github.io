@@ -34,7 +34,7 @@ const WaterShader = {
   name: 'CanalMirror',
   uniforms: { color: { value: null }, tDiffuse: { value: null }, textureMatrix: { value: null },
     uTime: { value: 0 }, uGain: { value: 1.0 }, uQuays: { value: null }, uN: { value: 0 }, uStreak: { value: 1.0 },
-    uLights: { value: null }, uLCol: { value: null } },        // filled at mount (64 x vec3)
+    uLights: { value: null }, uLCol: { value: null }, uMid: { value: null } },        // filled at mount (64 x vec3)
   vertexShader: /* glsl */`
     uniform mat4 textureMatrix; varying vec4 vUv; varying vec3 vW;
     #include <common>
@@ -46,7 +46,7 @@ const WaterShader = {
       #include <logdepthbuf_vertex>
     }`,
   fragmentShader: /* glsl */`
-    uniform sampler2D tDiffuse; uniform float uTime, uGain, uStreak; uniform vec2 uQuays; varying vec4 vUv; varying vec3 vW;
+    uniform sampler2D tDiffuse; uniform float uTime, uGain, uStreak; uniform vec2 uQuays, uMid; varying vec4 vUv; varying vec3 vW;
     #define MAXL 64
     uniform vec3 uLights[MAXL], uLCol[MAXL]; uniform int uN;
     #include <common>
@@ -139,7 +139,11 @@ const WaterShader = {
       // near the quay walls the water is darker: the wall's own image, its shadow, the murk along it
       float dq = min(abs(vW.z - uQuays.x), abs(vW.z - uQuays.y));
       float shade = mix(0.4, 1.0, smoothstep(0.0, 2.5, dq));
-      gl_FragColor = vec4(shoulder((refl * F * uGain + glint * (0.12 + F) * uStreak) * shade), 1.0);
+      // no seam (panel 015 action 7): the screen-blended mirror fades out towards the plane's ends along the canal,
+      // with distance, and for steep views (the aerial: F ~ 0.02 there anyway), so the plane never shows an edge
+      float fade = (1.0 - smoothstep(0.45, 0.95, abs(vW.x - uMid.x) / ${REACH.toFixed(1)}))
+        * (1.0 - smoothstep(55.0, 95.0, dist)) * (1.0 - smoothstep(0.45, 0.85, cosT));
+      gl_FragColor = vec4(shoulder((refl * F * uGain + glint * (0.12 + F) * uStreak) * shade) * fade, 1.0);
       #include <colorspace_fragment>
     }`,
 };
@@ -192,6 +196,9 @@ export default function mount(live) {
   mat.uniforms.uQuays.value = new THREE.Vector2(...[zNear, zFar].map((z) => node.localToWorld(new THREE.Vector3(0, 0, z)).z));
   water.renderOrder = 1;
   node.add(water);
+  water.updateWorldMatrix(true, false);
+  const mid = water.getWorldPosition(new THREE.Vector3());
+  mat.uniforms.uMid.value = new THREE.Vector2(mid.x, mid.z);
 
   // window panes (glTF, node frame): the mirror is only seen through them from the room
   const panes = new THREE.Box3();

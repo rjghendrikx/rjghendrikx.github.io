@@ -13,11 +13,14 @@
 // shot ends). The samples are in a canal frame built from those hooks, so the shot follows the data.
 // Plays once per visitor (localStorage, guarded), skipped by any input (pointer, wheel, key) or the
 // skip button. Not under ?gate, ?nolive (not mounted), ?nointro or prefers-reduced-motion; ?intro
-// plays it again; at the end window gets a 'room:intro' event (detail: done | skipped). It starts after the room is ready, so the still stays the LCP; idle, it costs nothing.
+// plays it again; at the end window gets a 'room:intro' event (detail: done | skipped). At PROMPT_AT s it sends
+// 'room:intro-prompt' (main.js shows the prompt; on a phone it takes the Skip pill's slot, so the pill goes); a
+// 'room:skipintro' event (main.js: Work opened, a chip chosen) ends it like any input. It starts after the room is ready, so the still stays the LCP; idle, it costs nothing.
 import { DT, N, PTS, TAU } from './intro-path.js';
 
 const DURATION = N * DT;         // s, the whole shot (10)
 const KEY = 'room.intro.v1';     // localStorage: seen
+const PROMPT_AT = 6;             // s: the room's prompt shows by then, the flight keeps its 10 s (panel 015 action 7)
 const PORTRAIT_MAX = 1.9;        // same widening as main.js (tan space)
 // The old shot's look-at keys and FOV: [key time (s), look-at [u, v, h] from the pass point (u along the
 // facade, v out of the window, h up), vertical FOV at 16:9 (deg)]; the last is the hero's (filled at mount).
@@ -42,6 +45,7 @@ export default function mount(live) {
   let seen = false;
   try { seen = localStorage.getItem(KEY) === '1'; } catch { /* private mode: play */ }
   if ((seen && !params.has('intro')) || live.reduceMotion.matches) return null;
+  if (document.querySelector('#work.open')) return null;   // opened on #work: the visitor came for the work, not the flight
 
   // the canal frame from the hooks: the right-hand pane, out of the window = -z (glTF)
   const panes = [];
@@ -58,6 +62,14 @@ export default function mount(live) {
   const heroTarget = tgtData ? new THREE.Vector3(...tgtData)
     : heroPos.clone().add(new THREE.Vector3(0, 0, -4).applyQuaternion(heroQuat));
   const heroFov = src?.fov ?? camera.fov;
+  // a portrait hero looks a little lower and to the side (main.js PORTRAIT_SHIFT, a view offset): the flight keeps a
+  // centred frame and eases into that offset over its last 1.5 s, so the cut to the orbit stays seamless
+  const vo = () => (camera.view?.enabled ? [camera.view.offsetX / camera.view.fullWidth, camera.view.offsetY / camera.view.fullHeight] : null);
+  const shiftBy = (k) => {                           // in px of the window: setViewOffset also sets the aspect from them
+    const w = innerWidth, h = innerHeight;
+    if (k > 0) camera.setViewOffset(w, h, heroShift[0] * k * w, heroShift[1] * k * h, w, h); else camera.clearViewOffset();
+  };
+  let heroShift = vo();
   let endFov = camera.fov;                           // the hero FOV as main.js fitted it to this screen
 
   // the samples in the world; the path was solved to end at the layout's hero, so the remainder (a few mm
@@ -116,6 +128,8 @@ export default function mount(live) {
     camera.lookAt(look);
     const f = THREE.MathUtils.degToRad(cr(FF, tau));
     camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.min(PORTRAIT_MAX, portrait()) * Math.tan(f / 2)));
+    const k = heroShift ? THREE.MathUtils.smoothstep(t, DURATION - 1.5, DURATION) : 0;
+    shiftBy(k);
     camera.updateProjectionMatrix();
   }
 
@@ -134,10 +148,18 @@ export default function mount(live) {
     background: 'rgba(20, 17, 15, .55)', border: '1px solid rgba(239, 230, 218, .22)', borderRadius: '999px',
     padding: '7px 12px', opacity: '0', transition: 'opacity .6s ease', backdropFilter: 'blur(6px)', webkitBackdropFilter: 'blur(6px)',
   });
+  btn.style.background = 'rgba(20, 17, 15, .8)';     // a 0.8 scrim at full opacity: 4.5:1 or better (panel 015 action 6)
   document.body.appendChild(btn);
-  const showBtn = setTimeout(() => { btn.style.opacity = '0.85'; }, 900);
+  const showBtn = setTimeout(() => { btn.style.opacity = '1'; }, 900);
+  let prompted = false;
+  function cue() {                                    // the prompt at PROMPT_AT s of the flight (intro clock, so at() works)
+    if (prompted || t < PROMPT_AT) return;
+    prompted = true;
+    if (narrow) btn.remove();                         // the prompt takes the pill's slot; any tap still ends the flight
+    dispatchEvent(new CustomEvent('room:intro-prompt'));
+  }
 
-  let t = 0, playing = true;
+  let t = 0, playing = true, elapsed = 0;
   const EVENTS = ['pointerdown', 'wheel', 'keydown', 'touchstart'];
   function finish(why) {
     if (!playing) return;
@@ -145,23 +167,27 @@ export default function mount(live) {
     clearTimeout(showBtn);
     for (const e of EVENTS) removeEventListener(e, onInput, true);
     removeEventListener('resize', onResize);
+    removeEventListener('room:skipintro', onInput);
     live.reduceMotion.removeEventListener?.('change', onMotion);
     btn.remove();
     camera.position.copy(heroPos);
     camera.quaternion.copy(heroQuat);
     camera.fov = endFov;
+    if (heroShift) shiftBy(1);
     camera.updateProjectionMatrix();
     root.dataset.intro = why;
+    elapsed = t;
     dispatchEvent(new CustomEvent('room:intro', { detail: why }));   // for layers that wait for the room (projector)
     live.render();
   }
   const { root } = live;
   const onInput = () => finish('skipped');
   // main.js's resize handler runs first (registered earlier) and refits the hero FOV: take it as the end
-  const onResize = () => { if (playing) { endFov = camera.fov; pose(t); } };
+  const onResize = () => { if (playing) { endFov = camera.fov; heroShift = vo(); pose(t); } };
   const onMotion = () => { if (live.reduceMotion.matches) finish('skipped'); };
   for (const e of EVENTS) addEventListener(e, onInput, { capture: true, passive: true });
   addEventListener('resize', onResize);
+  addEventListener('room:skipintro', onInput);
   live.reduceMotion.addEventListener?.('change', onMotion);
   try { localStorage.setItem(KEY, '1'); } catch { /* storage blocked: it plays again next time */ }
   root.dataset.intro = 'playing';
@@ -172,6 +198,7 @@ export default function mount(live) {
     update(dt) {
       if (!playing) return false;
       t += dt;
+      cue();
       if (t >= DURATION) { finish('done'); return true; }
       pose(t);
       live.render();                                  // the camera moves: full frame rate, not the ambient cap
@@ -179,8 +206,9 @@ export default function mount(live) {
     },
     api: {
       playing: () => playing,
+      elapsed: () => (playing ? t : elapsed),         // s of the flight seen (main.js: the least-action toast)
       // gates and frame captures: hold the shot at a fraction k of its length
-      at(k) { if (!playing) return null; t = k * DURATION; pose(t); live.render(); return { t, pos: pos.toArray(), look: look.toArray(), fov: camera.fov }; },
+      at(k) { if (!playing) return null; t = k * DURATION; pose(t); cue(); live.render(); return { t, pos: pos.toArray(), look: look.toArray(), fov: camera.fov }; },
       skip: () => finish('skipped'),
       path: () => ({ dt: DT, n: N, tPane, tau: TAU, endFix: endFix.toArray(), pts: X.map((v) => v.toArray()) }),
     },

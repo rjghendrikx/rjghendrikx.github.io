@@ -51,6 +51,9 @@ const CASES = {
     b: 'The projector is the scanner’s light source; its stripes label every point on the vase with a column and a row.',   // [check] panel 015 action 1
     acts: [{ label: 'Run the scan', run: (L) => L.projector?.start() }] },
 };
+// the nav's Work group, in this order (panel 015 action 6); the layout's other views go behind "More views"
+const WORK_ORDER = ['chamber', 'terminal', 'experiment'];
+const TOAST_MS = 8000;           // the end-of-flight toast's time on screen, at least 8 s (panel 016 action 8)
 const ORBIT_KEY = 0.06;          // rad per arrow-key press (keyboard orbit inside the viewpoint's cone)
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const root = document.documentElement;
@@ -64,6 +67,9 @@ const ORBIT = { az: 0.35, polarUp: 0.18, polarDown: 0.12, near: 0.85, far: 1.12 
 // Portrait screens: widen the vertical FOV by at most this factor (tan space) and crop the sides,
 // instead of keeping the full 16:9 width (which leaves the bench a thin strip on a phone).
 const PORTRAIT_MAX = 1.9;
+// Portrait, hero view only: the crop looks right and down by this share of the frame (width, height), so the vase and
+// its plinth stay in frame and clear the chip strip, instead of the ceiling (panel 015 actions 5-6)
+const PORTRAIT_SHIFT = [0.05, 0.14];
 
 function webglAvailable() {
   try {
@@ -167,7 +173,8 @@ async function start() {
   for (const o of meshes) {
     const ud = o.userData.bake_tex ? o.userData : o.parent?.userData ?? {};
     const file = ud.tex ?? ud.bake_tex?.replace(/\.jpg$/, '.ktx2');
-    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    // extras.double_sided: cards seen from both sides (the canal house's leaf clumps)
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, side: ud.double_sided ? THREE.DoubleSide : THREE.FrontSide });
     o.material = mat;
     if (!file) continue;
     loads.push((file.endsWith('.ktx2') ? texLoader : jpgLoader).loadAsync(file).then((t) => {
@@ -204,6 +211,7 @@ async function start() {
   // The first viewpoint is the hero: use the camera's exact values so the gate's pixel diff holds.
   if (views[0]) Object.assign(views[0], { pos: heroPos.clone(), target: heroTarget.clone(), fov: src.fov });
   else views.push({ id: 'overview', label: 'Overview', order: 0, pos: heroPos.clone(), target: heroTarget.clone(), fov: src.fov });
+  for (const v of views) v.shift = v === views[0] ? PORTRAIT_SHIFT : [0, 0];
 
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enablePan = false;
@@ -233,17 +241,25 @@ async function start() {
     controls.maxPolarAngle = Math.min(Math.PI / 2 - 0.05, sph.phi + ORBIT.polarDown);
   }
 
-  function place(pos, target, fov) {
+  let shift = [0, 0];               // the current view's portrait shift (PORTRAIT_SHIFT on the hero)
+  function frame() {                // portrait screens only; a setViewOffset survives the intro's fov changes
+    const w = innerWidth, h = innerHeight;   // in px: setViewOffset also sets the aspect to fullWidth / fullHeight
+    if (w < h && (shift[0] || shift[1])) camera.setViewOffset(w, h, shift[0] * w, shift[1] * h, w, h);
+    else camera.clearViewOffset();
+  }
+  function place(pos, target, fov, sh = [0, 0]) {
     camera.position.copy(pos);
     camera.lookAt(target);
     baseFov = fov;
+    shift = sh;
     camera.fov = fitFov();
+    frame();
     camera.updateProjectionMatrix();
   }
 
   let current = views[0];
   let onArrive = () => {};          // set once the layers are mounted
-  place(current.pos, current.target, current.fov);
+  place(current.pos, current.target, current.fov, current.shift);
   setLimits(current.pos, current.target);
   controls.update();
 
@@ -252,6 +268,7 @@ async function start() {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.fov = fitFov();
+    frame();
     camera.updateProjectionMatrix();
     needsRender = true;
   }
@@ -273,10 +290,10 @@ async function start() {
     // drop any orbit inertia left from a drag, or the damping would carry the camera past the viewpoint
     const damp = controls.enableDamping;
     controls.enableDamping = false; controls.update(); controls.enableDamping = damp;
-    const from = { pos: camera.position.clone(), target: controls.target.clone(), fov: baseFov };
+    const from = { pos: camera.position.clone(), target: controls.target.clone(), fov: baseFov, shift };
     if (reduceMotion.matches) {
       tween = null;
-      place(v.pos, v.target, v.fov);
+      place(v.pos, v.target, v.fov, v.shift);
       setLimits(v.pos, v.target);
       controls.update();
       needsRender = true;
@@ -297,7 +314,7 @@ async function start() {
     const k = Math.min(1, (now - t0) / TWEEN_MS);
     const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;   // easeInOutCubic
     const tgt = from.target.clone().lerp(to.target, e);
-    place(from.pos.clone().lerp(to.pos, e), tgt, from.fov + (to.fov - from.fov) * e);
+    place(from.pos.clone().lerp(to.pos, e), tgt, from.fov + (to.fov - from.fov) * e, from.shift.map((s, i) => s + (to.shift[i] - s) * e));
     controls.target.copy(tgt);
     if (k >= 1) {
       tween = null;
@@ -310,22 +327,51 @@ async function start() {
     needsRender = true;
   }
 
-  // The nav: one small button per viewpoint, plain-English labels.
+  // The nav (panel 015 action 6): the work views first, marked with the accent, then the room's views behind
+  // "More views" (desktop: a second row above, opened on demand; phone: one sideways strip, everything in it).
   const nav = document.querySelector('.views');
   const buttons = new Map();
+  let more = null, roomRow = null, back = null;
   function syncNav() {
     for (const [id, b] of buttons) b.setAttribute('aria-pressed', String(id === current.id));
+    if (back) back.hidden = current === views[0];
+    // a room view (not the hero) is current: keep its row open, so its pressed chip shows
+    if (roomRow && current !== views[0] && roomRow.contains(buttons.get(current.id))) setMore(true);
+  }
+  function setMore(open) {
+    if (!more) return;
+    more.setAttribute('aria-expanded', String(open));
+    nav.classList.toggle('more-open', open);
   }
   if (nav) {
-    for (const v of views) {
+    const group = (cls, label) => { const g = document.createElement('div'); g.className = cls; g.setAttribute('role', 'group'); g.setAttribute('aria-label', label); return g; };
+    const workRow = group('work-row', 'Work');
+    roomRow = group('room-row', 'The room');
+    roomRow.id = 'room-views';
+    const chip = (v) => {
       const b = document.createElement('button');
       b.type = 'button';
       b.textContent = v.label;
       b.dataset.view = v.id;
-      b.addEventListener('click', () => goTo(v.id));
-      nav.appendChild(b);
+      b.addEventListener('click', () => { dispatchEvent(new CustomEvent('room:skipintro')); goTo(v.id); });
       buttons.set(v.id, b);
-    }
+      return b;
+    };
+    for (const id of WORK_ORDER) { const v = views.find((x) => x.id === id); if (v) workRow.appendChild(chip(v)).classList.add('w'); }
+    for (const v of views) if (!WORK_ORDER.includes(v.id)) roomRow.appendChild(chip(v));
+    more = document.createElement('button');
+    more.type = 'button';
+    more.className = 'more';
+    more.textContent = 'More views';
+    more.setAttribute('aria-controls', roomRow.id);
+    more.addEventListener('click', () => setMore(more.getAttribute('aria-expanded') !== 'true'));
+    workRow.appendChild(more);
+    // a visible way home from any other view (panel 016 action 7); Escape does the same
+    back = Object.assign(document.createElement('button'), { type: 'button', className: 'back', textContent: 'Back to the room' });
+    back.addEventListener('click', () => goTo(views[0].id));
+    workRow.prepend(back);
+    nav.append(workRow, roomRow);
+    setMore(false);
     syncNav();
   }
 
@@ -339,6 +385,15 @@ async function start() {
   // the phone caption's right gutter follows the cluster's real width (index.html --controls-w)
   const gutter = () => { if (cluster) root.style.setProperty('--controls-w', `${Math.ceil(cluster.getBoundingClientRect().width) + 10}px`); };
   gutter(); addEventListener('resize', gutter);
+  // the bottom-left stack (index.html): caption, chips above it, prompt and toast above those; the heights are live
+  const capEl = document.querySelector('.caption');
+  const stack = () => {
+    if (capEl) root.style.setProperty('--cap-h', `${Math.ceil(capEl.getBoundingClientRect().height)}px`);
+    if (nav) root.style.setProperty('--nav-h', `${Math.ceil(nav.getBoundingClientRect().height)}px`);
+  };
+  stack();
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(stack); for (const e of [capEl, nav]) if (e) ro.observe(e); }
+  else addEventListener('resize', stack);
   renderer.render(scene, camera);
   root.classList.add('ready');
 
@@ -392,8 +447,10 @@ async function start() {
   onArrive = (id) => { for (const l of layers) l.onView?.(id); showCase(id); };
   // the reveal: when the projector starts scanning while the visitor is on the overview, the case card
   // says so and offers the close-up (the vase is small from the back of the room)
+  const narrow = matchMedia('(max-width: 640px)');
   if (views.some((v) => v.id === 'experiment')) addEventListener('room:scan', () => {
     if (current.id !== 'overview' || tween || !caseEl) return;
+    if (narrow.matches) { scanPill(); return; }
     CASES.overview = { k: 'Live', t: 'The projector is scanning the vase',
       b: 'Stripes of light label every point on it; in a moment it turns into its own point cloud.',   // [check] panel 015 action 1
       acts: [{ label: 'See it up close', run: () => goTo('experiment') }] };
@@ -401,10 +458,33 @@ async function start() {
     delete CASES.overview;
     setTimeout(() => { if (current.id === 'overview') showCase('overview'); }, 15000);   // the scan is over: clear
   });
+  // [check] copy (panel 015 action 6, the phone's scan notice). Only once the prompt is done (after the first pick) and
+  // no toast is up, so it never hides "Tap anything that glows" nor comes back under it (panel 016 action 9)
+  let picked = false;
+  addEventListener('room:pick', () => { picked = true; }, { once: true });
+  function scanPill() {
+    if (!picked || document.querySelector('.toast')) return;
+    const prompt = document.querySelector('.prompt');
+    const pill = document.createElement('p');
+    pill.className = 'prompt scan';
+    const b = Object.assign(document.createElement('button'), { type: 'button', textContent: 'Scanning the vase · see it up close' });
+    b.addEventListener('click', () => { pill.remove(); goTo('experiment'); });
+    pill.appendChild(b);
+    const was = prompt?.hidden;
+    if (prompt) prompt.hidden = true;
+    document.body.appendChild(pill);
+    const done = () => { if (!pill.isConnected) return; pill.remove(); if (prompt && !was) prompt.hidden = false; };
+    setTimeout(done, 12000);
+    addEventListener('room:pick', () => pill.remove(), { once: true });   // the prompt's own handler hides it for good
+  }
   showCase(current.id);
   // "Show me in the room" in the Work sheet (setupWork) flies to the case's viewpoint, if this layout has it
   flyTo = (id) => (views.some((v) => v.id === id) ? goTo(id) : null);
   work?.sync();
+  addEventListener('keydown', (ev) => {   // Escape: back to the overview (panel 016 action 7); the Work sheet's own Escape wins
+    if (ev.key !== 'Escape' || GATE || ev.defaultPrevented || work?.isOpen() || current === views[0]) return;
+    goTo(views[0].id);
+  });
   // Arrow keys orbit inside the viewpoint's cone (OrbitControls maps them to pan, which is off here)
   addEventListener('keydown', (ev) => {
     if (GATE || tween || ev.altKey || ev.ctrlKey || ev.metaKey || work?.isOpen()) return;
@@ -426,15 +506,83 @@ async function start() {
   if (prompt && !GATE && api.hotspots) {
     const btn = prompt.querySelector('button');
     if (matchMedia('(pointer: coarse)').matches) btn.textContent = 'Tap anything that glows';
-    const reveal = () => { prompt.hidden = false; api.hotspots.pulse(); };
-    if (root.dataset.intro === 'playing') addEventListener('room:intro', () => setTimeout(reveal, 400), { once: true });
-    else setTimeout(reveal, 900);
+    let shown = false;
+    const reveal = () => { if (shown) return; shown = true; prompt.hidden = false; };
+    const pulse = () => api.hotspots.pulse();
+    if (root.dataset.intro === 'playing') {
+      // shown by 6 s into the 10 s flight (layer-intro.js PROMPT_AT); the glows wait for the room itself
+      addEventListener('room:intro-prompt', reveal, { once: true });
+      addEventListener('room:intro', () => setTimeout(() => { reveal(); pulse(); }, 400), { once: true });
+    } else setTimeout(() => { reveal(); pulse(); }, 900);
     btn.addEventListener('click', () => api.hotspots.pulse());
     addEventListener('room:pick', () => { prompt.hidden = true; }, { once: true });
   }
 
+  // The end of the flight: a note that the timing along the wire was solved from the action, with the way to the poster
+  // (panel 015 action 7, 016 action 8). Only after most of it was seen (5 s or more), and only if this layout has the
+  // poster's viewpoint. Up for TOAST_MS, paused while hovered or focused (WCAG 2.2.1). [check] copy, notes/captions.md
+  if (!GATE && root.dataset.intro === 'playing' && views.some((v) => v.id === 'action')) addEventListener('room:intro', () => {
+    if ((api.intro?.elapsed?.() ?? 0) < 5) return;
+    const toast = document.createElement('p');
+    toast.className = 'toast';
+    toast.setAttribute('role', 'status');
+    const go = Object.assign(document.createElement('button'), { type: 'button', textContent: 'See the maths' });
+    go.addEventListener('click', () => { toast.remove(); goTo('action'); });
+    toast.append('That flight was a stationary path of the action. ', go);   // [check] not "least": only the timing is solved
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('on'));
+    let out = 0, held = 0;
+    const arm = () => { clearTimeout(out); out = setTimeout(() => { toast.classList.remove('on'); setTimeout(() => toast.remove(), 400); }, TOAST_MS); };
+    const hold = (d) => { held = Math.max(0, held + d); if (held) clearTimeout(out); else arm(); };
+    toast.addEventListener('pointerenter', () => hold(1)); toast.addEventListener('pointerleave', () => hold(-1));
+    toast.addEventListener('focusin', () => hold(1)); toast.addEventListener('focusout', () => hold(-1));
+    arm();
+  }, { once: true });
+
   // Gate hooks: draw-call count, a forced-render frame-rate sample, camera state, viewpoints.
   state.info = () => { renderer.render(scene, camera); return { ...renderer.info.render, programs: renderer.info.programs.length }; };
+  // Composition gate (panel 015 action 5): for each named node, the share of the frame where it is the nearest
+  // surface (an ID render of the baked meshes only, at 1/4 size) and its screen box in CSS px [l, t, r, b].
+  state.coverage = (names, opts = {}) => {   // opts.mask: also a top-down string, one char per 4x4 px ('0' none, '1'..'9' names[i])
+    const W4 = Math.max(1, Math.round(innerWidth / 4)), H4 = Math.max(1, Math.round(innerHeight / 4));
+    const rt = new THREE.WebGLRenderTarget(W4, H4);
+    const ids = names.map((_, i) => new THREE.MeshBasicMaterial({ color: new THREE.Color().setRGB((i + 1) * 16 / 255, 0, 0, THREE.LinearSRGBColorSpace) }));   // a linear target: bytes = (i + 1) * 16
+    const black = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    const saved = [];
+    scene.traverse((o) => {
+      if (!(o.isMesh || o.isPoints || o.isLine || o.isSprite)) return;
+      let i = -1;
+      for (let p = o; p && i < 0; p = p.parent) i = names.indexOf(p.name);
+      const keep = o.isMesh && !o.material?.transparent && o.visible;
+      saved.push([o, o.material, o.visible]);
+      if (!keep) { o.visible = false; return; }
+      o.material = i >= 0 ? ids[i] : black;
+    });
+    renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+    for (const [o, m, v] of saved) { o.material = m; o.visible = v; }
+    const px = new Uint8Array(W4 * H4 * 4);
+    renderer.readRenderTargetPixels(rt, 0, 0, W4, H4, px);
+    rt.dispose(); ids.forEach((m) => m.dispose()); black.dispose();
+    const out = Object.fromEntries(names.map((n) => [n, { share: 0, box: null }]));
+    for (let y = 0; y < H4; y++) for (let x = 0; x < W4; x++) {
+      const i = Math.round(px[4 * (y * W4 + x)] / 16) - 1;
+      if (i < 0 || i >= names.length) continue;
+      const r = out[names[i]], sx = x * 4, sy = (H4 - 1 - y) * 4;
+      r.share++;
+      r.box = r.box ? [Math.min(r.box[0], sx), Math.min(r.box[1], sy), Math.max(r.box[2], sx + 4), Math.max(r.box[3], sy + 4)] : [sx, sy, sx + 4, sy + 4];
+    }
+    for (const r of Object.values(out)) r.share /= W4 * H4;
+    if (opts.mask) {
+      let m = '';
+      for (let y = H4 - 1; y >= 0; y--) for (let x = 0; x < W4; x++) {
+        const i = Math.round(px[4 * (y * W4 + x)] / 16);
+        m += i >= 1 && i <= Math.min(9, names.length) ? String(i) : '0';
+      }
+      out._mask = { w: W4, h: H4, data: m };
+    }
+    needsRender = true;
+    return out;
+  };
   state.bench = (ms = 3000) => new Promise((resolve) => {
     let frames = 0; const t0 = performance.now();
     const tick = () => {
@@ -522,6 +670,7 @@ function setupWork() {
   const sync = () => { for (const b of sheet.querySelectorAll('.show')) b.hidden = !flyTo; };
   function open(from) {
     if (isOpen()) return;
+    dispatchEvent(new CustomEvent('room:skipintro'));   // layer-intro.js: Work ends the flight (panel 015 action 7)
     opener = from ?? document.activeElement;
     sync();
     inerted = [...document.body.children].filter((e) => e !== sheet && !e.inert && e.tagName !== 'SCRIPT' && e.tagName !== 'STYLE');

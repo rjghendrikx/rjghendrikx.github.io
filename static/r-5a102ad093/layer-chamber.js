@@ -10,6 +10,12 @@
 // Visible rate 3 per s: ~1 muon per cm^2 per minute gives ~7/s through the 21 x 21 cm plate, of which the
 // lit, sensitive layer shows a share (physics.md; panel 011 asked 2-4/s; unmeasured). Each trail condenses in ~0.15 s,
 // fades over 1-2 s, drifts down and spreads. Lit from the side like the LED strip: brighter near it.
+// The look follows the ionisation (panel 015 action 12, variant D): an alpha loses ~100x more energy per mm
+// than a minimum-ionising muon (Bethe: dE/dx ~ z^2 / beta^2), so its trail is fat, dense and bright, its
+// droplets overlapping into a solid rod that thickens toward the Bragg peak at its end; a muon leaves a faint,
+// thin, continuous hairline; a beta is thin like the muon and denser where it slows and curls. Between the
+// tracks the supersaturated layer drizzles: single droplets condensing on stray ions and dust, falling out
+// (DRIZZLE, unmeasured, kept under the gates' 40/255 track threshold). Rates, mix, ranges and fade unchanged.
 // One Points draw call, a ring buffer of droplets; the GPU does the ageing.
 //
 // Hooks (lib/live.py): cloud_chamber extras tracks_plate_y, tracks_w, tracks_layer, tracks_led.
@@ -28,13 +34,26 @@ const LIFE = [1.0, 2.0];                            // s, fade time (physics.md)
 // a real one under the LED strip. The physics (rates, mix, ranges, fade) is unchanged.
 const MIN_PX = 3.0;
 const GAIN = 2.0;                                   // the tracks against the dark plate (unmeasured, by eye)
+// per-kind droplet look: step along the track (m), droplet size (m), brightness (end values grow toward the
+// stopping end); all by eye (unmeasured), ordered by dE/dx: alpha >> beta (slow end) > muon
+const LOOK = {
+  muon: { step: 0.0005, size: 0.0008, bright: 1.0, jitter: 0.0002 },
+  alpha: { step: 0.0003, size: [0.0016, 0.0026], bright: [1.5, 2.5], jitter: 0.0011 },
+  beta: { step: 0.0006, size: 0.0007, bright: [0.7, 1.1], jitter: 0.0002 },
+};
+// a trail holds until FADE_FROM of its life, then fades out (physics.md: tracks fade in ~1-2 s): the droplets
+// stay grown while they fall; it was 0.25, which dimmed a 1 s track below the gates' threshold in half a second
+const FADE_FROM = 0.5;
+const DRIZZLE = { rate: 40, size: 0.0008, bright: 0.08, life: 0.6 };   // background droplets per s (unmeasured)
 
 export default function mount(live) {
   const { THREE, byName, camera, renderer } = live;
   const node = byName('cloud_chamber');
   const d = node?.userData;
   if (!d?.tracks_plate_y) return null;
-  const rand = rng(seedFrom(live.params, 202));
+  // two streams: `rand` decides the tracks (when, which kind, where, which way, how long they live), `jr` the
+  // droplets along them and the drizzle, so the look can be tuned without reshuffling the seeded timeline
+  const rand = rng(seedFrom(live.params, 202)), jr = rng(seedFrom(live.params, 203));
   const half = d.tracks_w / 2 - 0.004;
   const y0 = d.tracks_plate_y + d.tracks_layer[0], y1 = d.tracks_plate_y + d.tracks_layer[1];
 
@@ -47,12 +66,13 @@ export default function mount(live) {
     ...SCREEN,                                        // overlapping droplets saturate softly (layer-common.js)
     uniforms: { uTime: { value: 0 }, uPx: { value: 800 }, uMinPx: { value: MIN_PX }, uDrift: { value: DRIFT }, uLed: { value: new THREE.Vector3(...d.tracks_led) },
       uSpan: { value: d.tracks_w } },
-    vertexShader: `attribute float aBirth; attribute vec3 aShape;
+    vertexShader: `#define FADE_FROM ${FADE_FROM.toFixed(2)}
+      attribute float aBirth; attribute vec3 aShape;
       uniform float uTime, uPx, uMinPx, uDrift, uSpan; uniform vec3 uLed; varying float vA;
       void main() {
         float age = uTime - aBirth, life = aShape.z;
         vec3 p = position; p.y -= uDrift * max(age, 0.0);
-        float grow = smoothstep(0.0, 0.15, age), fade = 1.0 - smoothstep(0.25 * life, life, age);
+        float grow = smoothstep(0.0, 0.15, age), fade = 1.0 - smoothstep(FADE_FROM * life, life, age);
         float led = 0.55 + 0.45 * exp(-(p.x - uLed.x) / (0.6 * uSpan));   // falls off away from the strip
         vA = (age < 0.0 || age > life) ? 0.0 : aShape.y * grow * fade * led;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
@@ -78,9 +98,9 @@ export default function mount(live) {
   const inside = (p) => Math.abs(p.x) < half && Math.abs(p.z) < half && p.y > y0 && p.y < y1;
   function drop(p, size, bright, life, jitter) {
     const i = head; head = (head + 1) % POOL;
-    pos[3 * i] = p.x + (rand() - 0.5) * jitter; pos[3 * i + 1] = p.y + (rand() - 0.5) * jitter; pos[3 * i + 2] = p.z + (rand() - 0.5) * jitter;
-    birth[i] = t + (rand() * 0.06);
-    shape[3 * i] = size * (0.7 + 0.6 * rand()); shape[3 * i + 1] = bright; shape[3 * i + 2] = life;
+    pos[3 * i] = p.x + (jr() - 0.5) * jitter; pos[3 * i + 1] = p.y + (jr() - 0.5) * jitter; pos[3 * i + 2] = p.z + (jr() - 0.5) * jitter;
+    birth[i] = t + (jr() * 0.06);
+    shape[3 * i] = size * (0.7 + 0.6 * jr()); shape[3 * i + 1] = bright; shape[3 * i + 2] = life;
   }
   // walk from p along dir, laying droplets every `step` while inside the layer; `turn` bends the path
   function trail(p, dir, len, step, look, turn) {
@@ -91,36 +111,49 @@ export default function mount(live) {
       turn?.(dir, s / len);
     }
   }
-  const randDir = () => {
-    const u = 2 * rand() - 1, a = 2 * Math.PI * rand(), r = Math.sqrt(1 - u * u);
+  const randDir = (r0 = rand) => {
+    const u = 2 * r0() - 1, a = 2 * Math.PI * r0(), r = Math.sqrt(1 - u * u);
     return new THREE.Vector3(r * Math.cos(a), u, r * Math.sin(a));
   };
-  const kick = (dir, sigma) => dir.add(randDir().multiplyScalar(sigma)).normalize();
+  const kick = (dir, sigma) => dir.add(randDir(jr).multiplyScalar(sigma)).normalize();
 
-  function spawn() {
-    let u = rand(), kind = MIX[0][0];
-    for (const [k, w] of MIX) { if ((u -= w) < 0) { kind = k; break; } }
+  // forced: { kind, mid, dir } for the gates' look measurement (api.inject); otherwise a random track
+  function spawn(forced) {
+    let u = rand(), kind = forced?.kind ?? MIX[0][0];
+    if (!forced) for (const [k, w] of MIX) { if ((u -= w) < 0) { kind = k; break; } }
     spawned[kind]++;
-    const mid = new THREE.Vector3((2 * rand() - 1) * half, y0 + (y1 - y0) * rand(), (2 * rand() - 1) * half);
+    const mid = forced?.mid?.clone() ?? new THREE.Vector3((2 * rand() - 1) * half, y0 + (y1 - y0) * rand(), (2 * rand() - 1) * half);
     if (kind === 'muon') {
       // zenith: cos^2(theta) per solid angle, times cos(theta) for a horizontal layer -> cos(theta) = U^(1/4)
       const c = Math.pow(rand(), 0.25), s = Math.sqrt(1 - c * c), a = 2 * Math.PI * rand();
-      const dir = new THREE.Vector3(s * Math.cos(a), -c, s * Math.sin(a));
+      const dir = forced?.dir ?? new THREE.Vector3(s * Math.cos(a), -c, s * Math.sin(a));
       const L = 0.6;
-      trail(mid.clone().addScaledVector(dir, -L / 2), dir, L, 0.0009,
-        (p, f, life) => drop(p, 0.0010, 1.6, life, 0.0003), (dv) => kick(dv, 0.0008));   // multiple scattering
+      const m = LOOK.muon;
+      trail(mid.clone().addScaledVector(dir, -L / 2), dir, L, m.step,
+        (p, f, life) => drop(p, m.size, m.bright, life, m.jitter), (dv) => kick(dv, 0.0005));   // multiple scattering
     } else if (kind === 'alpha') {
       const R = ALPHA_RANGE[Math.floor(rand() * 3)];
-      const dir = randDir(); dir.y *= 0.35; dir.normalize();   // the ones we see lie in the thin layer
-      trail(mid, dir, R, 0.00045, (p, f, life) => {
-        drop(p, 0.0012 + 0.0008 * f, 0.32 + 0.2 * f, life, 0.0016);   // denser, wider towards the Bragg peak
+      const dir = forced?.dir ?? randDir(); dir.y *= 0.35; dir.normalize();   // the ones we see lie in the thin layer
+      const a = LOOK.alpha;
+      trail(mid, dir, R, a.step, (p, f, life) => {
+        const k = f * f;                                                    // the Bragg peak is at the end
+        drop(p, a.size[0] + (a.size[1] - a.size[0]) * k, a.bright[0] + (a.bright[1] - a.bright[0]) * k, life, a.jitter);
       });
     } else {
       const L = 0.01 + 0.03 * rand(), dir = randDir();
-      trail(mid, dir, L, 0.0011, (p, f, life) => drop(p, 0.0009, 1.4, life, 0.0003),
-        (dv, f) => kick(dv, rand() < 0.08 ? 0.9 : 0.12 + 0.5 * f * f));   // kinks, curling at the end
+      const b = LOOK.beta;
+      trail(mid, dir, L, b.step, (p, f, life) => drop(p, b.size, b.bright[0] + (b.bright[1] - b.bright[0]) * f, life, b.jitter),
+        (dv, f) => kick(dv, jr() < 0.08 ? 0.9 : 0.12 + 0.5 * f * f));   // kinks, curling at the end
     }
     lastBirth = t;
+    for (const k of ['position', 'aBirth', 'aShape']) g.attributes[k].needsUpdate = true;
+  }
+
+  // the drizzle: one faint droplet at a random place in the layer (no lastBirth: it alone keeps no frames going)
+  let nextDrizzle = expWait(jr, DRIZZLE.rate);
+  function drizzle() {
+    const p = new THREE.Vector3((2 * jr() - 1) * half, y0 + (y1 - y0) * jr(), (2 * jr() - 1) * half);
+    drop(p, DRIZZLE.size, DRIZZLE.bright, DRIZZLE.life, 0);
     for (const k of ['position', 'aBirth', 'aShape']) g.attributes[k].needsUpdate = true;
   }
 
@@ -137,6 +170,7 @@ export default function mount(live) {
     frozen = false;
     t += dt;
     if (t >= next) { spawn(); next = t + expWait(rand, RATE); }
+    while (t >= nextDrizzle) { drizzle(); nextDrizzle += expWait(jr, DRIZZLE.rate); }
     mat.uniforms.uTime.value = t;
     return t - lastBirth < LIFE[1] + 0.2;          // something on the plate is still fading
   }
@@ -152,6 +186,13 @@ export default function mount(live) {
       return step(live.gate ? 0 : dt);   // ?gate: the clock moves only through api.advance
     },
     api: {
+      // the gates' look measurement: clear the plate, then lay one track of `kind` across its middle, flat
+      inject(kind, az = 0.6) {
+        birth.fill(-99); g.attributes.aBirth.needsUpdate = true;
+        const mid = new THREE.Vector3(kind === 'alpha' ? -0.015 : 0, (y0 + y1) / 2, 0);
+        const dir = new THREE.Vector3(Math.cos(az), kind === 'muon' ? -0.12 : 0, Math.sin(az)).normalize();
+        spawn({ kind, mid, dir }); next = Infinity; nextDrizzle = Infinity; live.render(); return this.info();
+      },
       advance(sec, h = 1 / 30) { let n = Math.round(sec / h); while (n-- > 0) step(h); live.render(); return this.info(); },
       // the sensitive layer on screen, CSS px [x0, y0, x1, y1] (gates.py crops the track count to it)
       box() {

@@ -30,6 +30,8 @@
   .stage img { object-fit: cover; }
   .stage canvas { opacity: 0; transition: opacity .6s ease; touch-action: none; display: block; }
   .ready .stage canvas { opacity: 1; }
+  /* the flight starts on a hard cut from the poster, not a ghost crossfade into the aerial (panel 015 action 7) */
+  [data-intro="playing"] .stage canvas { transition: none; }
   /* Scrims: text sits on rgba(20,17,15,.8) at least, so --muted (#c4b7a5) keeps 4.5:1 even over a white pixel
      (worst case: 4.5:1 at .8, computed; --ink 8:1). */
   .caption { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); margin: 0;
@@ -43,13 +45,25 @@
   .caption .links { margin-top: 4px; }
   .caption .links a { white-space: nowrap; }
   .caption .links .colophon { color: var(--muted); }
-  /* the prompt: a quiet pill above the chips after the room is ready; gone after the first pick */
-  .prompt { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 52px); margin: 0; z-index: 3; }
+  /* Desktop, bottom left, one stack (panel 015 action 6): the caption, the chips above it, the prompt and the toast
+     above those. main.js keeps --cap-h and --nav-h at the real heights, so nothing overlaps at any size, and the
+     right half (the vase on its plinth) stays clear. */
+  .prompt, .toast { position: fixed; left: calc(max(16px, env(safe-area-inset-left, 0px)) - 10px); margin: 0; z-index: 3;
+    --stack: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--cap-h, 120px) + var(--nav-h, 32px) + 16px);
+    bottom: var(--stack); }
+  /* the prompt: a quiet pill above the chips by 6 s into the flight (or at once); gone after the first pick */
   .prompt button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); cursor: pointer; padding: 8px 13px; border-radius: 999px;
     background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .prompt button::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; vertical-align: 1px;
     background: var(--accent); box-shadow: 0 0 8px var(--accent); }
   .prompt button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* the end of the flight: an 8 s note with the way to the poster, above the prompt (paused on hover and focus) */
+  .toast { bottom: calc(var(--stack) + 40px); max-width: min(440px, calc(100vw - 32px)); box-sizing: border-box; padding: 8px 13px; border-radius: 10px;
+    font-size: 12.5px; line-height: 1.35; color: var(--ink); background: rgba(20, 17, 15, .8); border: 1px solid rgba(239, 230, 218, .16);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .4s ease; }
+  .toast.on { opacity: 1; }
+  .toast button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .toast button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* the case card: one project per work viewpoint, announced (aria-live) when the camera arrives; top right under
      the controls, off the left window's pane (panel 013, action 4) */
   .case { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(max(16px, env(safe-area-inset-top, 0px)) + 44px); z-index: 3;
@@ -77,7 +91,8 @@
   .work article { margin-top: 12px; }
   .work article p:not(.k), .work .more { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
   .work a { color: var(--ink); }
-  .work .work-close { position: absolute; right: 12px; top: 8px; font-size: 20px; text-decoration: none; }
+  .work .work-close { position: absolute; right: 8px; top: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; text-decoration: none; }   /* 32 px on every pointer, 44 on touch (below) */
   /* with JS: a modal sheet (main.js openWork), the rest of the page inert behind it */
   .work.open { display: block; background: rgba(20, 17, 15, .98); box-shadow: 0 0 0 100vmax rgba(10, 8, 7, .6), 0 18px 60px rgba(0, 0, 0, .55); }
   .js .work:target:not(.open) { display: none; }   /* closed with JS while the URL still says #work */
@@ -96,22 +111,37 @@
   .caption a { color: var(--ink); text-underline-offset: 2px; text-decoration-color: rgba(239, 230, 218, .4); }
   .caption a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Viewpoint nav: built by main.js from the scene's viewpoints; absent without JS/WebGL. */
-  .views { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px));
-    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; margin: 0; padding: 0; max-width: min(560px, calc(100vw - 32px));
+  /* Desktop: above the caption, the work row first (accent) with "More views", the room's row above it on demand */
+  .views { position: fixed; left: calc(max(16px, env(safe-area-inset-left, 0px)) - 10px);
+    bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--cap-h, 120px) + 8px);
+    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 6px; margin: 0; padding: 0; max-width: min(600px, calc(100vw - 32px));
     opacity: 0; transition: opacity .6s ease; }
+  .views .work-row, .views .room-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .views:not(.more-open) .room-row { display: none; }
+  .views button.w { color: var(--ink); border-color: rgba(227, 163, 91, .6); }
+  .views button.w::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; vertical-align: 2px; background: var(--accent); }
+  .views .more::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 7px; border: solid currentColor; border-width: 1.5px 1.5px 0 0;
+    transform: translateY(1px) rotate(-45deg); }
+  .views .more[aria-expanded="true"]::after { transform: translateY(-2px) rotate(135deg); }
   .ready .views { opacity: 1; }
   .views button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--muted);
     border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 7px 11px; cursor: pointer; background: rgba(20, 17, 15, .8);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: color .2s, border-color .2s, background .2s; }
   .views button:hover { color: var(--ink); border-color: rgba(239, 230, 218, .4); }
+  .views .back[hidden] { display: none; }
   .views button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); background: rgba(20, 17, 15, .75); }
   .views button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   @media (max-width: 640px) {
     /* phone: the chips in one row that scrolls sideways and snaps, instead of a wrapped block over the room */
-    .views { left: 0; right: 0; max-width: none; justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto;
+    .views { left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom, 0px)); max-width: none; flex-direction: row; align-items: center;
+      justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto;
       scroll-snap-type: x proximity; scroll-padding-inline: max(16px, env(safe-area-inset-left, 0px));
-      padding: 4px max(16px, env(safe-area-inset-right, 0px)) 4px max(16px, env(safe-area-inset-left, 0px));
-      scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      padding: 4px calc(max(16px, env(safe-area-inset-right, 0px)) + 24px) 4px max(16px, env(safe-area-inset-left, 0px));
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      /* the scroll cue: the strip fades out at the right edge (panel 015 action 6) */
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+    .views .work-row, .views .room-row, .views:not(.more-open) .room-row { display: contents; }
+    .views .more { display: none; }
     .views::-webkit-scrollbar { display: none; }
     .views button { flex: none; scroll-snap-align: start; white-space: nowrap; }
     /* the caption at the top keeps clear of the controls column (Sound, Lidar) on the right */
@@ -131,7 +161,7 @@
     .caption .links .colophon, .caption .links .colophon-sep { display: none; }
     /* phone: the case card is a bottom sheet on the chip strip, about 25% of the screen until its grip (or the body)
        is tapped, then up to 62% and scrollable (panel 013, action 11) */
-    .case { top: auto; left: 0; right: 0; width: auto; bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 52px); max-height: 25vh; overflow: hidden;
+    .case { top: auto; left: 0; right: 0; width: auto; bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--nav-h, 52px)); max-height: 25vh; overflow: hidden;
       padding: 0 max(16px, env(safe-area-inset-right, 0px)) 11px max(16px, env(safe-area-inset-left, 0px)); border-radius: 14px 14px 0 0;
       border-width: 1px 0 0; transition: max-height .25s ease; }
     .case.open { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
@@ -142,12 +172,15 @@
     .case p.b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; cursor: pointer; }
     .case.open p.b { -webkit-line-clamp: unset; display: block; }
     .case h2 { font-size: 15px; }
-    .prompt { bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + 62px); }
+    .prompt, .toast { left: 50%; transform: translateX(-50%); --stack: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--nav-h, 52px) + 10px); }
+    .prompt button { white-space: nowrap; }
+    .toast { bottom: calc(var(--stack) + 52px); width: max-content; text-align: center; }
     .case:not(:empty) ~ .prompt, .has-case .prompt { display: none; }
     .controls { flex-direction: column; align-items: flex-end; }
   }
   /* touch: every target at least 44 px high (WCAG 2.5.5 / Apple HIG) */
   @media (pointer: coarse) {
+    .toast button { min-height: 44px; }
     .views button, .controls > button, .sound, .prompt button, .case .acts :is(a, button), .work .show:not([hidden]) { min-height: 44px; padding-top: 0; padding-bottom: 0; padding-inline: 14px; }
     /* inline text links: at least 24 px targets (WCAG 2.5.8), was 16 px */
     .caption .links a, .work .links a { display: inline-flex; align-items: center; min-height: 24px; vertical-align: middle; }

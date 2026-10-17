@@ -8,12 +8,15 @@
 // vase (an analytic test against its radius profile). Then the vase dissolves, scan line by scan line,
 // into its own point cloud (scan_points.json, sampled on the mesh in build.py) shaded like a lidar
 // return: intensity ~ cos(theta)/r^2 from the projector, a little range noise, dropouts at grazing
-// angles and none at all on the side the projector never saw. Then it settles back.
+// angles and none at all on the side the projector never saw. A point needs two views: the stripes label it
+// with a projector column and row, and the machine-vision camera beside the lens (objects/projector.py,
+// 0.20 m baseline) sees that label and triangulates its depth; so a point the camera cannot see (n.L_cam <= 0)
+// is a dropout too, a shadow band on the vase's far flank from the camera. Then it settles back.
 //
 // Hooks (lib/scene.py, objects/projector.py): projector extras projector_cam_pos/dir (node-local, glTF
 // axes), projector_cam_hfov_deg, projector_cam_aspect; scan_target extras vase_y0, vase_h,
 // vase_center, vase_profile. Trigger: the Projector viewpoint, and once a few seconds after load.
-import { easeInOut, noPick } from './layer-common.js';
+import { easeInOut, noPick, SHOULDER } from './layer-common.js';
 
 const BITS = 7;                 // 128 columns over the 0.50 m image: 3.9 mm finest stripe at the vase
 const T_REF = [0.45, 0.30];     // white, black reference frames (s)
@@ -21,7 +24,8 @@ const T_FRAME = 0.22;           // one bit plane or its inverse (s); a real scan
                                 // this is slowed down to be watched
 const T_GAP = 0.35, T_DISSOLVE = 1.9, T_HOLD = 4.2, T_SETTLE = 1.9;
 const BEAM_NEAR = 0.01, BEAM_REACH = 1.12;   // beam volume: lens glass to just past the vase (x throw)
-const HAZE = 0.5;               // scattered fraction per metre of beam, display units (by eye; unmeasured)
+const HAZE = 0.25;              // scattered fraction per metre of beam, display units (by eye, unmeasured): 0.5
+                                // clipped and hatched; at the panel's 0.15 the filtered beam no longer read as sheets
 const AUTOSTART = 3.5;          // s after load, once, if the vase is in view
 const AUTOSTART_INTRO = 1.0;    // s after the intro lands on the hero: the reveal follows the flight in
 const LIGHT = [1.25, 1.3, 1.36];   // projected white relative to the baked texel (cool laser-phosphor white)
@@ -48,35 +52,43 @@ float liveVaseShadow(vec3 P) {
   return smoothstep(r - 0.003, r + 0.003, length(p + d * t - a));
 }
 // The projected frame at image column colc (0..2^bits): reference frames, or one Gray-code bit plane
-// (MSB, the coarsest, first) or its inverse. Stripes narrower than ~a pixel (blur, in columns) fade
-// to their mean instead of aliasing.
-float liveGray(vec2 ndc, float blur) {
+// (MSB, the coarsest, first) or its inverse. Bit plane j with p = 2^(bits-1-j) columns per half-step is a
+// square wave of period 4p, high on [p, 3p) (b_j xor b_j+1). It is box-filtered over the footprint w (in
+// ndc along the stripe axis: a pixel's, or one ray-march step's) through the wave's integral
+// F(u) = floor(u)/2 + min(fract(u), 1/2), so a stripe narrower than the footprint shows as its mean
+// instead of crawling (panel 015 action 4; the old floor()/mod() wave aliased into moire on the floor).
+${SHOULDER}
+float liveSqInt(float u) { return floor(u) * 0.5 + min(fract(u), 0.5); }
+float liveGray(vec2 ndc, float w) {
   if (uPat.x < -1.5) return 0.0;          // black reference
   if (uPat.x < -0.5) return 1.0;          // white reference
-  float colc = ((uPat.y > 1.5 ? ndc.y : ndc.x) * 0.5 + 0.5) * exp2(uPat.z);   // columns, then rows
-  float p = exp2(uPat.z - 1.0 - uPat.x);
-  float col = floor(colc);
-  float g = mod(floor(col / p) + floor(col / (2.0 * p)), 2.0);   // Gray bit = b_j xor b_j+1
-  if (mod(uPat.y, 2.0) > 0.5) g = 1.0 - g;
-  return mix(g, 0.5, smoothstep(0.35, 0.9, blur * exp2(uPat.z) / p));
+  float n = exp2(uPat.z), p = exp2(uPat.z - 1.0 - uPat.x);
+  float colc = ((uPat.y > 1.5 ? ndc.y : ndc.x) * 0.5 + 0.5) * n;   // columns, then rows
+  float u = (colc - p) / (4.0 * p), wu = max(w * 0.5 * n / (4.0 * p), 1e-4);
+  float g = (liveSqInt(u + 0.5 * wu) - liveSqInt(u - 0.5 * wu)) / wu;
+  return mod(uPat.y, 2.0) > 0.5 ? 1.0 - g : g;
 }
 vec3 liveScan(vec3 base) {
   if (uOn <= 0.0) return base;
   vec4 pc = uProjVP * vec4(vLiveW, 1.0);
+  vec2 ndc = pc.xy / max(pc.w, 1e-4);
+  float sa = uPat.y > 1.5 ? ndc.y : ndc.x;                   // derivatives before any branch: the footprint
+  float fw = length(vec2(dFdx(sa), dFdy(sa)));                // of this pixel along the stripe axis (ndc)
   if (pc.w <= 0.0) return base;
-  vec2 ndc = pc.xy / pc.w;
   vec2 e = smoothstep(1.0, 0.98, abs(ndc));
   if (e.x * e.y <= 0.0) return base;
   vec3 N = normalize(cross(dFdx(vLiveW), dFdy(vLiveW)));   // facet normal (the GLB has none)
   vec3 L = uProjPos - vLiveW; float r = length(L); L /= r;
   float cosT = dot(N, L);
   if (cosT <= 0.0) return base;
-  float g = liveGray(ndc, max(fwidth(ndc.x), fwidth(ndc.y)) * 0.5);
+  float g = liveGray(ndc, fw);
   float reach = e.x * e.y * uOn * min(1.0, uR0 * uR0 / (r * r));
 #ifdef LIVE_SHADOW
   reach *= liveVaseShadow(vLiveW);
 #endif
-  return base * (1.0 - uExpose * reach) + base * uLight * g * cosT * reach;
+  // the same shoulder as the other live layers: the white reference frame on the white vase rolls off
+  // instead of clipping (0.15 % of the hero clipped at 1440x900 during the scan)
+  return shoulder(base * (1.0 - uExpose * reach) + base * uLight * g * cosT * reach);
 }
 `;
 
@@ -156,7 +168,7 @@ export default async function mount(live) {
   });
   for (const [o, def] of receivers) patch(o.material, U, def);
 
-  // The beam in haze: the frustum from the lens to just past the vase, ray-marched (24 steps) in one
+  // The beam in haze: the frustum from the lens to just past the vase, ray-marched (32 steps) in one
   // additive pass, so the Gray-code planes show as sheets of light while they travel.
   const far = U.uR0.value * BEAM_REACH;
   const tx = Math.tan(hf / 2), ty = tx / d.projector_cam_aspect;
@@ -168,7 +180,9 @@ export default async function mount(live) {
   }
   bg.applyMatrix4(pcam.matrixWorld);
   const beamMat = new THREE.ShaderMaterial({
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    // back faces, depth-tested: where a surface stands in front of the beam's far side (the plant, the vase)
+    // the beam is not painted over it; the march runs from the back face toward the eye
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.BackSide,
     uniforms: { ...U, uHaze: { value: HAZE }, uFar: { value: far }, uAxis: { value: dir.clone() }, uSpan: { value: far * 1.2 } },
     vertexShader: `varying vec3 vLiveW; varying vec3 vLiveL;
       void main() { vLiveW = (modelMatrix * vec4(position, 1.0)).xyz; vLiveL = position;
@@ -176,18 +190,23 @@ export default async function mount(live) {
     fragmentShader: SHADER_HEAD + `uniform float uHaze, uFar, uSpan; uniform vec3 uAxis;
       void main() {
         vec3 rd = normalize(vLiveW - cameraPosition);
-        float dt = uSpan / 24.0, acc = 0.0;
+        float dt = uSpan / 32.0, acc = 0.0;
         float j = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) * dt;   // IGN
-        for (int i = 0; i < 24; i++) {
-          vec3 p = vLiveW + rd * (j + float(i) * dt);
+        for (int i = 0; i < 32; i++) {
+          vec3 p = vLiveW - rd * (j + float(i) * dt);
           vec4 pc = uProjVP * vec4(p, 1.0);
           float z = dot(p - uProjPos, uAxis);
           if (pc.w <= 0.0 || z > uFar) continue;
           vec2 ndc = pc.xy / pc.w;
-          if (abs(ndc.x) > 1.0 || abs(ndc.y) > 1.0) continue;
+          vec4 pn = uProjVP * vec4(p - rd * dt, 1.0);              // the next step: its footprint filters the stripes
+          vec2 dn = abs(pn.xy / max(pn.w, 1e-4) - ndc) + 1e-4;
+          // the share of this step inside the frustum's sides, not all-or-nothing: a hard cut flipped one step
+          // in or out from pixel to pixel with the jitter and hatched the beam's edges
+          vec2 inside = clamp((1.0 - abs(ndc)) / dn + 0.5, 0.0, 1.0);
+          if (inside.x * inside.y <= 0.0) continue;
           float r = length(p - uProjPos);
-          float g = liveGray(ndc, 0.0);
-          acc += g * liveVaseShadow(p) * min(4.0, uR0 * uR0 / (r * r));
+          float g = liveGray(ndc, uPat.y > 1.5 ? dn.y : dn.x);
+          acc += g * inside.x * inside.y * liveVaseShadow(p) * min(4.0, uR0 * uR0 / (r * r));
         }
         gl_FragColor = vec4(uLight * acc * dt * uHaze * uOn, 1.0);
       }`,
@@ -198,12 +217,16 @@ export default async function mount(live) {
   beam.renderOrder = 2;
   live.scene.add(beam);
 
+  // The camera's projection centre (projector extras, node-local glTF axes); without it, points keep the
+  // projector-only test (another layout's older projector), placed where the projector is.
+  const camPos = d.projector_mv_pos ? new THREE.Vector3(...d.projector_mv_pos).applyMatrix4(proj.matrixWorld) : pos.clone();
   // The point cloud, node-local in the scan target (sorted by projector row in build.py).
   const { geometry, count } = await loadPoints(THREE);
   const pm = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    uniforms: { uProjVP: U.uProjVP, uProjPos: U.uProjPos, uR0: U.uR0, uCut: U.uCut, uFade: { value: 0 }, uPx: { value: 800 } },
-    vertexShader: `uniform mat4 uProjVP; uniform vec3 uProjPos; uniform float uR0, uCut, uFade, uPx;
+    uniforms: { uProjVP: U.uProjVP, uProjPos: U.uProjPos, uR0: U.uR0, uCut: U.uCut, uFade: { value: 0 }, uPx: { value: 800 },
+      uCamPos: { value: camPos } },
+    vertexShader: `uniform mat4 uProjVP; uniform vec3 uProjPos, uCamPos; uniform float uR0, uCut, uFade, uPx;
       varying float vI; varying float vA;
       float h1(vec3 p) { return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
       void main() {
@@ -215,6 +238,9 @@ export default async function mount(live) {
         float u1 = max(h1(s), 1e-4), u2 = h1(s + 17.0), u3 = h1(s + 41.0);
         // dropouts: the side the projector never lit, and grazing returns too weak to decode
         float keep = step(0.0, c) * step(smoothstep(0.30, 0.05, c), u3);
+        // and the camera must see it: no second view, no triangulation, no point
+        float cc = dot(n, normalize(uCamPos - w.xyz));
+        keep *= step(0.0, cc) * step(smoothstep(0.20, 0.03, cc), h1(s + 73.0));
         // range noise along the ray (Box-Muller)
         w.xyz -= L * sqrt(-2.0 * log(u1)) * cos(6.2831853 * u2) * ${RANGE_NOISE.toFixed(6)};
         vec4 pc = uProjVP * w;
@@ -314,7 +340,8 @@ export default async function mount(live) {
     api: {
       start() { t = 0; live.render(); },
       advance(sec, h = 1 / 60) { let n = Math.round(sec / h); while (n-- > 0) step(h); live.render(); return phase; },
-      info: () => ({ phase, running: t >= 0, t, tEnd, frames: frames.length, bits: BITS, points: count, cloudVisible: cloud.visible }),
+      info: () => ({ phase, running: t >= 0, t, tEnd, frames: frames.length, bits: BITS, points: count, cloudVisible: cloud.visible,
+        camera: d.projector_mv_pos ? camPos.toArray().map((v) => +v.toFixed(4)) : null, baseline: d.projector_mv_baseline ?? null }),
     },
   };
 }

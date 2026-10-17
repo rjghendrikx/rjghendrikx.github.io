@@ -142,7 +142,7 @@ const POINTS_FS = `varying vec3 vC; varying float vA;
 const STYLE = `.lidar { position: fixed; top: calc(max(16px, env(safe-area-inset-top, 0px)) + 32px); right: max(16px, env(safe-area-inset-right, 0px));
   font: inherit; font-size: 12px; line-height: 1; color: var(--muted, #b9ab98); background: rgba(20, 17, 15, .55); cursor: pointer;
   border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 6px 10px; opacity: 0; transition: opacity .6s ease, color .2s, border-color .2s; }
-.ready .lidar { opacity: .8; }
+.ready .lidar { opacity: 1; }   /* no opacity on the label: 5.18:1 (panel 015 action 6) */
 .lidar:hover { color: var(--ink, #efe6da); opacity: 1; }
 .lidar[aria-pressed="true"] { color: var(--ink, #efe6da); border-color: #45bdcb; opacity: 1; }
 .lidar:focus-visible { outline: 2px solid var(--accent, #e3a35b); outline-offset: 2px; }
