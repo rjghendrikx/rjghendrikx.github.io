@@ -32,7 +32,11 @@ export const CAPTIONS = [
     body: 'Its probe is hooked onto the Geiger counter’s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other.' }],
   // [check] panel 015 action 1: the room has no camera, so the stripes label points, they do not range them
   ['projector', { kicker: 'An object shows its own measurement', title: 'Structured light',
-    body: 'Gray-code stripes label every point with a projector column and row; a camera beside it triangulates the depth. Then the vase becomes its own point cloud.' }],
+    body: 'Gray-code stripes label every point with a projector column and row; the camera beside the lens reads each label and triangulates the depth. Then the scanned object becomes its own point cloud.' }],   // [check] wave 5 P2
+  // [check] wave 5 P2: the head that replaced the vase in the canal house
+  ['plato', { kicker: 'Plato’s cave · projection mapping', title: 'Plato',
+    body: 'A plaster cast of Plato’s head, scanned by the SMK in Copenhagen and in the public domain. In his cave, prisoners take shadows thrown on a wall for the real thing: projection, 2,400 years early. He mapped light onto festival stages with Resolume and MadMapper; here the projector first measures the head, then paints it.',
+    more: { href: 'https://open.smk.dk/artwork/image/KAS2111', label: 'The cast at SMK' } }],
   ['amp', { kicker: 'Listening corner', title: 'Luxman L-308',
     body: 'His own amplifier, last box in a chain he can name from library to speaker cone. The real one has no meters, so neither does this one.' }],
   ['pr_dm603', { kicker: 'Listening corner', title: 'B&W DM603',

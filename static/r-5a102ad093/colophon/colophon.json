@@ -2755,6 +2755,13 @@
    "t": "2026-10-16T11:43:34Z",
    "commit": "839413f",
    "message": "KTX2+meshopt (7.9->4.5 MB), work sheet + phone caption + calm glows, on-demand water mirror, AgX roll-off in live layers, visible chamber tracks, poster 2048"
+  },
+  {
+   "tag": "room-iter-016-merge-016",
+   "ts": 1792229416,
+   "t": "2026-10-17T09:30:16Z",
+   "commit": "4a7a602",
+   "message": "Round 016 merge: B camera+nav+toast, A stripes/rain/light, D chamber+eraser+camera, C street without canopy, plaster ceiling"
   }
  ]
 }

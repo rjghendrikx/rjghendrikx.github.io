@@ -20,7 +20,7 @@ const LIVE = !params.has('nolive');   // ?nolive: the bake alone
 // onView(id), api for the gates). One failing layer must not take the room down.
 // layer-terminal.js first (its canvas is ready before the others mount); layer-intro.js last, it takes
 // the camera from the room's first frame
-const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-lidar.js', 'layer-intro.js'];
+const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-lidar.js', 'layer-c64.js', 'layer-intro.js'];
 // Case cards: one project per work viewpoint (lib/layouts/canal_house.py VIEWS), shown in .case (aria-live)
 // when the camera arrives. A view id that the layout lacks is skipped. acts: DOM buttons for the room's picks
 // ({ label, run: layer api call }) and links.
@@ -50,6 +50,15 @@ const CASES = {
   projector: { k: 'Try it', t: 'Structured light',
     b: 'The projector is the scanner’s light source; its stripes label every point on the vase with a column and a row.',   // [check] panel 015 action 1
     acts: [{ label: 'Run the scan', run: (L) => L.projector?.start() }] },
+};
+// wave 5 P2: where the scan target is the Plato head (canal_house) the projector's cards say so. [check] notes/captions.md
+const PLATO = {
+  projector: { k: 'Try it', t: 'Projection mapping',
+    b: 'First the projector measures the head: its stripes label every point with a column and a row, and the camera beside the lens triangulates the depth. Then the head becomes a canvas, as festival stages were for him with Resolume and MadMapper. The buttons step through what a mapping studio shows: white, wire, template, mask, content.',
+    acts: [{ label: 'Run the scan and the show', run: (L) => L.projector?.start() }] },
+  room: 'Watch the projector: its stripes label the head point by point, the head becomes its own point cloud, and then a canvas for light.',
+  scan: ['The projector is scanning Plato', 'Stripes of light label every point on the head; then it becomes its own point cloud, and then a canvas.'],
+  pill: 'Scanning Plato · see it up close',
 };
 // the nav's Work group, in this order (panel 015 action 6); the layout's other views go behind "More views"
 const WORK_ORDER = ['chamber', 'terminal', 'experiment'];
@@ -186,6 +195,11 @@ async function start() {
     }));
   }
   const byName = (n) => scene.getObjectByName(n);
+  const head = !!byName('plato');   // wave 5 P2
+  if (head) {
+    Object.assign(CASES.projector, PLATO.projector);
+    if (CASES.experiment) CASES.experiment.b = CASES.experiment.b.replace(WORK.experiment.room, PLATO.room);
+  }
   if (GLASS) { const cc = byName('cloud_chamber'); if (cc) addGlass(cc); addPropGlass(scene); }
 
   // Hero camera from the glTF: same transform and vertical FOV as the Blender still.
@@ -309,6 +323,25 @@ async function start() {
     });
   }
 
+  // Click to move (wave 5): a click on an object flies to the viewpoint that looks at it (a target inside its box, grown
+  // 0.15 m, the one aimed nearest its middle; walls, floor and the street are too big to count), as its chip would. A
+  // click out of the window (past FAR m) goes to the view that looks most nearly that way; any other click to the view
+  // whose target is nearest the clicked point. The current view stays put.
+  const FAR = 8;
+  function flyNear(p, obj) {
+    if (GATE || tween) return;
+    while (obj?.parent && obj.parent !== scene) obj = obj.parent;
+    const box = obj ? new THREE.Box3().setFromObject(obj).expandByScalar(0.15) : null;
+    const own = box && Math.max(...box.getSize(new THREE.Vector3()).toArray()) < 2.5 ? views.filter((x) => box.containsPoint(x.target)) : [];
+    const c = own.length ? box.getCenter(new THREE.Vector3()) : p;
+    const far = !own.length && camera.position.distanceTo(p) > FAR;
+    const cost = (x) => (far ? x.target.clone().sub(x.pos).angleTo(p.clone().sub(x.pos)) : x.target.distanceTo(c));
+    const v = (own.length ? own : views).reduce((a, b) => (cost(b) < cost(a) ? b : a));
+    if (own.includes(current) || v === current) return;
+    dispatchEvent(new CustomEvent('room:skipintro'));
+    goTo(v.id);
+  }
+
   function stepTween(now) {
     const { from, to, t0, resolve } = tween;
     const k = Math.min(1, (now - t0) / TWEEN_MS);
@@ -377,7 +410,7 @@ async function start() {
 
   await Promise.all(loads);
   const layers = LIVE ? await mountLayers({ THREE, scene, camera, renderer, byName, gate: GATE, reduceMotion,
-    params, root, view: () => current.id, render: () => { needsRender = true; } }) : [];
+    params, root, view: () => current.id, render: () => { needsRender = true; }, flyNear }) : [];
   for (const l of layers) l.onView?.(current.id);
   // layer toggles (Lidar, ...) join the page's control cluster instead of stacking on their own
   const cluster = document.querySelector('.controls');
@@ -444,15 +477,21 @@ async function start() {
       caseEl.appendChild(row);
     }
   }
-  onArrive = (id) => { for (const l of layers) l.onView?.(id); showCase(id); };
+  // every arrival is announced, with or without a case card (wave 5); visually hidden
+  const said = Object.assign(document.createElement('p'), { className: 'view-status' });
+  said.setAttribute('role', 'status');
+  said.style.cssText = 'position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0';
+  document.body.appendChild(said);
+  onArrive = (id) => { for (const l of layers) l.onView?.(id); showCase(id); said.textContent = `Viewpoint: ${views.find((v) => v.id === id)?.label ?? id}`; };
+  if (params.has('dev')) import('./dev.js').then((m) => m.default({ params, state, views })).catch((e) => console.warn('room: dev panel', e));
   // the reveal: when the projector starts scanning while the visitor is on the overview, the case card
   // says so and offers the close-up (the vase is small from the back of the room)
   const narrow = matchMedia('(max-width: 640px)');
   if (views.some((v) => v.id === 'experiment')) addEventListener('room:scan', () => {
     if (current.id !== 'overview' || tween || !caseEl) return;
     if (narrow.matches) { scanPill(); return; }
-    CASES.overview = { k: 'Live', t: 'The projector is scanning the vase',
-      b: 'Stripes of light label every point on it; in a moment it turns into its own point cloud.',   // [check] panel 015 action 1
+    CASES.overview = { k: 'Live', t: head ? PLATO.scan[0] : 'The projector is scanning the vase',
+      b: head ? PLATO.scan[1] : 'Stripes of light label every point on it; in a moment it turns into its own point cloud.',   // [check] panel 015 action 1
       acts: [{ label: 'See it up close', run: () => goTo('experiment') }] };
     showCase('overview');
     delete CASES.overview;
@@ -467,7 +506,7 @@ async function start() {
     const prompt = document.querySelector('.prompt');
     const pill = document.createElement('p');
     pill.className = 'prompt scan';
-    const b = Object.assign(document.createElement('button'), { type: 'button', textContent: 'Scanning the vase · see it up close' });
+    const b = Object.assign(document.createElement('button'), { type: 'button', textContent: head ? PLATO.pill : 'Scanning the vase · see it up close' });
     b.addEventListener('click', () => { pill.remove(); goTo('experiment'); });
     pill.appendChild(b);
     const was = prompt?.hidden;
@@ -625,17 +664,20 @@ async function mountLayers(live) {
     ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, live.camera);
     const hits = ray.intersectObjects(live.scene.children, true);
+    // where the click lands: the first baked surface (through the glass, the rain on the panes and other layer visuals)
+    lastHit = hits.find((h) => h.object.material?.isMeshBasicMaterial && h.object.material.map && !h.object.material.transparent) ?? null;
     if (!hits.length) return null;
     return live.picks.find((p) => (hits[0].object === p.object || p.object.getObjectById(hits[0].object.id))
       && p.accept(hits[0].point)) ?? null;
   }
-  let down = null;
+  let down = null, lastHit = null;
   canvas.addEventListener('pointerdown', (ev) => { down = { x: ev.clientX, y: ev.clientY, t: performance.now() }; });
   canvas.addEventListener('pointerup', (ev) => {
     if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > 6 || performance.now() - down.t > 600) return;
     down = null;
     const p = pickAt(ev);
     if (p) { p.onPick(); dispatchEvent(new CustomEvent('room:pick', { detail: p.object.name })); }
+    if (lastHit) live.flyNear(lastHit.point, lastHit.object);   // and the camera follows the click (a layer's own goTo already moved it)
   });
   let hoverQueued = false;
   canvas.addEventListener('pointermove', (ev) => {
