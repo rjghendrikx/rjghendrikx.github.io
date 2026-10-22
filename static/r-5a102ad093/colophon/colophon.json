@@ -2769,6 +2769,13 @@
    "t": "2026-10-20T22:35:11Z",
    "commit": "8abcd71",
    "message": "Plato head projection-mapped (Gray-code, lidar, colour) + green C64 with hand-written BASIC, click-to-move camera, ?dev restart flight"
+  },
+  {
+   "tag": "room-iter-018-click-nav",
+   "ts": 1792669113,
+   "t": "2026-10-22T11:38:33Z",
+   "commit": "51059eb",
+   "message": "Click-through navigation (C base + A/B/D grafts): one click to every case and back, per-view URL, outside means back, eraser by clicking, thinner tags"
   }
  ]
 }

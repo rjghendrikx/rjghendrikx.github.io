@@ -16,6 +16,10 @@
 <meta property="og:image:alt" content="A workroom at night: a desk of instruments under the window, a small projector on the table and a plaster head of Plato on a plinth.">
 <meta name="twitter:card" content="summary_large_image">
 <style>
+  /* round 019 (panel 018 action 6): one handwritten face for the paper tags on every OS: Kalam Bold (OFL, kalam-OFL.txt),
+     self-hosted, subset to Basic Latin plus · and ’ (12 kB); no request leaves the site. The arrows fall back to the system. */
+  @font-face { font-family: "Kalam"; src: url("kalam-tags.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap;
+    unicode-range: U+0020-007E, U+00B7, U+2019; }
   :root { --bg: #14110f; --ink: #efe6da; --muted: #c4b7a5; --accent: #e3a35b; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
   body {
@@ -62,6 +66,11 @@
     font-size: 12.5px; line-height: 1.35; color: var(--ink); background: rgba(20, 17, 15, .8); border: 1px solid rgba(239, 230, 218, .16);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .4s ease; }
   .toast.on { opacity: 1; }
+  /* panel 019 action 15: the chips up (keyboard focus, More views, the Views list): the prompt and the toast step aside, as
+     the tags do. Their height above the chips came from --nav-h, which a ResizeObserver writes a rendering step after the
+     chips grow; on a slow frame (SwiftShader under load) the chips stood over them for that step ("ui: no overlaps" failed
+     at random). Both now follow one style recalc, no script in between. */
+  body:has(.views:focus-within) :is(.prompt, .toast), body:has(.views.open) :is(.prompt, .toast), body:has(.views.more-open) :is(.prompt, .toast) { visibility: hidden; }
   .toast button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
   .toast button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* the case card: one project per work viewpoint, announced (aria-live) when the camera arrives; top right under
@@ -71,6 +80,10 @@
     background: rgba(20, 17, 15, .84); border: 1px solid rgba(239, 230, 218, .14); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, .35); transition: opacity .25s ease, transform .25s ease; }
   .case:empty { display: none; }
+  /* panel 018 action 5: the card fades in when the camera has arrived (main.js empties it as a move starts) */
+  .case:not(:empty) { animation: case-in .28s ease-out backwards; }
+  @keyframes case-in { from { opacity: 0; translate: 0 4px; } }
+  @media (prefers-reduced-motion: reduce) { .case:not(:empty) { animation: none; } }
   .case .grip { display: none; }
   .case .k, .work .k { margin: 0 0 3px; font-size: 10.5px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
   .case h2, .work h3 { margin: 0; font: 600 16px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
@@ -181,7 +194,7 @@
   /* touch: every target at least 44 px high (WCAG 2.5.5 / Apple HIG) */
   @media (pointer: coarse) {
     .toast button { min-height: 44px; }
-    .views button, .controls > button, .sound, .prompt button, .case .acts :is(a, button), .work .show:not([hidden]) { min-height: 44px; padding-top: 0; padding-bottom: 0; padding-inline: 14px; }
+    .views button, .controls > button, .sound, .views-btn, .prompt button, .case .acts :is(a, button), .work .show:not([hidden]) { min-height: 44px; padding-top: 0; padding-bottom: 0; padding-inline: 14px; }
     /* inline text links: at least 24 px targets (WCAG 2.5.8), was 16 px */
     .caption .links a, .work .links a { display: inline-flex; align-items: center; min-height: 24px; vertical-align: middle; }
     .js .cap-more { min-height: 24px; }
@@ -193,25 +206,27 @@
   .controls { position: fixed; top: max(16px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
     display: flex; gap: 6px; align-items: center; z-index: 5; }
   .controls > button { position: static; margin: 0; }
-  .sound {
+  .sound, .views-btn {
     font: inherit; font-size: 12px; line-height: 1; color: var(--muted); background: rgba(20, 17, 15, .8); cursor: pointer;
     border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 6px 10px; opacity: 0; transition: opacity .6s ease, color .2s, border-color .2s; }
-  .ready .sound { opacity: 1; }
-  .sound:hover { color: var(--ink); opacity: 1; }
+  .ready .sound, .ready .views-btn { opacity: 1; }
+  .sound:hover, .views-btn:hover { color: var(--ink); opacity: 1; }
   .sound[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
-  .sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .views-btn[aria-expanded="true"] { color: var(--ink); border-color: var(--accent); }
+  .sound:focus-visible, .views-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .sound[hidden] { display: none; }
   /* Round 18 C: the room is the menu (layer-tags.js, main.js HOT). The chips are the keyboard's road: out of sight until
      a chip has focus (Tab), then the bar shows as before. */
-  .js .views:not(:focus-within) { width: 1px; height: 1px; max-width: none; overflow: hidden; clip-path: inset(50%); padding: 0;
+  /* round 019 (panel 018 action 13): plus one quiet "Views" pill in the controls corner opens them for a pointer (main.js) */
+  .js .views:not(:focus-within):not(.open) { width: 1px; height: 1px; max-width: none; overflow: hidden; clip-path: inset(50%); padding: 0;
     -webkit-mask-image: none; mask-image: none; }
   /* the way home, only away from the hero, named for where it goes; a paper tag like the others */
   .back { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 4; transform: translateX(-50%) rotate(-1.5deg);
-    font: 600 15px/1 "Bradley Hand", "Noteworthy", "Segoe Print", "Comic Neue", cursive; color: #2b2119; cursor: pointer; white-space: nowrap;
-    padding: 9px 15px 10px; border: 0; border-radius: 9px; background: linear-gradient(#efe3c9, #e4d5b6); box-shadow: 0 4px 12px rgba(0, 0, 0, .45); }
+    font: 700 15px/1 "Kalam", "Bradley Hand", "Noteworthy", cursive; font-synthesis: none; color: #2b2119; cursor: pointer; white-space: nowrap;
+    padding: 9px 15px 10px; border: 0; border-radius: 9px; background: linear-gradient(#cdc3ac, #c3b69c); box-shadow: 0 4px 12px rgba(0, 0, 0, .45); }
   .back::before { content: "\2190"; margin-right: 7px; }
   .back .esc { font: 600 11px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; color: #7a6650; }
-  .back:hover { background: linear-gradient(#f6ebd3, #ead9b7); }
+  .back:hover { background: linear-gradient(#d3cab5, #c9ba9d); }
   .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .back[hidden] { display: none; }
   .away .prompt { display: none; }   /* the first-look prompt belongs to the hero */
@@ -224,7 +239,7 @@
   @media (max-width: 640px) { .nav-hint { bottom: auto; top: 38%; border-radius: 12px; } }   /* clear of the caption on top and the case sheet below */
   @media (pointer: coarse) { .back { min-height: 44px; } .back .esc { display: none; } }
   @media (max-width: 640px) { .away .case { bottom: calc(max(18px, env(safe-area-inset-bottom, 0px)) + 56px); } }
-  .gate .back, .gate .nav-hint, .gate .caption, .gate .views, .gate .sound, .gate .prompt, .gate .case, .gate .work { display: none; }
+  .gate .back, .gate .nav-hint, .gate .caption, .gate .views, .gate .sound, .gate .views-btn, .gate .prompt, .gate .case, .gate .work { display: none; }
   .gate .stage canvas { transition: none; }
   @media (prefers-reduced-motion: reduce) { .stage canvas, .views, .views button { transition: none; } }
 </style>
@@ -274,7 +289,7 @@
   <li><strong>The shelf</strong>: McGilchrist, Abram, Lane, Koch, Kastrup, Faggin, and a binder of Levin papers: the thinkers he keeps whole collections of notes on.</li>
   <li><strong>The principle of least action</strong>: Every path between two points gets one number, the action S = ∫L dt with L = T − V. Vary the path, q → q + εη with η zero at both ends, and ask that S does not change to first order, δS = 0. Integrate by parts: the boundary term vanishes and the Euler–Lagrange equation is left, d/dt ∂L/∂q̇ − ∂L/∂q = 0, which for L = ½mq̇² − V is F = ma. With p = ∂L/∂q̇ and H = Σ pq̇ − L, write S = ∫(Σ pq̇ − H) dt and vary q and p independently: integrating the p δq̇ term by parts gives Hamilton&rsquo;s equations, q̇ = ∂H/∂p and ṗ = −∂H/∂q. Why stationary? Feynman: every path counts, with a phase e^{iS/ħ}; near δS = 0 the phases agree and add up, elsewhere they cancel. The camera that brought you in rode such a path: a bead on a wire along its route, through an invented landscape. After a lecture by Erik Verlinde (University of Amsterdam). Sources: Goldstein, Poole &amp; Safko, Classical Mechanics, 3rd ed., ch. 2 and §8.5; Feynman Lectures on Physics, Vol. II, ch. 19; Thornton &amp; Marion, Classical Dynamics, 5th ed., ch. 7; Cline, Variational Principles in Classical Mechanics, ch. 9. <a href="https://arxiv.org/abs/1001.0785">Verlinde: F = ma from entropy</a></li>
 </ul>
-<nav class="views" aria-label="Viewpoints"></nav>
+<nav class="views" id="views" aria-label="Viewpoints"></nav>
 <div class="controls">
   <button class="sound" type="button" aria-pressed="false" aria-label="Geiger counter sound" hidden>Sound</button>
 </div>

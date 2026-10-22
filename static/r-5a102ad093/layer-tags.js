@@ -23,11 +23,12 @@ const WORK_VIEWS = ['chamber', 'terminal', 'experiment'];
 
 const CSS = `
 .tag { position: fixed; left: 0; top: 0; z-index: 3; margin: 0; padding: 8px; border: 0; background: none; cursor: pointer;
-  font: 600 16.5px/1.1 "Bradley Hand", "Noteworthy", "Segoe Print", "Comic Neue", cursive; color: #2b2119; white-space: nowrap;
+  font: 700 16.5px/1.1 "Kalam", "Bradley Hand", "Noteworthy", cursive; font-synthesis: none; color: #2b2119; white-space: nowrap;
   filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45)); opacity: 0; transform: rotate(var(--r, -3deg)) translateY(3px);
   transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
-/* the paper; the button around it is an invisible 8 px margin that takes the click too (merge 018 action 4) */
-.tag .p { position: relative; display: block; padding: 5px 11px 6px 17px; background: linear-gradient(#efe3c9, #e4d5b6);
+/* the paper, half a stop under the old cream (#efe3c9): the tags were +0.44 stop over the lamp pool, the brightest flat
+   value in the frame (round 019, panel 018 action 6); the button around it is an invisible 8 px margin that takes the click too (merge 018 action 4) */
+.tag .p { position: relative; display: block; padding: 5px 11px 6px 17px; background: linear-gradient(#cdc3ac, #c3b69c);
   border-radius: 3px 9px 9px 3px; clip-path: polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%); }
 .tag .p::before { content: ""; position: absolute; left: 7px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%;
   background: rgba(20, 17, 15, .75); }
@@ -37,16 +38,16 @@ const CSS = `
 .tag.on { opacity: 1; transform: rotate(var(--r, -3deg)); pointer-events: auto; }
 .tag.edge .p { clip-path: none; border-radius: 9px; padding-left: 11px; }
 .tag.edge .p::before { display: none; }
-.tag:hover .p { background: linear-gradient(#f6ebd3, #ead9b7); }
+.tag:hover .p { background: linear-gradient(#d3cab5, #c9ba9d); }
 .tag-line { position: fixed; left: 0; top: 0; z-index: 2; height: 1px; transform-origin: 0 50%; pointer-events: none;
   background: rgba(239, 230, 218, .7); opacity: 0; transition: opacity .18s ease; }
 .tag-line.on { opacity: 1; }
 .gate .tag, .gate .tag-line { display: none; }
-/* a keyboard visitor has the chips up: the tags (a pointer's road) step aside */
-body:has(.views:focus-within) .tag, body:has(.views:focus-within) .tag-line { display: none; }
-/* touch: no invisible margin, a 44 px paper; each place on a shared edge tag is its own 44 px target. The canvas takes the
-   touch (a drag that starts on a tag still turns the view) and main.js asks tapAt() where a tap on a tag goes */
-@media (pointer: coarse) { .tag { font-size: 16px; padding: 0; } .tag.on { pointer-events: none; }
+/* the chips are up (a keyboard visitor, or the "Views" pill): the tags (a pointer's road) step aside */
+body:has(.views:focus-within) .tag, body:has(.views:focus-within) .tag-line, body:has(.views.open) .tag, body:has(.views.open) .tag-line { display: none; }
+/* touch: no invisible margin, a 44 px paper; each place on a shared edge tag is its own 44 px target. The tag takes the
+   touch: a tap goes where it says, a drag that starts on it does nothing (round 019; touch-action: no pan, no orbit) */
+@media (pointer: coarse) { .tag { font-size: 16px; padding: 0; touch-action: none; }
   .tag .p { padding-top: 8px; padding-bottom: 9px; min-height: 44px; box-sizing: border-box; }
   .tag.edge .p { padding-top: 0; padding-bottom: 0; }
   .tag.edge .t { display: inline-flex; align-items: center; min-height: 44px; } }
@@ -97,7 +98,16 @@ export default function mount(live) {
     b.innerHTML = '<span class="p"></span>';
     b.style.setProperty('--r', `${((id.length * 7) % 5) - 3.5}deg`);   // each its own small tilt, stable
     // a shared edge tag (touch: "← C64 · Hi-fi") holds one place per view: the place under the finger is where it goes
-    b.addEventListener('click', (ev) => { ev.stopPropagation(); const to = ev.target.closest?.('[data-go]')?.dataset.go ?? id; hideAll(); live.go(to); });
+    // a press that moved (a drag that started on the tag) is not a click: it does nothing (round 019)
+    let press = null;
+    b.addEventListener('pointerdown', (ev) => { press = [ev.clientX, ev.clientY]; });
+    b.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const moved = press && ev.detail && Math.hypot(ev.clientX - press[0], ev.clientY - press[1]) > 6;
+      press = null;
+      if (moved) return;
+      const to = ev.target.closest?.('[data-go]')?.dataset.go ?? id; hideAll(); live.go(to);
+    });
     holder.appendChild(b);
     const line = document.createElement('div');
     line.className = 'tag-line';
@@ -132,7 +142,11 @@ export default function mount(live) {
   const onScreen = (s, m = 8) => !s.behind && s.x > m && s.x < innerWidth - m && s.y > m && s.y < innerHeight - m;
   // the anchor of a view's tag: the top middle of its biggest on-screen object
   // the page's own boxes (caption, controls) cover part of the frame: an object under them is out of reach
-  const covers = () => ['.caption', '.controls'].map((q) => document.querySelector(q)?.getBoundingClientRect()).filter((b) => b && b.width);
+  const readCovers = () => ['.caption', '.controls'].map((q) => document.querySelector(q)?.getBoundingClientRect()).filter((b) => b && b.width);
+  // panel 018 action 7: what read() took at the start of this frame, before any layer wrote (main.js calls every read()
+  // first): the hover and update() use it, so a hover frame forces no layout. { cov, m: measure(), size: tag -> [w, h] }
+  let F = null;
+  const covers = () => F?.cov ?? readCovers();
   const under = (s, B = covers()) => B.some((b) => s.x >= b.left && s.x <= b.right && s.y >= b.top && s.y <= b.bottom);
   // the points of a box a visitor could click: its centre, top centre and corners pulled 20% in
   const samples = (box, inset = 0.2) => {
@@ -251,17 +265,22 @@ export default function mount(live) {
     return (t.box = { x, y, w, h });
   }
 
-  function show(id, why, at = null) {
+  function show(id, why, at = null, node = null) {
     const t = tags.get(id);
     if (!t || id === live.view()) return;
-    t.why = why; t.at = at; t.edge = null;
+    if (t.node && t.node !== node) lit(id, false, t.node);
+    t.why = why; t.at = at; t.edge = null; t.node = node;
     t.el.classList.add('on');
-    lit(id, true);
+    lit(id, true, node);
     live.render();                 // update() places it, with the frame's other reads
   }
-  function hide(t) { if (t.why && t.why !== 'edge') lit(t.id, false); t.why = null; t.el.classList.remove('on'); t.line.classList.remove('on'); }
-  // merge 018 step 5: what a hover or first-look tag names glows with it (glow.js, a warm lift of the bake)
-  function lit(id, on) { if (live.glow) live.glow.set((byView.get(id) ?? []).flatMap((o) => o.mats), on); live.render(); }
+  function hide(t) { if (t.why && t.why !== 'edge') lit(t.id, false, t.node); t.why = null; t.node = null; t.el.classList.remove('on'); t.line.classList.remove('on'); }
+  // merge 018 step 5: what a hover or first-look tag names glows with it (glow.js, a warm lift of the bake). Panel 019
+  // action 8: a hover lights the hovered object's own meshes only (the Geiger counter, never the bench under it)
+  function lit(id, on, node = null) {
+    if (live.glow) live.glow.set((byView.get(id) ?? []).filter((o) => !node || o.node === node).flatMap((o) => o.mats), on);
+    live.render();
+  }
   function hideAll(keepEdge = false) { for (const t of tags.values()) if (!(keepEdge && t.why === 'edge')) hide(t); }
 
   // edge tags: recomputed on arrival and resize, only on the hero
@@ -303,12 +322,17 @@ export default function mount(live) {
     for (const side of [-1, 1, 2]) {
       let list = per[side];
       if (!list.length) continue;
-      // touch: one edge tag per side, the nearer view's, naming every view that way ("← C64 · Hi-fi"), one place each
-      if (coarse.matches && list.length > 1) {
+      // panel 019 action 4: the work is always findable. A work view keeps its own edge tag (it never folds into a
+      // furniture tag that flies elsewhere); the furniture views on a side fold into one tag, the nearer view's, naming
+      // every view that way ("← Hi-fi · C64 · Table"), one place each; on desktop too (C's left stack was three deep)
+      const work = list.filter((q) => WORK_VIEWS.includes(q.t.id));
+      let rest = list.filter((q) => !WORK_VIEWS.includes(q.t.id));
+      if (rest.length > 1) {
         const dist = (q) => (side < 0 ? -q.e.x : side === 1 ? q.e.x : -q.e.y);
-        list.sort((a, b) => (Number.isFinite(dist(a)) ? dist(a) : 1e9) - (Number.isFinite(dist(b)) ? dist(b) : 1e9));
-        list = [{ t: list[0].t, e: list[0].e, ids: list.map((q) => q.t.id) }];
+        rest.sort((a, b) => (Number.isFinite(dist(a)) ? dist(a) : 1e9) - (Number.isFinite(dist(b)) ? dist(b) : 1e9));
+        rest = [{ t: rest[0].t, e: rest[0].e, ids: rest.map((q) => q.t.id) }];
       }
+      list = [...work, ...rest];
       for (const q of list) {
         const t = q.t;
         for (const id of q.ids ?? [t.id]) { const o = tags.get(id); if (o.why && o.why !== 'edge') hide(o); }   // a first-look tag gives way
@@ -361,28 +385,17 @@ export default function mount(live) {
     // the window has no object: the tag hangs where the pointer is, on the glass
     const at = it.node ? anchorOf(id) : (() => { const B = r(); ndc.set(((x - B.left) / B.width) * 2 - 1, -((y - B.top) / B.height) * 2 + 1);
       ray.setFromCamera(ndc, camera); return ray.ray.at(3, new THREE.Vector3()); })();
-    if (at) show(id, 'hover', at);
+    if (at) show(id, 'hover', at, it.node ?? null);
   }
   canvas.addEventListener('pointerleave', () => { if (hoverId && tags.get(hoverId)?.why === 'hover') hide(tags.get(hoverId)); hoverId = null; });
-  canvas.addEventListener('pointerdown', (ev) => { if (tagAt(ev.clientX, ev.clientY)) return; for (const t of tags.values()) if (t.why === 'gaze') hide(t); });
-
-  // touch: the view a tap at (x, y) on a tag goes to (each place of a shared edge tag its own), or null
-  function tagAt(x, y) {
-    if (!coarse.matches) return null;
-    for (const t of tags.values()) {
-      if (!t.why) continue;
-      for (const e of [...t.el.querySelectorAll('[data-go]'), t.el]) {
-        const b = e.getBoundingClientRect();
-        if (x >= b.left && x <= b.right && y >= b.top && y <= b.bottom) return e.dataset.go ?? t.id;
-      }
-    }
-    return null;
-  }
+  canvas.addEventListener('pointerdown', () => { for (const t of tags.values()) if (t.why === 'gaze') hide(t); });
+  // panel 019 action 8: a click that moves the camera puts the glow out first (main.js room:move, the move's first frame)
+  addEventListener('room:move', () => hideAll(true));
 
   // gaze: the first look at the room shows where the work is
   let gazeT = 0;
   function gaze() {
-    if (live.view() !== home) return;
+    if (live.view() !== home && !live.inRoom?.()) return;   // the hero, or one of the walk's standpoints (panel 019 action 5)
     clearTimeout(gazeT);
     for (const id of WORK_VIEWS) { const at = anchorOf(id); if (at && !edged.has(id)) show(id, 'gaze', at); }
     gazeT = setTimeout(() => { for (const t of tags.values()) if (t.why === 'gaze') hide(t); }, GAZE_MS);
@@ -396,26 +409,29 @@ export default function mount(live) {
   return {
     name: 'tags',
     hover,
+    read() {
+      const up = [...tags.values()].filter((t) => t.why && t.why !== 'edge');
+      F = { cov: readCovers(), m: up.length ? measure() : null, size: new Map(up.map((t) => [t, [t.el.offsetWidth, t.el.offsetHeight]])) };
+    },
     update(dt) {
       if (live.glow?.tick(dt)) live.render();
-      const up = [...tags.values()].filter((t) => t.why && t.why !== 'edge');
-      if (!up.length) return false;
-      // every read first (the page's boxes, each tag's size), then the writes: no forced layout per tag
-      const m = measure(), size = up.map((t) => [t.el.offsetWidth, t.el.offsetHeight]);
+      // the reads were read()'s (the page's boxes, each tag's size), here only the writes; a tag shown since then waits
+      // one frame, still at opacity 0 (its .18 s fade)
+      const up = [...tags.values()].filter((t) => t.why && t.why !== 'edge' && F?.size.has(t));
+      if (!up.length || !F.m) return false;
       const edge = [...tags.values()].filter((t) => t.why === 'edge').map((t) => t.box).filter(Boolean);
       const done = [...edge];
-      up.forEach((t, i) => done.push(place(t, m, ...size[i], done)));
+      for (const t of up) done.push(place(t, F.m, ...F.size.get(t), done));
       return false;
     },
     onView(id) {
       for (const t of tags.values()) if (t.why !== 'edge' || id !== home) hide(t);
       for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
       if (id === home) requestAnimationFrame(edges);
+      else if (live.inRoom?.()) requestAnimationFrame(gaze);   // a standpoint: the work in reach from here hangs its tags
     },
-    // touch: the view a tap at (x, y) on a tag goes to (each place of a shared edge tag its own), or null
-    tapAt(x, y) { const id = tagAt(x, y); if (id) hideAll(); return id; },
     api: {
-      gaze, edges, tagAt,
+      gaze, edges,
       shown: () => [...tags.values()].filter((t) => t.why).map((t) => ({ view: t.id, why: t.why, box: (({ left, top, right, bottom }) => [left, top, right, bottom])(t.el.getBoundingClientRect()) })),
     },
   };

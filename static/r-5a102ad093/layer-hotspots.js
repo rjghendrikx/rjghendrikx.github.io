@@ -219,8 +219,7 @@ export default function mount(live) {
     else if (card.parentNode !== document.body) document.body.appendChild(card);
     card.hidden = false;
     if (how === 'pinned' || how === 'key') dispatchEvent(new CustomEvent('room:pick', { detail: spot.name }));
-    last.x = NaN;
-    position();
+    last.x = NaN;                       // update() places it next frame, from read()'s boxes (no forced layout)
     requestAnimationFrame(() => { if (open === spot) { card.classList.add('on'); dot.classList.add('on'); } });
   }
 
@@ -237,9 +236,16 @@ export default function mount(live) {
 
   // Place the card above the anchor (below if there is no room), clamped to a 16 px gutter and kept
   // off the page caption (top on phones) and the viewpoint strip (bottom).
+  // panel 018 action 7: the boxes it needs, read by read() at the start of the frame (main.js: every read() before any
+  // layer writes), or here when called outside the frame (resize)
+  let CR = null, RB = null;
+  addEventListener('resize', () => { CR = null; });
+  const canvasBox = () => (CR ??= canvas.getBoundingClientRect());
+  const boxes = () => ({ cap: document.querySelector('.caption')?.getBoundingClientRect(),
+    views: document.querySelector('.views')?.getBoundingClientRect(), w: card.offsetWidth, h: card.offsetHeight });
   function position() {
     if (!open) return;
-    const r = canvas.getBoundingClientRect();
+    const r = canvasBox();
     v.copy(open.anchor).project(camera);
     const behind = v.z > 1;
     let x = r.left + (v.x + 1) / 2 * r.width, y = r.top + (1 - v.y) / 2 * r.height;
@@ -248,11 +254,10 @@ export default function mount(live) {
     last.x = x; last.y = y; last.vis = vis;
     const W = innerWidth, H = innerHeight, g = 16;
     let top = g, bottom = H - g;
-    const cap = document.querySelector('.caption')?.getBoundingClientRect();
+    const { cap, views, w, h } = RB ?? boxes();
+    RB = null;
     if (cap && cap.top < H / 2) top = Math.max(top, cap.bottom + 8);
-    const views = document.querySelector('.views')?.getBoundingClientRect();
     if (views && views.height) bottom = Math.min(bottom, views.top - 8);
-    const w = card.offsetWidth, h = card.offsetHeight;
     if (!vis) { x = W / 2; y = bottom; }             // off-screen at this viewpoint: rest above the strip
     let cy = y - 14 - h;
     if (cy < top) cy = y + 14;
@@ -271,7 +276,7 @@ export default function mount(live) {
   const ndc = new THREE.Vector2();
   const hitPt = new THREE.Vector3();
   function spotAt(clientX, clientY) {
-    const r = canvas.getBoundingClientRect();
+    const r = canvasBox();
     ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ndc, camera);
     const cands = spots.filter((s) => ray.ray.intersectBox(s.box, hitPt));
@@ -302,7 +307,6 @@ export default function mount(live) {
   canvas.addEventListener('pointerup', (ev) => {
     if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > TAP_PX || performance.now() - down.t > TAP_MS) { down = null; return; }
     down = null;
-    if (window.__room?.layers?.tags?.tagAt?.(ev.clientX, ev.clientY)) { hide(); return; }   // a tap on a paper tag (touch)
     // a click that moves the camera (another view, or back to the room from a close-up) pins no card: it would ride along
     const go = window.__room?.intent?.(ev.clientX, ev.clientY, ev.pointerType === 'touch')?.kind;
     if (go === 'go' || go === 'back') { hide(); return; }
@@ -338,6 +342,7 @@ export default function mount(live) {
 
   return {
     name: 'hotspots',
+    read() { RB = open ? boxes() : null; },
     update() {
       if (open) position();             // follow the camera; DOM only, no WebGL frame needed
       return false;

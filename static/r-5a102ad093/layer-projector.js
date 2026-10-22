@@ -34,8 +34,8 @@ const T_REF = [0.45, 0.30];     // white, black reference frames (s)
 const T_FRAME = 0.22;           // one bit plane or its inverse (s); a real scanner runs 60-120 Hz,
                                 // this is slowed down to be watched
 const T_GAP = 0.35, T_DISSOLVE = 1.9, T_HOLD = 4.2, T_SETTLE = 1.9;
-const BEAM_NEAR = 0.01, BEAM_REACH = 1.12;   // beam volume: lens glass to just past the vase (x throw)
-const HAZE = 0.25;              // scattered fraction per metre of beam, display units (by eye, unmeasured): 0.5
+const BEAM_NEAR = 0.01, BEAM_REACH = 1.12;   // beam volume: lens glass to just past the target, the Plato head in the canal house (x throw)
+const HAZE = 0.25;              // scattered fraction per metre of beam, display units (by eye, unmeasured; physics.md): at 0.5 it
                                 // clipped and hatched; at the panel's 0.15 the filtered beam no longer read as sheets
 const AUTOSTART = 3.5;          // s after load, once, if the vase is in view
 const AUTOSTART_INTRO = 1.0;    // s after the intro lands on the hero: the reveal follows the flight in

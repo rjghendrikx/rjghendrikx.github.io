@@ -514,6 +514,8 @@ export default function mount(live) {
   chip.addEventListener('click', () => { if (!brk()) blur(); poke(); });
   function syncChip() { chip.hidden = !focused; chip.textContent = run || tape ? 'Stop the program' : 'Leave the C64'; }   // [check]
   function blur() { ta.blur(); }
+  // panel 019 action 3a: leaving the C64's view (main.js room:move, the move's first frame) lets go of the keyboard
+  addEventListener('room:move', (ev) => { if (ev.detail !== 'c64' && focused) blur(); });
 
   // ---------------------------------------------------------------- focus, picking, the loop
   let focused = false, booted = false, blinkT = 0, cursorOn = true, acc = 1;
@@ -552,6 +554,9 @@ export default function mount(live) {
 
   return {
     name: 'c64',
+    // panel 019 action 3a: the "Leave the C64" chip outlived its view (a click out kept the textarea's focus): every
+    // arrival anywhere else lets go of the keyboard, so the chip goes with the view
+    onView(id) { if (id !== 'c64' && focused) blur(); syncChip(); },
     update(dt) {
       if (live.gate && !quad.visible) return false;
       if (!focused && !inView(live.camera, quad)) return false;   // off screen: paused, no uploads
