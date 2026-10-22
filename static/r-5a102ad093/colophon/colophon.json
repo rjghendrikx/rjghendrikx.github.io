@@ -2762,6 +2762,13 @@
    "t": "2026-10-17T09:30:16Z",
    "commit": "4a7a602",
    "message": "Round 016 merge: B camera+nav+toast, A stripes/rain/light, D chamber+eraser+camera, C street without canopy, plaster ceiling"
+  },
+  {
+   "tag": "room-iter-017-merge-017",
+   "ts": 1792535711,
+   "t": "2026-10-20T22:35:11Z",
+   "commit": "8abcd71",
+   "message": "Plato head projection-mapped (Gray-code, lidar, colour) + green C64 with hand-written BASIC, click-to-move camera, ?dev restart flight"
   }
  ]
 }

@@ -281,6 +281,10 @@ export default function mount(live) {
     return cands.reduce((a, b) => (b.volume < a.volume ? b : a));
   }
 
+  // round 18 C: an object that leads to another view shows its paper tag (layer-tags.js) and flies on a click; its card
+  // belongs to its own view, where hovering it shows the card
+  // merge 018 step 3: in its own view the object's caption is the case card (main.js), so no hover card there either
+  const leads = (s) => { const id = live.hot?.(s.node); return !!id && (id !== live.view() || live.cardOf?.(id) === s.name); };
   // Pointer: hover for a mouse, tap (or click) to pin; never stops main.js's own picks.
   let queued = null, down = null;
   canvas.addEventListener('pointermove', (ev) => {
@@ -289,7 +293,7 @@ export default function mount(live) {
       const { clientX, clientY } = queued; queued = null;
       if (mode === 'pinned' || mode === 'key') return;
       const s = spotAt(clientX, clientY);
-      if (s) show(s, 'hover'); else if (mode === 'hover') hideSoon();
+      if (s && !leads(s)) show(s, 'hover'); else if (mode === 'hover') hideSoon();
     });
     queued = { clientX: ev.clientX, clientY: ev.clientY };
   });
@@ -298,8 +302,12 @@ export default function mount(live) {
   canvas.addEventListener('pointerup', (ev) => {
     if (!down || Math.hypot(ev.clientX - down.x, ev.clientY - down.y) > TAP_PX || performance.now() - down.t > TAP_MS) { down = null; return; }
     down = null;
+    if (window.__room?.layers?.tags?.tagAt?.(ev.clientX, ev.clientY)) { hide(); return; }   // a tap on a paper tag (touch)
+    // a click that moves the camera (another view, or back to the room from a close-up) pins no card: it would ride along
+    const go = window.__room?.intent?.(ev.clientX, ev.clientY, ev.pointerType === 'touch')?.kind;
+    if (go === 'go' || go === 'back') { hide(); return; }
     const s = spotAt(ev.clientX, ev.clientY);
-    if (s) show(s, 'pinned'); else hide();
+    if (s && !leads(s)) show(s, 'pinned'); else hide();
   });
   card.addEventListener('click', (ev) => { if (mode === 'pinned' && !ev.target.closest('a')) hide(); });   // tap the card to dismiss it
 
@@ -337,6 +345,8 @@ export default function mount(live) {
     onView() { if (mode === 'hover') hide(); document.querySelectorAll('.hs-glow').forEach((e) => e.remove()); },
     api: {
       list: () => spots.map((s) => s.name),
+      // merge 018 step 3 (from A): a caption as data, for the case card of a view that has no case of its own
+      caption: (name) => { const s = spots.find((x) => x.name === name); return s && { kicker: s.kicker, title: s.title, body: s.body, more: s.more }; },
       open: (name) => { const s = spots.find((x) => x.name === name); if (s) show(s, 'pinned'); return !!s; },
       close: hide,
       // glow on the captioned objects in view (the box centre), once: at most one per cluster (objects whose centres

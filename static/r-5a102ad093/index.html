@@ -201,7 +201,30 @@
   .sound[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
   .sound:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   .sound[hidden] { display: none; }
-  .gate .caption, .gate .views, .gate .sound, .gate .prompt, .gate .case, .gate .work { display: none; }
+  /* Round 18 C: the room is the menu (layer-tags.js, main.js HOT). The chips are the keyboard's road: out of sight until
+     a chip has focus (Tab), then the bar shows as before. */
+  .js .views:not(:focus-within) { width: 1px; height: 1px; max-width: none; overflow: hidden; clip-path: inset(50%); padding: 0;
+    -webkit-mask-image: none; mask-image: none; }
+  /* the way home, only away from the hero, named for where it goes; a paper tag like the others */
+  .back { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 4; transform: translateX(-50%) rotate(-1.5deg);
+    font: 600 15px/1 "Bradley Hand", "Noteworthy", "Segoe Print", "Comic Neue", cursive; color: #2b2119; cursor: pointer; white-space: nowrap;
+    padding: 9px 15px 10px; border: 0; border-radius: 9px; background: linear-gradient(#efe3c9, #e4d5b6); box-shadow: 0 4px 12px rgba(0, 0, 0, .45); }
+  .back::before { content: "\2190"; margin-right: 7px; }
+  .back .esc { font: 600 11px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; color: #7a6650; }
+  .back:hover { background: linear-gradient(#f6ebd3, #ead9b7); }
+  .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .back[hidden] { display: none; }
+  .away .prompt { display: none; }   /* the first-look prompt belongs to the hero */
+  /* merge 018 step 7 (from D): the one-time hint on the first arrival away from the hero, just above the way home */
+  .nav-hint { position: fixed; left: 50%; bottom: calc(max(18px, env(safe-area-inset-bottom, 0px)) + 52px); z-index: 4; margin: 0; transform: translateX(-50%);
+    max-width: calc(100vw - 32px); box-sizing: border-box; padding: 8px 13px; border-radius: 999px; font-size: 12.5px; line-height: 1.3; text-align: center;
+    color: var(--ink); background: rgba(20, 17, 15, .84); border: 1px solid rgba(227, 163, 91, .45); opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+  .nav-hint.on { opacity: 1; }
+  .nav-hint:empty { display: none; }
+  @media (max-width: 640px) { .nav-hint { bottom: auto; top: 38%; border-radius: 12px; } }   /* clear of the caption on top and the case sheet below */
+  @media (pointer: coarse) { .back { min-height: 44px; } .back .esc { display: none; } }
+  @media (max-width: 640px) { .away .case { bottom: calc(max(18px, env(safe-area-inset-bottom, 0px)) + 56px); } }
+  .gate .back, .gate .nav-hint, .gate .caption, .gate .views, .gate .sound, .gate .prompt, .gate .case, .gate .work { display: none; }
   .gate .stage canvas { transition: none; }
   @media (prefers-reduced-motion: reduce) { .stage canvas, .views, .views button { transition: none; } }
 </style>

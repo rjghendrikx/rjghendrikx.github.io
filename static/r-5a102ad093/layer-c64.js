@@ -492,7 +492,8 @@ export default function mount(live) {
   function announce() { const t = out.join(' ').replace(/\s+/g, ' ').trim(); if (t) sr.textContent = t; }
   ta.addEventListener('keydown', (ev) => {
     ev.stopPropagation();
-    if (ev.key === 'Escape') { ev.preventDefault(); if (!brk()) blur(); }
+    // panel 018 action 2: Esc leaves the C64 at once, even mid-program (it stops it) and with the keyboard focus
+    if (ev.key === 'Escape') { ev.preventDefault(); brk(); blur(); live.go?.(live.home)?.catch?.(() => {}); }
     else if (ev.key === 'Enter') { ev.preventDefault(); if (!run && !tape) { enter(); } }
     else if (ev.key === 'Backspace') { ev.preventDefault(); backspace(); }
     else return;
@@ -526,7 +527,7 @@ export default function mount(live) {
     holdUntil = performance.now() + 600;
     window.__room?.layers?.hotspots?.close?.();
     const v = window.__room?.views?.().find((x) => x.id === 'c64');
-    if (v && live.view() !== 'c64') window.__room.goTo('c64').catch(() => {});
+    if (v && live.view() !== 'c64') (live.go ? live.go('c64') : window.__room.goTo('c64')).catch(() => {});
     poke();
   }
   for (const name of ['pr_c64mon', 'c64']) { const o = byName(name); if (o) live.picks.push({ object: o, accept: () => true, onPick: focus }); }

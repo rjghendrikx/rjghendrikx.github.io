@@ -309,13 +309,21 @@ export default async function mount(live) {
         <p>This room was built by AI agents working in parallel, one pane each, directed by Ruud. What you see is its real git history, replayed.</p>
         <a href="colophon.html">Read how this room was made</a></div></div>`;
     document.body.appendChild(el);
-    el.addEventListener('click', (ev) => { if (ev.target === el || ev.target.closest('.term-close')) close(); });
+    // round 18 C: putting the terminal down is the way back into the room (a click beside it or Close), as Esc is
+    // the tap that opened the panel sends its compatibility click after it, at the same point: never let that one land
+    // on the panel's margin and put it straight down again (a tap on the laptop near the frame edge)
+    el.addEventListener('click', (ev) => {
+      if (performance.now() - openedAt < 450) return;
+      if (ev.target === el || ev.target.closest('.term-close')) { close(); live.go?.(live.home); }
+    });
     addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && panelOpen) close(); });
     return el;
   }
+  let openedAt = -1e9;
   function open() {
     if (live.gate) return;
     panelOpen = true;
+    openedAt = performance.now();
     panel.querySelector('.term-slot').appendChild(canvas);   // the texture's own canvas, enlarged
     panel.hidden = false;
     requestAnimationFrame(() => panel.classList.add('open'));
@@ -323,7 +331,7 @@ export default async function mount(live) {
     // a viewpoint that looks at the laptop, if the layout has one
     const at = node.getWorldPosition(new THREE.Vector3());
     const v = window.__room?.views?.().find((x) => new THREE.Vector3(...x.target).distanceTo(at) < 0.5);
-    if (v && v.id !== live.view()) window.__room.goTo(v.id).catch(() => {});
+    if (v && v.id !== live.view()) (live.go ? live.go(v.id) : window.__room.goTo(v.id)).catch(() => {});   // live.go: with its history entry
     show();
     live.render();
   }
@@ -337,6 +345,8 @@ export default async function mount(live) {
 
   return {
     name: 'terminal',
+    // merge 018 action 2: back in the room by any road (browser Back, the way-home tag) puts the laptop down too
+    onView(id) { if (panelOpen && id === live.home) close(); },
     update(dt) {
       if (live.gate) return false;
       const seen = panelOpen || inView(live.camera, quad);
