@@ -4,10 +4,11 @@
 // Captions are keyed by node NAME (CAPTIONS below; the draft copy and its sources are in
 // notes/captions.md). A name that is not in the scene is skipped, so one table serves every layout.
 //
-// Cost: nothing per frame while no card is open (update() returns at once). Hit-testing runs on
-// pointer events only, rAF-throttled: a ray against one world box per hotspot (made once at mount
-// from the baked meshes), then a triangle raycast only on the 1-3 objects whose box was hit; if
-// that misses (thin things like the TI-83), the smallest hit box wins. No WebGL draw calls added.
+// Cost: nothing per frame while no card is open (update() returns at once). No raycast of its own
+// (panel 019 action 10): the hover reuses main.js's one resolve per frame (hover(it, x, y, r)), a
+// tap resolves once; the first baked surface names the spot, else the smallest spot box (made once
+// at mount from the baked meshes) the ray enters in front of it (thin things like the TI-83).
+// No WebGL draw calls added.
 // main.js keeps its own picks (Geiger toggle, eraser): this layer never stops their events.
 //
 // A11y: a nav of real buttons (visually hidden, the marker on the object is the focus ring), each
@@ -15,13 +16,15 @@
 // The no-JS version of the list belongs in index.html (notes/captions.md, "No-JS list").
 
 // Story order: this is also the Tab order. kicker = small caps line, more = { href, label } (real URLs only).
+import { rivulet } from './layer-rain.js';
+
 export const CAPTIONS = [
   ['c64', { kicker: 'Where it started', title: 'Commodore 64',
     body: 'His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object.' }],
   ['ti83', { kicker: 'Then', title: 'TI-83',
     body: 'The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time.' }],
   ['optics', { kicker: 'The lab years', title: 'Quantum eraser, classical version',
-    body: 'Crossed polarizers on the two slits mark the path, so no fringes. Put the loose polarizer in at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics.',
+    body: 'Crossed polarizers on the two slits mark the path, so no fringes. Drop the polarizer into the beam at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics.',
     more: { href: 'https://doi.org/10.1038/srep20834', label: 'His 2D spectroscopy paper' } }],
   ['cloud_chamber', { kicker: 'Cosmic rays · live', title: 'Cloud chamber',
     body: 'Dry ice, isopropanol, a cold black plate. At sea level a cosmic-ray muon crosses each square centimetre about once a minute: several a second through this plate. The vapour shows the ones it catches: steep ones as short stubs, shallow ones as long lines, the odd fat alpha and a curling beta. The flux is real, the tracks are simulated.' }],
@@ -69,6 +72,10 @@ export const CAPTIONS = [
   ['pr_poster_action', { kicker: 'How the intro flew', title: 'The principle of least action',
     body: 'Every path between two points gets one number, the action S = ∫L dt with L = T − V. Vary the path, q → q + εη with η zero at both ends, and ask that S does not change to first order, δS = 0. Integrate by parts: the boundary term vanishes and the Euler–Lagrange equation is left, d/dt ∂L/∂q̇ − ∂L/∂q = 0, which for L = ½mq̇² − V is F = ma. With p = ∂L/∂q̇ and H = Σ pq̇ − L, write S = ∫(Σ pq̇ − H) dt and vary q and p independently: integrating the p δq̇ term by parts gives Hamilton\'s equations, q̇ = ∂H/∂p and ṗ = −∂H/∂q. Why stationary? Feynman: every path counts, with a phase e^{iS/ħ}; near δS = 0 the phases agree and add up, elsewhere they cancel. The camera that brought you in rode such a path: a bead on a wire along its route, through an invented landscape. After a lecture by Erik Verlinde (University of Amsterdam). Sources: Goldstein, Poole & Safko, Classical Mechanics, 3rd ed., ch. 2 and §8.5; Feynman Lectures on Physics, Vol. II, ch. 19; Thornton & Marion, Classical Dynamics, 5th ed., ch. 7; Cline, Variational Principles in Classical Mechanics, ch. 9.',
     more: { href: 'https://arxiv.org/abs/1001.0785', label: 'Verlinde: F = ma from entropy' } }],
+  // [check] 019 action 16, the raindrop named (Ruud's ask, 2026-10-22; David Abram's Sensing talk, the-body-knew-first
+  // notes): no node; one rivulet on the hero pane (layer-rain.js rivulet()) is its spot. In the canal view it is the card
+  ['raindrop', { kicker: 'At the window', title: 'A drop on the glass',
+    body: 'Watch a drop run down the glass. No model predicts whether it swerves left or right. Not chaos: wild. Out of our control, not out of order. (David Abram, The Spell of the Sensuous, on the shelf.)' }],
 ];
 
 const TAP_PX = 6, TAP_MS = 600;   // main.js's click rule: a press that hardly moved
@@ -128,7 +135,23 @@ export default function mount(live) {
   const table = new Map(CAPTIONS);
   const spots = [];
   const owner = new Map();               // mesh -> spot
+  // 019 action 16: the raindrop's spot, a box round one rivulet's trail on the pane the hero looks at: 0.22 m across (about
+  // 50 px on the 1440 hero), the middle third of the pane's height, 2 cm either side of the glass
+  const glass = byName('cz_canal_night');
+  function rainSpot(text) {
+    if (!glass || !live.heroTarget) return null;
+    glass.updateWorldMatrix(true, false);
+    const rv = rivulet(glass.userData, glass.worldToLocal(live.heroTarget.clone()));
+    if (!rv) return null;
+    const h = rv.y1 - rv.y0;
+    const box = new THREE.Box3(new THREE.Vector3(rv.x - 0.11, rv.y0 + h / 3, rv.z - 0.02), new THREE.Vector3(rv.x + 0.11, rv.y1 - h / 3, rv.z + 0.02))
+      .applyMatrix4(glass.matrixWorld);
+    const size = box.getSize(new THREE.Vector3());
+    return { name: 'raindrop', ...text, node: null, meshes: [], box, volume: size.x * size.y * size.z,
+      anchor: new THREE.Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2) };
+  }
   for (const [name, entry] of CAPTIONS) {
+    if (name === 'raindrop') { const s = rainSpot(entry); if (s) spots.push(s); continue; }
     const node = byName(name);
     if (!node) continue;
     const text = typeof entry === 'string' ? table.get(entry) : entry;
@@ -271,37 +294,29 @@ export default function mount(live) {
     dot.style.top = `${y}px`;
   }
 
-  // Hit test: boxes first, triangles only on the candidates, nearest wins.
-  const ray = new THREE.Raycaster();
-  const ndc = new THREE.Vector2();
+  // Hit test (panel 019 action 10): main.js's one resolve (resolveAt, its fast raycaster), no second raycast here. The
+  // first baked surface names its spot through `owner` (a split part through its parents); where that surface is no
+  // spot's, a spot whose box the ray enters in front of it still counts, the smallest (the TI-83 behind its own slop).
   const hitPt = new THREE.Vector3();
-  function spotAt(clientX, clientY) {
-    const r = canvasBox();
-    ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
-    ray.setFromCamera(ndc, camera);
-    const cands = spots.filter((s) => ray.ray.intersectBox(s.box, hitPt));
-    if (!cands.length) return null;
-    const hits = ray.intersectObjects(cands.flatMap((s) => s.meshes), false);
-    if (hits.length) return owner.get(hits[0].object);
-    return cands.reduce((a, b) => (b.volume < a.volume ? b : a));
+  function spotOf({ hit, ray }) {
+    for (let o = hit?.object; o; o = o.parent) if (owner.has(o)) return owner.get(o);
+    const cands = spots.filter((s) => ray.intersectBox(s.box, hitPt) && (!hit || ray.origin.distanceTo(hitPt) < hit.distance));
+    return cands.length ? cands.reduce((a, b) => (b.volume < a.volume ? b : a)) : null;
   }
+  const spotAt = (clientX, clientY) => spotOf(live.resolveAt(clientX, clientY));
 
   // round 18 C: an object that leads to another view shows its paper tag (layer-tags.js) and flies on a click; its card
   // belongs to its own view, where hovering it shows the card
   // merge 018 step 3: in its own view the object's caption is the case card (main.js), so no hover card there either
   const leads = (s) => { const id = live.hot?.(s.node); return !!id && (id !== live.view() || live.cardOf?.(id) === s.name); };
   // Pointer: hover for a mouse, tap (or click) to pin; never stops main.js's own picks.
-  let queued = null, down = null;
-  canvas.addEventListener('pointermove', (ev) => {
-    if (ev.pointerType !== 'mouse' || ev.buttons) return;
-    if (!queued) requestAnimationFrame(() => {
-      const { clientX, clientY } = queued; queued = null;
-      if (mode === 'pinned' || mode === 'key') return;
-      const s = spotAt(clientX, clientY);
-      if (s && !leads(s)) show(s, 'hover'); else if (mode === 'hover') hideSoon();
-    });
-    queued = { clientX: ev.clientX, clientY: ev.clientY };
-  });
+  let down = null;
+  // hover: main.js's pointermove resolves once per frame (none while the camera flies) and calls hover() with it
+  function hover(it, x, y, r) {
+    if (mode === 'pinned' || mode === 'key') return;
+    const s = spotOf(r);
+    if (s && !leads(s)) show(s, 'hover'); else if (mode === 'hover') hideSoon();
+  }
   canvas.addEventListener('pointerleave', () => { if (mode === 'hover') hideSoon(); });
   canvas.addEventListener('pointerdown', (ev) => { down = { x: ev.clientX, y: ev.clientY, t: performance.now() }; });
   canvas.addEventListener('pointerup', (ev) => {
@@ -342,6 +357,7 @@ export default function mount(live) {
 
   return {
     name: 'hotspots',
+    hover,
     read() { RB = open ? boxes() : null; },
     update() {
       if (open) position();             // follow the camera; DOM only, no WebGL frame needed
@@ -396,6 +412,19 @@ export default function mount(live) {
         return Object.fromEntries(spots.map((s) => [s.name, { anchor: px(s.anchor), center: px(s.box.getCenter(new THREE.Vector3())) }]));
       },
       boxes: () => Object.fromEntries(spots.map((s) => [s.name, s.box.getSize(new THREE.Vector3()).toArray().map((n) => +n.toFixed(3))])),
+      // a spot's box on screen, CSS px [left, top, right, bottom] (the raindrop's >= 44 px check), or null if behind
+      rect: (name) => {
+        const s = spots.find((x) => x.name === name), r = canvas.getBoundingClientRect();
+        if (!s) return null;
+        const out = [Infinity, Infinity, -Infinity, -Infinity];
+        for (let i = 0; i < 8; i++) {
+          v.set(i & 1 ? s.box.max.x : s.box.min.x, i & 2 ? s.box.max.y : s.box.min.y, i & 4 ? s.box.max.z : s.box.min.z).project(camera);
+          if (v.z > 1) return null;
+          const x = r.left + (v.x + 1) / 2 * r.width, y = r.top + (1 - v.y) / 2 * r.height;
+          out[0] = Math.min(out[0], x); out[1] = Math.min(out[1], y); out[2] = Math.max(out[2], x); out[3] = Math.max(out[3], y);
+        }
+        return out.map(Math.round);
+      },
     },
   };
 }

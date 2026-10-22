@@ -5,53 +5,22 @@
 //   which-path (orthogonal polarizers on the slits): I = I0 sinc^2(pi a y / lambda L), no fringes
 //   eraser at +45 deg before the screen:              I = (I0/2) sinc^2 (1 + cos(2 pi d y / lambda L))
 // so fringes 1.27 mm apart under an envelope with zeros at +-6.33 mm, every 5th fringe missing (d/a = 5).
-// Click or tap the loose polarizer: it stands up into the beam at +45 deg and the fringes appear;
-// again, and it goes back to the board. The pattern is box-filtered over each pixel, so fringes
+// The polarizer stands on its post in a holder beside the card post, facing the room, in the #optics frame (panel 019
+// bet C). Click or tap it: it lifts out, turns to face the beam with its analyser ring at +45 deg and drops into the
+// empty holder in the beam, and the fringes appear; again, and it goes back to its holder. The pattern is box-filtered over each pixel, so fringes
 // finer than a pixel show as their mean (half the which-path brightness) instead of aliasing.
 //
 // Hooks (lib/live.py): optics extras optics_screen(_size), optics_beam, optics_eraser(_dims),
 // optics_physics. The polarizer's baked triangles are split out of the optics mesh and moved.
 import { easeInOut, noPick, splitPart } from './layer-common.js';
 
-const IN_BEAM = 0.6;            // where the eraser stands: fraction of L from the slits
+const IN_BEAM = 0.7;            // where the eraser stands: fraction of L from the slits (optics.py IN_BEAM, the drop-in holder)
 const ANGLE = 45;               // deg, analyser axis
 const MOVE_S = 1.2;             // s, lift, turn and set down
+const LIFT = 0.02;              // m, the post clears its holder on the way (0.035 left the desktop frame at the apex)
 const BEAM_W = 0.0015;          // m, 1/e^2 radius at the card: a ~3 mm expanded/pointer-class beam (unmeasured)
 const GLARE = 0.0025;           // m, the card's diffuse glare around the bright line (by eye)
-
-function boardPatch(THREE, node, ex, ey, ez, r, dx) {
-  const g = node.geometry, pos = g.attributes.position, uv = g.attributes.uv, idx = g.index.array;
-  const P = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
-  const sx = ex + dx, sz = ez;
-  for (let i = 0; i < idx.length; i += 3) {
-    for (let k = 0; k < 3; k++) P[k].fromBufferAttribute(pos, idx[i + k]);
-    if (P.some((v) => Math.abs(v.y - ey) > 1e-4)) continue;           // board top only
-    const [a, b, c] = P;
-    const det = (b.x - a.x) * (c.z - a.z) - (c.x - a.x) * (b.z - a.z);
-    if (Math.abs(det) < 1e-9) continue;
-    const bary = (x, z) => {
-      const u = ((x - a.x) * (c.z - a.z) - (c.x - a.x) * (z - a.z)) / det;
-      const v = ((b.x - a.x) * (z - a.z) - (x - a.x) * (b.z - a.z)) / det;
-      return [1 - u - v, u, v];
-    };
-    const w = bary(sx, sz);
-    if (w.some((t) => t < -1e-6)) continue;                         // the triangle under the sample point
-    const uvAt = (x, z) => {
-      const q = bary(x, z);
-      return [0, 1].map((j) => q[0] * uv.getComponent(idx[i], j) + q[1] * uv.getComponent(idx[i + 1], j) + q[2] * uv.getComponent(idx[i + 2], j));
-    };
-    const geo = new THREE.CircleGeometry(r, 40).rotateX(-Math.PI / 2);
-    const gp = geo.attributes.position, gu = geo.attributes.uv;
-    for (let k = 0; k < gp.count; k++) gu.setXY(k, ...uvAt(gp.getX(k) + sx, gp.getZ(k) + sz));
-    const m = new THREE.Mesh(geo, node.material);
-    m.raycast = () => {};
-    m.position.set(ex, ey + 0.0002, ez);
-    m.visible = false;
-    node.add(m);
-    return m;
-  }
-  return null;
-}
+const PICK_PAD = 0.0006;        // m round the mount: 8 px at 1440x900, ~4 at 390 wide in the #optics frame (api.boxes(), merge 020)
 
 export default function mount(live) {
   const { THREE, byName } = live;
@@ -59,31 +28,30 @@ export default function mount(live) {
   const d = node?.userData;
   if (!d?.optics_eraser || !d?.optics_physics) return null;
   const [lambda, slitD, slitA, L] = d.optics_physics;
-  const [R, H, , rz] = d.optics_eraser_dims;
-  const [ex, ey, ez] = d.optics_eraser;
-
-  // the polarizer: every triangle inside its mount's cylinder (its bottom cap only within R)
-  const inR = (v, r) => Math.hypot(v.x - ex, v.z - ez) < r;
-  const part = splitPart(node, (a, b, c) => {
-    const vs = [a, b, c];
-    if (!vs.every((v) => inR(v, R + 0.016) && v.y < ey + H + 0.002 && v.y > ey - 0.0005)) return false;
-    return (a.y + b.y + c.y) / 3 > ey + 0.0003 || vs.every((v) => inR(v, R + 0.0005));
-  }, new THREE.Vector3(ex, ey + H / 2, ez), 'optics_eraser');
-  if (!part) return null;
-  const rest = { pos: part.position.clone(), q: new THREE.Quaternion() };
-
-  // Where it lay, the bake has a black footprint (that texel was never lit). Cover it while the
-  // polarizer is away with a disc of board texels from 100 mm along -X (four hole pitches, so the
-  // M6 grid lines up; clear of the footprint and its contact shadow): the board top's UVs are affine
-  // in position, so one triangle extends to all.
-  const patch = boardPatch(THREE, node, ex, ey, ez, R + 0.014, -0.1);
-  const [bx, by, bz] = d.optics_beam;
+  const [R, H, , rz] = d.optics_eraser_dims;     // mount r, its centre above the holder's top, film r, parked reading
+  const [ex, , ez] = d.optics_eraser;             // the parked holder (x, -y in Blender)
+  const [bx, by, bz] = d.optics_beam;             // slit plane on the beam axis
   const sx = d.optics_screen[0];
+
+  // the polarizer: the mount and its post, everything above the holder's top near the holder's axis (the post's foot
+  // stands 0.4 mm clear of the holder, so the holder and its dark bore stay where they are: no footprint to cover)
+  const foot = by - H + 0.0002;
+  const part = splitPart(node, (...vs) => vs.every((v) => Math.abs(v.x - ex) < R + 0.006 && Math.abs(v.z - ez) < R + 0.006
+    && v.y > foot && v.y < by + R + 0.008), new THREE.Vector3(ex, by, ez), 'optics_eraser');
+  if (!part) return null;
+  // the rotating ring (film, retainer, hairline, scale) turns in the fixed body: everything inside the ring's radius
+  // about the mount's axis, which faces the room while parked (glTF Z)
+  const ring = splitPart(part, (...vs) => vs.every((v) => Math.hypot(v.x, v.y) < R - 0.0013), new THREE.Vector3(), 'optics_eraser_ring');
+  // panel 020 action 6: the post (everything under the barrel: optics.py stops it 0.15 mm short) only translates, so its
+  // bake keeps facing the lamp it was baked under; it turns back against the head's -90 deg about its own axis
+  const post = splitPart(part, (...vs) => vs.every((v) => v.y < -R - 0.00005), new THREE.Vector3(), 'optics_eraser_post');
   const Q = (axis, deg) => new THREE.Quaternion().setFromAxisAngle(axis, THREE.MathUtils.degToRad(deg));
-  const X = new THREE.Vector3(1, 0, 0), Y = new THREE.Vector3(0, 1, 0), Z = new THREE.Vector3(0, 0, 1);
-  // undo its yaw on the board, set the analyser to +45 deg about its own axis, stand it up (axis -> beam)
-  const inBeam = { pos: new THREE.Vector3(bx + (sx - bx) * IN_BEAM, by, bz),
-    q: Q(Z, -90).multiply(Q(Y, ANGLE)).multiply(Q(Y, -rz)) };
+  const still = new THREE.Quaternion();
+  const rest = part.position.clone();
+  // in the drop-in holder on the beam: the post turned -90 deg about the vertical (the scale side to the slits), the
+  // analyser ring from its parked reading to +45 deg about the mount's axis
+  const inBeam = { pos: new THREE.Vector3(bx + (sx - bx) * IN_BEAM, by, bz), q: Q(new THREE.Vector3(0, 1, 0), -90),
+    ring: Q(new THREE.Vector3(0, 0, 1), ANGLE - rz) };
 
   // the pattern on the card face (normal -X; plane x -> glTF +Z = across the fringes)
   const [W, Hc] = d.optics_screen_size;
@@ -118,17 +86,29 @@ export default function mount(live) {
   let want = 0, p = 0;             // wanted state, animated progress (0 on the board, 1 in the beam)
   function pose() {
     const k = easeInOut(p);
-    part.position.lerpVectors(rest.pos, inBeam.pos, k);
-    part.position.y += Math.sin(Math.PI * k) * 0.03;                   // lift over the board
-    part.quaternion.slerpQuaternions(rest.q, inBeam.q, k);
+    part.position.lerpVectors(rest, inBeam.pos, k);
+    part.position.y += Math.sin(Math.PI * k) * LIFT;                   // out of one holder, over, into the other
+    part.quaternion.slerpQuaternions(still, inBeam.q, k);
+    ring?.quaternion.slerpQuaternions(still, inBeam.ring, k);
+    post?.quaternion.copy(part.quaternion).invert();
     mat.uniforms.uErase.value = THREE.MathUtils.smoothstep(p, 0.8, 1.0);   // fringes once it cuts the beam
-    if (patch) patch.visible = p > 0;
   }
   function toggle(instant) {
     want = 1 - want;
     if (instant || live.reduceMotion.matches) { p = want; pose(); }
     live.render();
   }
+  // the pick: the mount's box (barrel and ring, not the post) grown by PICK_PAD, about 8 px at the #optics frame
+  // (panel 020 action 6; invisible, never drawn), so a click on the dial or just beside it takes it
+  // (from the index: splitPart keeps the split-off vertices in the attribute, so computeBoundingBox would count the post)
+  const bb = new THREE.Box3(), v = new THREE.Vector3(), P = part.geometry.attributes.position;
+  for (const i of part.geometry.index.array) bb.expandByPoint(v.fromBufferAttribute(P, i));
+  if (ring) { ring.geometry.computeBoundingBox(); bb.union(ring.geometry.boundingBox); }
+  const mountBox = bb.clone();   // for boxes(): the mount alone
+  bb.expandByScalar(PICK_PAD);
+  const hit = new THREE.Mesh(new THREE.BoxGeometry(...bb.getSize(new THREE.Vector3()).toArray()), new THREE.MeshBasicMaterial({ visible: false }));
+  bb.getCenter(hit.position);
+  part.add(hit);
   live.picks.push({ object: part, accept: () => true, onPick: () => toggle(false) });
 
   return {
@@ -142,13 +122,15 @@ export default function mount(live) {
     api: {
       show() { screen.visible = true; live.render(); },
     toggle: (instant = true) => { screen.visible = true; toggle(instant); return want; },
+      // panel 020 action 12: hold the polarizer part-way (p 0..1) for the raycast gate's mid-move sample
+      hold(at) { screen.visible = true; want = p = at; pose(); live.render(); },
       info: () => ({ inBeam: want === 1, progress: p, erase: mat.uniforms.uErase.value, fringeSpacingMm: lambda * L / slitD * 1e3 }),
       // pixel box of the card and the eraser on screen (for the gates' crops)
       boxes() {
         const r = live.renderer.domElement.getBoundingClientRect();
-        const px = (o) => {
+        const px = (o, local = null) => {
           o.updateMatrixWorld();
-          const b = new THREE.Box3().setFromObject(o), out = [Infinity, Infinity, -Infinity, -Infinity];
+          const b = local ? local.clone().applyMatrix4(o.matrixWorld) : new THREE.Box3().setFromObject(o), out = [Infinity, Infinity, -Infinity, -Infinity];
           for (let i = 0; i < 8; i++) {
             const v = new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(live.camera);
             const x = (v.x + 1) / 2 * r.width, y = (1 - v.y) / 2 * r.height;
@@ -156,7 +138,7 @@ export default function mount(live) {
           }
           return out.map(Math.round);
         };
-        return { screen: px(screen), eraser: px(part) };
+        return { screen: px(screen), eraser: px(part), pick: px(hit), mount: px(part, mountBox) };
       },
     },
   };

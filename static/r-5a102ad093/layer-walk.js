@@ -11,23 +11,16 @@
 // Cost: one hidden disc (+1 draw call only while the pointer is over walkable floor), no per-frame work at rest.
 import { noPick } from './layer-common.js';
 
-// The standpoints, hand-placed for the canal house (Blender room metres: x right, y into the room from the window wall,
-// z up; eye 1.65 m standing, 1.2 m seated). Each looks at the part of the room the hero frame cannot reach: the C64's
-// screen, the hi-fi, the poster. A layout without the canal house's floor and shell gets no walk. [check] labels,
-// notes/captions.md. Next: rows in canal_house.py beside VIEWS, exported as extras, at the next bake.
-const LAYOUT = 'cz_canal';
-const STANDS = [
-  // the back corner (merge 019: "From the back of the room" until a door is modelled, panel 019 open call): the table,
-  // the C64's green screen face on, the bench and both panes beyond. card: what a click reaches from here ([check])
-  { id: 'door', label: 'From the back of the room', loc: [1.95, -5.05, 1.65], target: [-0.9, -0.9, 0.95], lens: 20,
-    card: 'From here: the C64, Agents on the laptop, the bench and the canal.' },
-  // in front of the bench, the panes at your back: Plato on his plinth, the bookcase and the poster down the right wall
-  { id: 'window', label: 'At the window', loc: [0.25, -1.05, 1.62], target: [2.5, -3.4, 1.1], lens: 20,
-    card: 'From here: Plato and the projection mapping, the bookcase, the poster.' },
-  // seated on the speakers' axis, back from the stool: the Luxman, the B&Ws and the records along the left wall
-  { id: 'seat', label: 'The listening seat', loc: [0.85, -1.9, 1.2], target: [-2.4, -1.35, 0.8], lens: 20,
-    card: 'From here: the hi-fi, Simulations in the cloud chamber, the C64.' },
-];
+// The standpoints are the layout's STANDS rows (round 020, panel 019 action 6: lib/layouts/canal_house.py, beside VIEWS),
+// exported as empties st_<id> with label, target (glTF axes) and lens, so the bake, the stills and the gates own them. A
+// layout without them (the default room) gets no walk. Here only what a click reaches from each: its one-line card.
+// [check] cards, notes/captions.md
+const CARDS = {
+  door: 'From here: the C64, Agents on the laptop, the bench and the canal.',
+  // round 020: the STANDS row turned this one out over the sill (it looked back at the bookcase): the card says so
+  window: 'From here: the canal and the University through the panes, the bench under the sill.',
+  seat: 'From here: the hi-fi, Simulations in the cloud chamber, the C64.',
+};
 const FLOOR = new Set(['at_floor', 'cz_rug']);
 const FLOOR_Y = 0.06;        // m: a hit this low on the floor or the rug is floor (the rug is ~1 cm)
 const REACH = 1.8;           // m: a spot further than this from every other place walks nowhere (a far spot is not a place);
@@ -41,8 +34,11 @@ export default function mount(live) {
   // merge 019 step 2 (UX's conditional blocker): a mouse only. On touch the floor is no hidden gesture: a tap there does what
   // it did before the walk (nothing on the hero, back from a view), and the phone reaches every case by its tag
   if (!matchMedia('(pointer: fine)').matches) return null;
-  if (live.gate || !live.addStands || !byName(LAYOUT) || !byName('at_floor')) return null;
-  const glPos = ([x, y, z]) => new THREE.Vector3(x, z, -y);   // Blender Z-up to glTF Y-up
+  if (live.gate || !live.addStands || !byName('at_floor')) return null;
+  const rows = [];
+  scene.traverse((o) => { const d = o.userData; if (d.st_label) rows.push({ id: o.name.replace(/^st_/, ''), label: d.st_label, order: d.st_order ?? 0,
+    pos: o.getWorldPosition(new THREE.Vector3()), target: new THREE.Vector3(...d.st_target), lens: d.st_lens }); });
+  rows.sort((a, b) => a.order - b.order);
 
   // keep a standpoint only if a ray down through it lands on the floor first (not inside a piece of furniture)
   const down = new THREE.Raycaster();
@@ -52,10 +48,9 @@ export default function mount(live) {
   const clear = (p) => { down.set(new THREE.Vector3(p.x, 2.2, p.z), new THREE.Vector3(0, -1, 0)); const h = down.intersectObjects(solids, false)[0];
     return !!h && FLOOR.has(top(h.object)?.name) && (2.2 - h.distance) < FLOOR_Y; };
   const stands = [], dropped = [];
-  for (const s of STANDS) {
-    const pos = glPos(s.loc);
-    if (!clear(pos)) { dropped.push(s.id); continue; }
-    stands.push({ id: s.id, label: s.label, card: s.card, pos, target: glPos(s.target), fov: live.fovOf(s.lens) });
+  for (const s of rows) {
+    if (!clear(s.pos)) { dropped.push(s.id); continue; }
+    stands.push({ id: s.id, label: s.label, card: CARDS[s.id] ?? null, pos: s.pos, target: s.target, fov: live.fovOf(s.lens) });
   }
   if (!stands.length) return null;
   const hero = { id: live.home, pos: live.heroPos };

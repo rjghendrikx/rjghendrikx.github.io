@@ -46,7 +46,7 @@ const CSS = `
 /* the chips are up (a keyboard visitor, or the "Views" pill): the tags (a pointer's road) step aside */
 body:has(.views:focus-within) .tag, body:has(.views:focus-within) .tag-line, body:has(.views.open) .tag, body:has(.views.open) .tag-line { display: none; }
 /* touch: no invisible margin, a 44 px paper; each place on a shared edge tag is its own 44 px target. The tag takes the
-   touch: a tap goes where it says, a drag that starts on it does nothing (round 019; touch-action: no pan, no orbit) */
+   touch: a tap goes where it says; a drag that starts on it orbits the room (panel 020 action 15: handed to the canvas) */
 @media (pointer: coarse) { .tag { font-size: 16px; padding: 0; touch-action: none; }
   .tag .p { padding-top: 8px; padding-bottom: 9px; min-height: 44px; box-sizing: border-box; }
   .tag.edge .p { padding-top: 0; padding-bottom: 0; }
@@ -98,9 +98,21 @@ export default function mount(live) {
     b.innerHTML = '<span class="p"></span>';
     b.style.setProperty('--r', `${((id.length * 7) % 5) - 3.5}deg`);   // each its own small tilt, stable
     // a shared edge tag (touch: "← C64 · Hi-fi") holds one place per view: the place under the finger is where it goes
-    // a press that moved (a drag that started on the tag) is not a click: it does nothing (round 019)
+    // a press that moved (a drag that started on the tag) is not a click (round 019). Panel 020 action 15: on touch that
+    // drag orbits, as it does anywhere else on the room: past 6 px the pointer is handed to the canvas (a pointerdown
+    // there at the press point, then the capture), so OrbitControls takes the rest of the drag (the tag over the
+    // table ate it: D's orb.py repro)
     let press = null;
     b.addEventListener('pointerdown', (ev) => { press = [ev.clientX, ev.clientY]; });
+    b.addEventListener('pointermove', (ev) => {
+      if (ev.pointerType !== 'touch' || !press || Math.hypot(ev.clientX - press[0], ev.clientY - press[1]) <= 6) return;
+      const [x, y] = press;
+      press = null;
+      if (b.hasPointerCapture(ev.pointerId)) b.releasePointerCapture(ev.pointerId);
+      canvas.dispatchEvent(new PointerEvent('pointerdown', { pointerId: ev.pointerId, pointerType: 'touch', isPrimary: ev.isPrimary,
+        clientX: x, clientY: y, button: 0, buttons: 1, bubbles: true, cancelable: true }));
+      try { canvas.setPointerCapture(ev.pointerId); } catch { /* the pointer ended meanwhile */ }
+    });
     b.addEventListener('click', (ev) => {
       ev.stopPropagation();
       const moved = press && ev.detail && Math.hypot(ev.clientX - press[0], ev.clientY - press[1]) > 6;
@@ -155,9 +167,11 @@ export default function mount(live) {
     return out;
   };
   const reach = (box) => samples(box).find((p) => { const s = toScreen(p); return onScreen(s) && !under(s); }) ?? null;
-  function anchorOf(id) {
+  // node: only that object's box (a hover hangs the tag on the object under the pointer: a binder, not its case's chamber)
+  function anchorOf(id, node = null) {
     let best = null, bestA = 0;
-    for (const { box } of byView.get(id) ?? []) {
+    for (const { box, node: n } of byView.get(id) ?? []) {
+      if (node && n !== node) continue;
       const p = reach(box);
       if (!p) continue;
       const a = box.getSize(new THREE.Vector3()).length();
@@ -179,7 +193,7 @@ export default function mount(live) {
   }
   // where a click at (x, y) goes, by the click code itself (main.js intentAt): sampled only where it matters (inside a
   // view's projected boxes, inside a tag's box), never the whole frame (a full 24 px grid cost ~2 s on desktop)
-  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' ? it.id : null; };
+  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' || it?.kind === 'walk' ? it.id : null; };
   function grid(l, t, r2, b, f, max = 160) {
     const w = r2 - l, h = b - t, st = Math.max(SAMPLE, Math.sqrt((w * h) / max));
     for (let y = t + st / 2; y < b; y += st) for (let x = l + st / 2; x < r2; x += st) if (f(x, y, st) === false) return;
@@ -291,6 +305,13 @@ export default function mount(live) {
     for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
     if (live.view() !== home || live.root.dataset.intro === 'playing') return;   // not from the flight's camera
     edged.clear();
+    // round 020 (panel 019 action 4): the walk's standpoints (desktop) are places too: one out of reach from the hero (the
+    // back of the room, behind the camera, where no floor in frame is near) gets the edge tag that points the way. A
+    // standpoint is a person-sized column on its spot, never a busy box for the other tags
+    for (const s of live.stands?.() ?? []) if (!byView.has(s.id)) {
+      byView.set(s.id, [{ node: null, place: true, mats: [], box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(s.pos.x, 0.85, s.pos.z), new THREE.Vector3(0.5, 1.7, 0.5)) }]);
+      tags.set(s.id, make(s.id));
+    }
     // the areas hold while the camera and the frame do (edges() runs on arrival, at the first-look pulse and on resize)
     const key = `${camera.matrixWorld.elements.map((e) => e.toFixed(4))}|${innerWidth}x${innerHeight}|${covers().map((b) => b.bottom | 0)}`;
     if (areas.key !== key) { areas.key = key; areas.v = {}; }
@@ -312,7 +333,8 @@ export default function mount(live) {
     }
     const m = measure();
     const busy = [];
-    for (const [, list] of byView) for (const { box } of list) {
+    for (const [, list] of byView) for (const { box, place } of list) {
+      if (place) continue;
       const pts = samples(box, 0).map(toScreen).filter((q) => onScreen(q, 0) && !under(q));
       if (pts.length) busy.push([Math.min(...pts.map((q) => q.x)), Math.min(...pts.map((q) => q.y)), Math.max(...pts.map((q) => q.x)), Math.max(...pts.map((q) => q.y))]);
     }
@@ -325,8 +347,10 @@ export default function mount(live) {
       // panel 019 action 4: the work is always findable. A work view keeps its own edge tag (it never folds into a
       // furniture tag that flies elsewhere); the furniture views on a side fold into one tag, the nearer view's, naming
       // every view that way ("← Hi-fi · C64 · Table"), one place each; on desktop too (C's left stack was three deep)
-      const work = list.filter((q) => WORK_VIEWS.includes(q.t.id));
-      let rest = list.filter((q) => !WORK_VIEWS.includes(q.t.id));
+      const own = (q) => WORK_VIEWS.includes(q.t.id) || !!byView.get(q.t.id)?.[0]?.place;
+      // a standpoint keeps its own tag too (round 020), low on its edge, by the floor it walks over
+      const work = list.filter(own).map((q) => (byView.get(q.t.id)?.[0]?.place ? { ...q, e: { ...q.e, y: innerHeight * 0.78, ay: NaN } } : q));
+      let rest = list.filter((q) => !own(q));
       if (rest.length > 1) {
         const dist = (q) => (side < 0 ? -q.e.x : side === 1 ? q.e.x : -q.e.y);
         rest.sort((a, b) => (Number.isFinite(dist(a)) ? dist(a) : 1e9) - (Number.isFinite(dist(b)) ? dist(b) : 1e9));
@@ -383,7 +407,7 @@ export default function mount(live) {
     hoverId = id;
     if (!id || tags.get(id)?.why === 'edge') return;
     // the window has no object: the tag hangs where the pointer is, on the glass
-    const at = it.node ? anchorOf(id) : (() => { const B = r(); ndc.set(((x - B.left) / B.width) * 2 - 1, -((y - B.top) / B.height) * 2 + 1);
+    const at = it.node ? anchorOf(id, it.node) ?? anchorOf(id) : (() => { const B = r(); ndc.set(((x - B.left) / B.width) * 2 - 1, -((y - B.top) / B.height) * 2 + 1);
       ray.setFromCamera(ndc, camera); return ray.ray.at(3, new THREE.Vector3()); })();
     if (at) show(id, 'hover', at, it.node ?? null);
   }
@@ -405,6 +429,12 @@ export default function mount(live) {
   else setTimeout(edges, 300);
   addEventListener('resize', () => { edges(); });
   addEventListener('room:intro-prompt', () => requestAnimationFrame(edges));   // the prompt pill came up: hang clear of it
+  // round 020: the case card fills on the hero after the edges ran (the scan notice at the end of the intro): measure()
+  // read it empty, so a tag on its edge sat under it. Its content changing is the obstacle changing: hang clear again
+  const caseEl = document.querySelector('.case');
+  // merge 020: in the observer itself (a microtask before the next paint), not a frame later: the gate's "ui: no overlaps"
+  // caught the one frame where the filled card and the old tag place met (1024x768, the scan notice at the intro's end)
+  if (caseEl) new MutationObserver(() => edges()).observe(caseEl, { childList: true });
 
   return {
     name: 'tags',

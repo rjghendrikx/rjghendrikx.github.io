@@ -2776,6 +2776,13 @@
    "t": "2026-10-22T11:38:33Z",
    "commit": "51059eb",
    "message": "Click-through navigation (C base + A/B/D grafts): one click to every case and back, per-view URL, outside means back, eraser by clicking, thinner tags"
+  },
+  {
+   "tag": "room-iter-019-walk-frames-motion",
+   "ts": 1792688330,
+   "t": "2026-10-22T16:58:50Z",
+   "commit": "bbf307c",
+   "message": "Head-like camera moves (0.8-1.3 s), desktop walk via standpoints, Table and Bookcase views, chamber pulled back, wall reframed, inherited bugs cleared, glow as light"
   }
  ]
 }

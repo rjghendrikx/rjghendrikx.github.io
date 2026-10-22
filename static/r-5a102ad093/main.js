@@ -36,14 +36,22 @@ const WORK = {
     acts: [{ label: 'Hear the Geiger counter', run: (L) => L.geiger?.sound(true) }] },
   // [check] card only (panel 015 action 1 wording)
   experiment: { room: 'Watch the projector: its stripes label the vase point by point, and the vase becomes its own point cloud.',
-    acts: [{ label: 'Run the scan', run: (L) => L.projector?.start() }, { label: 'How this room was made', href: 'colophon.html' }] },
-  terminal: { acts: [{ label: 'How this room was made', href: 'colophon.html' }] },
+    acts: [{ label: 'Run the scan', run: (L) => L.projector?.start() }] },
+  // panel 019 action 9: the colophon link left this card; until Ruud supplies a proof link the mailto is its one act
+  terminal: { acts: [] },
 };
+// panel 019 action 9: every work card ends with the offer, "Ask him about this", a mailto whose subject names the case.
+// Its one copy is the article's own a.ask in index.html #work (the no-JS sheet has it too); `mail` marks it so showCase
+// renders it last, after any proof link added later (PLATO.proof). [check] notes/captions.md
 function workCase(id, { room, acts }) {
   const a = document.querySelector(`#work article[data-view="${id}"]`);
   if (!a) return null;
   const text = (q) => a.querySelector(q)?.textContent.replace(/\s+/g, ' ').trim() ?? '';
-  return { k: text('.k'), t: text('h3'), b: [text('p.text'), room].filter(Boolean).join(' '), acts };
+  const ask = a.querySelector('a.ask');
+  // the label without its visually hidden case name (panel 020 action 4), which showCase adds back as .vh
+  const vh = ask?.querySelector('.vh')?.textContent ?? '';
+  const mail = ask ? [{ label: ask.textContent.replace(vh, '').trim(), href: ask.getAttribute('href'), mail: true, vh }] : [];
+  return { k: text('.k'), t: text('h3'), b: [text('p.text'), room].filter(Boolean).join(' '), acts: [...acts, ...mail] };
 }
 const CASES = {
   ...Object.fromEntries(Object.entries(WORK).map(([id, w]) => [id, workCase(id, w)]).filter(([, c]) => c)),
@@ -69,14 +77,14 @@ const PLATO = {
 };
 // merge 018 step 3 (A's table, D's rule): a view without a case shows its object's caption as the card, on arrival
 // (the hover only names it, with the tag). View id -> layer-hotspots.js CAPTIONS name; a missing caption is skipped.
-const CAPTION_OF = { c64: 'c64', optics: 'optics', hifi: 'amp' };   // not the poster: it is its own text (D)
-// panel 018 action 3: the acts of a caption card. The polarizer is off frame in #optics until the next bake reframes it
-// (action 12), so the card carries the experiment's own action: the fringes on the card are in frame
+const CAPTION_OF = { c64: 'c64', optics: 'optics', hifi: 'amp', canal: 'raindrop' };   // canal: 019 action 16, the phone's road to the drop   // not the poster: it is its own text (D)
+// panel 018 action 3: the acts of a caption card. The polarizer is in the #optics frame since round 020 C (parked on its
+// post beside the card): a click on it or the card's act puts it in the beam, and the fringes on the card come back
 // panel 019 actions 5 and 11: a place that is not a case still says, in one line, what a click reaches from it: the furniture
 // views here, the walk's standpoints in layer-walk.js (STANDS card). [check] copy, notes/captions.md
 const PLACE_CARDS = {
   table: 'From here: the C64, Agents on the laptop, the hi-fi.',
-  wall: 'From here: Plato and the projection mapping, the poster, the wheel.',
+  wall: 'From here: the work files on the shelf, Plato and the projection mapping, the wheel.',
 };
 const CAPTION_ACTS = { optics: [{ label: POLARIZER, run: (L) => L.eraser?.toggle(false) }] };
 // the nav's Work group, in this order (panel 015 action 6); the layout's other views go behind "More views"
@@ -95,7 +103,14 @@ const HOT = {
   // The wall is reached by the wheel, not the bookcase: the bookcase's box is a third of the hero, and layer-tags keeps
   // tags off hot boxes, which pushed the "Least action" edge tag up under the live card at 1024x768
   cz_table: 'table', pr_wheel: 'wall',
+  // round 020 A + panel 020 action 5: the work's three lever-arch files on the bookcase (objects/case_folders.py), one
+  // node each, so glow, tags and the click table run through the same code as every other hot object
+  case_simulations: 'chamber', case_agents: 'terminal', case_mapping: 'experiment',
 };
+// round 020 (panel 019 action 7): part of a node goes somewhere: a hit on it below `y` m (glTF up) leads to `id`. The
+// bookcase's lower shelves, under Plato's plinth top, are the Bookcase view's own target; above them the books stay
+// scenery, so the case's box (a third of the hero) never becomes a hot box for the tags
+const HOT_BELOW = { cz_bookcase: { id: 'wall', y: 0.9 } };
 // merge 018 step 4 (from D): a second click on the view's own object, where no layer pick takes it, runs its action
 const ACT = { experiment: (L) => L.projector?.start(), projector: (L) => L.projector?.start() };
 const FAR_VIEWS = ['canal', 'university'];
@@ -434,6 +449,8 @@ async function start() {
   function hotOf(p, obj) {
     const top = topOf(obj);
     if (hot.has(top)) return { id: hot.get(top), node: top };
+    const low = HOT_BELOW[top?.name];
+    if (low && p.y < low.y && views.some((v) => v.id === low.id)) return { id: low.id, node: top };
     if (farViews.length && camera.position.distanceTo(p) > FAR) {
       // out of the window, by the pane it is seen through (merge 018 step 1, from A): the left pane looks at the
       // University, the right one at the canal (canal_house WINDOWS: panes x -1.85..-0.45 and 0.45..1.85 on the window
@@ -566,7 +583,7 @@ async function start() {
     if (ph.length && !(hit && ph[0].distance > hit.distance + 0.01)) {
       pick = picks.find((p) => (ph[0].object === p.object || p.object.getObjectById(ph[0].object.id)) && p.accept(ph[0].point)) ?? null;
     }
-    return { hit, pick };
+    return { hit, pick, ray: ray.ray };   // ray: valid until the next resolve (layer-hotspots reads it at once)
   }
   // Where a click leads, the one rule for the click, the cursor, the tags and the gate (round 18 C, spec rules 1-4):
   // { kind: 'go', id, node } another view; 'stay' (its own object, or a layer's pick); 'back' to the hero; 'none' (scenery
@@ -719,8 +736,13 @@ async function start() {
     params, root, view: () => current.id, render: () => { needsRender = true; }, clickAt, resolveAt, intentAt, cursorOf,
     moving: () => !!tween, go, where: hotOf, glow, intent: (x, y, touch) => intentAt(resolveAt(x, y), x, y, touch), cardOf: (id) => (!CASES[id] && CAPTION_OF[id]) || null,
     hot: (o) => hot.get(topOf(o)) ?? null, label: (id) => viewOf(id)?.label ?? id, home: home.id, inRoom: () => inRoom(),
-    fovOf: lensToFov, heroPos: home.pos.clone(), addStands: (list, step) => { stands.push(...list.map((s) => ({ ...s, shift: [0, 0], stand: true }))); stepOf = step; } }) : [];
+    fovOf: lensToFov, heroPos: home.pos.clone(), heroTarget: home.target.clone(), stands: () => stands, addStands: (list, step) => { stands.push(...list.map((s) => ({ ...s, shift: [0, 0], stand: true }))); stepOf = step; } }) : [];
   for (const l of layers) l.onView?.(current.id);
+  // panel 019 action 10: the hit list and the canal's chunk boxes are built here, at load (the layers' split parts exist
+  // now), not on the first hover; the first move of a sweep then pays only for its rays
+  scene.updateMatrixWorld(true);
+  solid = []; scene.traverse((o) => { if (isSolid(o)) solid.push(o); });
+  for (const o of solid) runsOf(o);
   // layer toggles (Lidar, ...) join the page's control cluster instead of stacking on their own
   const cluster = document.querySelector('.controls');
   if (cluster) for (const b of document.querySelectorAll('body > button')) cluster.appendChild(b);
@@ -778,25 +800,33 @@ async function start() {
     // phone: a bottom sheet at ~25% height; the grip (or a tap on the body) opens it (index.html; hidden on desktop)
     const grip = Object.assign(el('button', 'grip'), { type: 'button' });
     grip.setAttribute('aria-label', 'Show the whole case');
+    // panel 020 action 12: the grip is the phone's (0x0 on desktop, index.html), so a keyboard on desktop never lands on it
+    if (!matchMedia('(max-width: 640px)').matches) grip.tabIndex = -1;
     grip.setAttribute('aria-expanded', 'false');
     const toggle = () => grip.setAttribute('aria-expanded', String(caseEl.classList.toggle('open')));
     grip.addEventListener('click', toggle);
     const body = el('p', 'b', c.b);
     body.addEventListener('click', toggle);
     caseEl.append(grip, el('p', 'k', c.k), el('h2', '', c.t), body);
+    // panel 020 action 4: on touch the offer is the first act and the acts sit under the title, inside the peek sheet's
+    // 25% (the Projection mapping body pushed it out of the sheet); with a mouse it stays the last act, under the body
+    const first = matchMedia('(pointer: coarse)').matches;
     if (c.acts?.length) {
       const row = el('div', 'acts');
       const live = [];                 // acts whose words follow a layer's state (the polarizer): re-said after each act
       const say = (a) => (typeof a.label === 'function' ? a.label(api) : a.label);
-      for (const a of c.acts) {
-        const b = a.href ? Object.assign(el('a', '', a.ext ? `${say(a)} ↗` : say(a)), { href: a.href }, a.ext ? { target: '_blank', rel: 'noopener' } : {})
+      // a link's ↗ is index.html's .case .acts a::after (the label's own doubled it); the offer has none
+      const mails = c.acts.filter((x) => x.mail), rest = c.acts.filter((x) => !x.mail);
+      for (const a of first ? [...mails, ...rest] : [...rest, ...mails]) {   // the offer last (action 9), first on touch
+        const b = a.href ? Object.assign(el('a', a.mail ? 'mail' : '', say(a)), { href: a.href }, a.ext ? { target: '_blank', rel: 'noopener' } : {})
           : Object.assign(el('button', '', say(a)), { type: 'button' });
+        if (a.vh) b.appendChild(el('span', 'vh', a.vh));
         if (typeof a.label === 'function') live.push([b, a]);
         if (a.run) b.addEventListener('click', () => { a.run(api); needsRender = true; relabel(); });
         row.appendChild(b);
       }
       relabel = () => { for (const [b, a] of live) b.textContent = say(a); };
-      caseEl.appendChild(row);
+      if (first) caseEl.insertBefore(row, body); else caseEl.appendChild(row);
     }
   }
   // every arrival is announced, with or without a case card (wave 5); visually hidden
@@ -1002,6 +1032,8 @@ async function start() {
   state.hotMap = (step = 32, touch = false) => {
     const out = { none: [] };
     for (let y = step / 2; y < innerHeight; y += step) for (let x = step / 2; x < innerWidth; x += step) {
+      // panel 020 action 12: a cell the page covers (a card, a tag, the caption) is no click on the room: dropped
+      if (document.elementFromPoint(x, y) !== renderer.domElement) continue;
       const it = intentAt(resolveAt(x, y), x, y, touch);
       (out[it.kind === 'go' ? it.id : it.kind === 'walk' ? `walk:${it.id}` : it.kind] ??= []).push([x, y]);
     }
@@ -1009,7 +1041,26 @@ async function start() {
   };
   // where a click at (x, y) leads, for the gates: { kind, id, pick: the pick object's name, hit: the baked surface's }
   state.intent = (x, y, touch = false) => { const r = resolveAt(x, y), it = intentAt(r, x, y, touch);
-    return { kind: it.kind, id: it.id ?? null, pick: it.pick?.object.name ?? null, hit: r.hit?.object.name ?? null }; };
+    return { kind: it.kind, id: it.id ?? null, pick: it.pick?.object.name ?? null, hit: r.hit?.object.name ?? null,
+      top: r.hit ? topOf(r.hit.object)?.name ?? null : null, at: r.hit?.point.toArray().map((c) => +c.toFixed(3)) ?? null }; };
+  // panel 019 action 10: the fast raycaster checked, not trusted. On a grid of rays from the current camera (CSS px, `step`
+  // apart) firstHit(solid) against three.js's own ray.intersectObjects(solid)[0]: a mismatch is a hit against a miss or a
+  // distance off by more than 0.1 mm (not the object: two coplanar faces tie). chunked: meshes with runs built at load.
+  state.rayCheck = (step = 24) => {
+    // panel 020 action 12: also against the whole scene (intersectObjects(scene, true), its solid meshes), so a baked mesh
+    // missing from `solid` (a layer's split part added late) shows up as `unlisted`
+    let rays = 0; const bad = [], off = [], pre = chunked.size;   // pre: built at load, before this grid's first ray
+    const near = (a, b) => !a === !b && (!a || Math.abs(a.distance - b.distance) <= 1e-4);
+    for (let y = step / 2; y < innerHeight; y += step) for (let x = step / 2; x < innerWidth; x += step) {
+      resolveAt(x, y);   // sets the ray as a click there would
+      const a = firstHit(solid), b = ray.intersectObjects(solid, false)[0] ?? null;
+      const c = ray.intersectObjects(scene.children, true).find((h) => isSolid(h.object)) ?? null;
+      rays++;
+      if (!near(a, b)) bad.push([x, y, a?.object.name ?? null, b?.object.name ?? null]);
+      if (!near(a, c)) off.push([x, y, a?.object.name ?? null, c?.object.name ?? null]);
+    }
+    return { rays, mismatches: bad.length, bad: bad.slice(0, 5), unlisted: off.length, off: off.slice(0, 5), solid: solid.length, chunked: pre };
+  };
   state.layers = api;
   state.cases = () => Object.keys(CASES).filter((id) => views.some((v) => v.id === id));
   state.mode = 'webgl';
@@ -1048,10 +1099,10 @@ async function mountLayers(live) {
       const { x, y } = queued; queued = null;
       if (live.moving()) return;
       lastX = x; lastY = y;
-      const it = live.intentAt(live.resolveAt(x, y), x, y, false);
+      const r = live.resolveAt(x, y), it = live.intentAt(r, x, y, false);
       const cur = live.cursorOf(it);
       if (canvas.style.cursor !== cur) canvas.style.cursor = cur;
-      for (const l of layers) l.hover?.(it, x, y);
+      for (const l of layers) l.hover?.(it, x, y, r);   // r: the one resolve, reused by the hotspot cards (action 10)
     });
     queued = { x: ev.clientX, y: ev.clientY };
   });

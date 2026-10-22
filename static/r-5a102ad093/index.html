@@ -4,8 +4,8 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2314110f'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23e3a35b'/%3E%3C/svg%3E">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<!-- [check] link preview copy (panel 015 action 8); og.jpg is cropped from the poster still at stage time
-     (lib/site.py og_image). Relative URL: make it absolute once the room's public path is fixed. -->
+<!-- [check] link preview copy (panel 015 action 8); og.jpg is the Table view where the layout has its still, else a crop
+     of the poster still, made at stage time (lib/site.py og_image; panel 019 action 14). Local build only. Relative URL: make it absolute once the room's public path is fixed. -->
 <meta name="description" content="Ruud Hendrikx, creative technologist: simulations and AI agents, made visible. Walk into his workroom, live in the browser.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Ruud Hendrikx, creative technologist">
@@ -92,7 +92,15 @@
   .case .acts a, .case .acts button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); text-decoration: none; cursor: pointer;
     padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
   .case .acts a::after { content: " \2197"; color: var(--accent); }
-  .case .acts :is(a, button) { display: inline-flex; align-items: center; box-sizing: border-box; }
+  /* panel 019 action 9: the offer, the card's last act: filled, no outbound arrow (it opens the mail app, not a page) */
+  .case .acts a.mail { background: rgba(227, 163, 91, .2); border-color: var(--accent); }
+  .case .acts a.mail::after { content: none; }
+  .work .ask-row { margin-top: 8px; }
+  .case .acts :is(a, button) { display: inline-flex; align-items: center; box-sizing: border-box; min-height: 32px; }
+  /* panel 020 action 4: the case name after "Ask him about this", for a screen reader's link list; not shown */
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; margin: -1px; }
+  /* the card stays above the terminal replay (its offer reachable while the agents replay) */
+  body:has(.term-panel.open) .case { z-index: 21; }
   .case .acts :is(a, button):hover { border-color: var(--accent); }
   .case .acts :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Work: hidden until #work (no-JS) */
@@ -121,6 +129,20 @@
   .work .contact .links a { color: var(--ink); }
   .cap-head { display: flex; align-items: baseline; gap: 8px; }
   .cap-more { display: none; }
+  /* with JS: name, the one-line offer and the contact row; the offer opens behind "About" (phone: panel 013 action 11;
+     desktop: round 020, panel 019 action 4) */
+  .js .cap-more { display: inline-flex; align-items: center; font: inherit; font-size: 12px; line-height: 1; color: var(--muted); cursor: pointer;
+    padding: 4px 8px; border-radius: 999px; background: none; border: 1px solid rgba(239, 230, 218, .22); }
+  .js .cap-more::after { content: ""; width: 5px; height: 5px; margin-left: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
+    transform: translateY(-2px) rotate(45deg); }
+  .js .caption.open .cap-more::after { transform: translateY(1px) rotate(-135deg); }
+  .js .cap-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .js .caption:not(.open) .offer { display: none; }
+  /* the one-line offer stays under the name while the long one is closed (panel 015 action 8) */
+  .js .caption:not(.open) .tagline { display: block; color: var(--ink); font-size: 12.5px; margin-top: 2px; text-wrap: pretty; }
+  /* desktop: the card is a narrow label, so the laptop (Agents) at the hero's lower left stays in the scene: the full
+     card covered all 25 of its hot cells (round 020, panel 019 action 4); "About" opens the offer over it on demand */
+  @media (min-width: 641px) { .js .caption:not(.open) { max-width: 188px; } }
   .caption a { color: var(--ink); text-underline-offset: 2px; text-decoration-color: rgba(239, 230, 218, .4); }
   .caption a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   /* Viewpoint nav: built by main.js from the scene's viewpoints; absent without JS/WebGL. */
@@ -161,16 +183,6 @@
     .caption { top: max(16px, env(safe-area-inset-top, 0px)); bottom: auto;
       right: calc(max(16px, env(safe-area-inset-right, 0px)) + var(--controls-w, 96px)); max-width: none; }
     .caption .offer { font-size: 12.5px; }
-    /* phone, with JS: name + the contact row; the offer opens behind "About" (panel 013, action 11) */
-    .js .cap-more { display: inline-flex; align-items: center; font: inherit; font-size: 12px; line-height: 1; color: var(--muted); cursor: pointer;
-      padding: 4px 8px; border-radius: 999px; background: none; border: 1px solid rgba(239, 230, 218, .22); }
-    .js .cap-more::after { content: ""; width: 5px; height: 5px; margin-left: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
-      transform: translateY(-2px) rotate(45deg); }
-    .js .caption.open .cap-more::after { transform: translateY(1px) rotate(-135deg); }
-    .js .cap-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .js .caption:not(.open) .offer { display: none; }
-    /* the one-line offer stays under the name while the long one is closed (panel 015 action 8) */
-    .js .caption:not(.open) .tagline { display: block; color: var(--ink); font-size: 12.5px; margin-top: 2px; text-wrap: pretty; }
     .caption .links .colophon, .caption .links .colophon-sep { display: none; }
     /* phone: the case card is a bottom sheet on the chip strip, about 25% of the screen until its grip (or the body)
        is tapped, then up to 62% and scrollable (panel 013, action 11) */
@@ -189,6 +201,8 @@
     .prompt button { white-space: nowrap; }
     .toast { bottom: calc(var(--stack) + 52px); width: max-content; text-align: center; }
     .case:not(:empty) ~ .prompt, .has-case .prompt { display: none; }
+    /* panel 020 action 4: the end-of-flight toast gives way to a case card, so it never covers the card's acts */
+    .has-case .toast { visibility: hidden; }
     .controls { flex-direction: column; align-items: flex-end; }
   }
   /* touch: every target at least 44 px high (WCAG 2.5.5 / Apple HIG) */
@@ -268,11 +282,12 @@
   <a class="work-close" href="#" aria-label="Close">&times;</a>
   <h2 id="work-title" tabindex="-1">Work</h2>
   <!-- [check] outcome first, the second sentence names the stack or the earlier job -->
-  <article data-view="chamber"><p class="k">Simulations</p><h3>Passenger flow at Schiphol</h3><p class="text">He led the operational simulation and forecasting Royal Schiphol Group plans the airport with: departure passenger flow, queues and waiting times, runway capacity. Before that, at Danieli Corus, a real-time digital twin of a steel plant for capacity and scheduling decisions.</p><button type="button" class="show" aria-label="Show me in the room: Passenger flow at Schiphol" hidden>Show me in the room</button></article>
+  <article data-view="chamber"><p class="k">Simulations</p><h3>Passenger flow at Schiphol</h3><p class="text">He led the operational simulation and forecasting Royal Schiphol Group plans the airport with: departure passenger flow, queues and waiting times, runway capacity. Before that, at Danieli Corus, a real-time digital twin of a steel plant for capacity and scheduling decisions.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Simulations%3A%20Passenger%20flow%20at%20Schiphol">Ask him about this<span class="vh">: Passenger flow at Schiphol</span></a></p><button type="button" class="show" aria-label="Show me in the room: Passenger flow at Schiphol" hidden>Show me in the room</button></article>
   <!-- [check] outcome first: "one multi-tenant stack" is llms-full.txt's "productizing the stack into a multi-tenant, airport-ready solution" -->
-  <article data-view="terminal"><p class="k">Agents</p><h3>LLM assistants in production</h3><p class="text">For Schiphol he designed and deployed LLM customer assistants, then turned them into one multi-tenant stack the airport can reuse. Under the hood: Azure OpenAI, LangGraph and FastAPI, with intent classification, hybrid RAG and agentic tool use.</p><button type="button" class="show" aria-label="Show me in the room: LLM assistants in production" hidden>Show me in the room</button></article>
-  <!-- [check] new case "This room", replaces "3D capture ... is next" (panel 013, action 10); facts from CONVENTIONS.md and colophon.html -->
-  <article data-view="experiment"><p class="k">This room</p><h3>A portfolio you can walk into</h3><p class="text">Nobody modelled this room by hand, and it runs live in a phone browser. Agents wrote the Python that drives Blender, one module per object, and automated gates checked every step; the scan, the cloud chamber and the Geiger counter are live simulations. The habit is older: at AMOLF and Laserlab Amsterdam he wrote the software that ran the experiments.</p><p><a href="colophon.html">How this was made</a></p><button type="button" class="show" aria-label="Show me in the room: A portfolio you can walk into" hidden>Show me in the room</button></article>
+  <article data-view="terminal"><p class="k">Agents</p><h3>LLM assistants in production</h3><p class="text">For Schiphol he designed and deployed LLM customer assistants, then turned them into one multi-tenant stack the airport can reuse. Under the hood: Azure OpenAI, LangGraph and FastAPI, with intent classification, hybrid RAG and agentic tool use.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Agents%3A%20LLM%20assistants%20in%20production">Ask him about this<span class="vh">: LLM assistants in production</span></a></p><button type="button" class="show" aria-label="Show me in the room: LLM assistants in production" hidden>Show me in the room</button></article>
+  <!-- [check] panel 019 action 9: the third case is the projection mapping (facts from Ruud, 2026-10-17: festival stages, Resolume,
+       MadMapper); "A portfolio you can walk into" moved to colophon.html. the room sentence after it is main.js WORK/PLATO.room -->
+  <article data-view="experiment"><p class="k">Projection mapping</p><h3>Light on festival stages</h3><p class="text">On festival stages he mapped light onto the set with Resolume and MadMapper: a template of the surface, masks cut to its edges, then content made to fit its shape.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Projection%20mapping%3A%20Light%20on%20festival%20stages">Ask him about this<span class="vh">: Light on festival stages</span></a></p><button type="button" class="show" aria-label="Show me in the room: Light on festival stages" hidden>Show me in the room</button></article>
   <!-- [check] direct ask, new (panel 013, action 10): engagement type is not in llms-full.txt -->
   <div class="contact"><h3>Work with him</h3><p>Available for freelance projects: AI agents, simulations, or something people can see and use, hands-on or as technical lead.</p>
     <p class="links"><a href="mailto:info@ruudhendrikx.nl?subject=Project%20inquiry">Mail info@ruudhendrikx.nl</a> <span aria-hidden="true">&middot;</span> <a href="https://linkedin.com/in/rjghx/" rel="noopener">Full history on LinkedIn</a></p></div>
@@ -280,7 +295,7 @@
 <ul class="hs-static" aria-label="Objects in the room" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap">
   <li><strong>Commodore 64</strong>: His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object.</li>
   <li><strong>TI-83</strong>: The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time.</li>
-  <li><strong>Quantum eraser, classical version</strong>: Crossed polarizers on the two slits mark the path, so no fringes. Put the loose polarizer in at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics. <a href="https://doi.org/10.1038/srep20834">His 2D spectroscopy paper</a></li>
+  <li><strong>Quantum eraser, classical version</strong>: Crossed polarizers on the two slits mark the path, so no fringes. Drop the polarizer into the beam at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics. <a href="https://doi.org/10.1038/srep20834">His 2D spectroscopy paper</a></li>
   <li><strong>Cloud chamber</strong>: Dry ice, isopropanol, a cold black plate. At sea level a cosmic-ray muon crosses each square centimetre about once a minute, several a second through this plate. The vapour shows the ones it catches: steep ones as short stubs, shallow ones as long lines, the odd fat alpha and a curling beta. The flux is real, the tracks are simulated.</li>
   <li><strong>Geiger counter</strong>: An SBM-20 tube at background: about 20 counts a minute, Poisson-timed. The rate is real, the counts are simulated. Flip the toggle to hear it.</li>
   <li><strong>Oscilloscope</strong>: Its probe is hooked onto the Geiger counter&rsquo;s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other.</li>

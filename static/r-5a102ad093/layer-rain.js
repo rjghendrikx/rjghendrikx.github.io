@@ -22,6 +22,38 @@ const GLOW_R = 1.2;               // m, the halo around a lantern head in the dr
 const WIND = 0.18;                // horizontal drift per metre of fall
 const PAUSE = 35;                 // s on the quay between two passes of the boat
 
+// 019 action 16 (the raindrop, named): where one rivulet runs on a pane, as the glass shader below draws it (its columns
+// of 0.5 m, its h21 hash, its 0.4 threshold), so layer-hotspots.js can hang a card on it. This only reads the shader's
+// numbers. d = cz_canal_night's extras; near = a node-space point (glTF): the pane whose centre is
+// nearest it. Returns { x, y0, y1, z, w } in node space: the trail's line x, the pane's bottom and top, its plane, its width,
+// or null.
+const fr = (v) => v - Math.floor(v);
+function h21(x, y) {
+  let a = fr(x * 123.34), b = fr(y * 456.21);
+  const d = a * (a + 45.32) + b * (b + 45.32);
+  a += d; b += d;
+  return fr(a * b);
+}
+export function rivulet(d, near) {
+  if (!d?.rain_panes) return null;
+  let best = null;
+  for (let k = 0; k < d.rain_panes.length; k += 5) {
+    const [cx, cy, cz, w, h] = d.rain_panes.slice(k, k + 5);
+    const dist = Math.hypot(cx - near.x, cy - near.y);
+    if (best && best.dist <= dist) continue;
+    const off = k * 3.1;                                  // the shader's per-pane offset of aP.x
+    let pick = null;
+    for (let col = Math.floor(off / 0.5); col <= Math.floor((off + w) / 0.5); col++) {
+      const hc = h21(col + 0.5, 2.5);                     // the shader's h21(vec2(col, 2.0) + 0.5)
+      const xr = (col + 0.15 + 0.7 * hc) * 0.5 - off;     // on the pane, from its left edge
+      if (hc < 0.4 || xr < 0.12 * w || xr > 0.88 * w) continue;
+      if (!pick || Math.abs(xr - w / 2) < Math.abs(pick - w / 2)) pick = xr;
+    }
+    if (pick !== null) best = { dist, x: cx - w / 2 + pick, y0: cy - h / 2, y1: cy + h / 2, z: cz, w };
+  }
+  return best && { x: best.x, y0: best.y0, y1: best.y1, z: best.z, w: best.w };
+}
+
 export default function mount(live) {
   const { THREE, byName, camera } = live;
   const node = byName('cz_canal_night');
@@ -122,10 +154,12 @@ export default function mount(live) {
         vec4 a = drop(vP, 0.014, 0.14, 0.10, 0.24, px), b = drop(vP + 0.37, 0.03, 0.10, 0.12, 0.26, px);
         vec4 g = drop(vP + 1.13, 0.065, 0.06, 0.10, 0.17, px);
         // rivulets: 2-3 per pane, a drop running down now and then, a thin wet trail behind it
-        float col = floor(vP.x / 0.5), hc = h21(vec2(col, 2.0));
+        // merge 020: hashed at the column's centre (+0.5): at integer corners h21 gave every column of both panes < 0.4,
+        // so no rivulet ever ran (rivulet() below found none); now 3 on the left pane, 2 on the right
+        float col = floor(vP.x / 0.5), hc = h21(vec2(col, 2.0) + 0.5);
         float xr = (col + 0.15 + 0.7 * hc) * 0.5 + 0.006 * sin(vP.y * 23.0 + hc * 6.0) + 0.003 * sin(vP.y * 61.0);
         float dx = vP.x - xr;
-        float speed = mix(0.05, 0.14, h21(vec2(col, 5.0)));
+        float speed = mix(0.05, 0.14, h21(vec2(col, 5.0) + 0.5));
         float headY = 3.2 - mod(uTime * speed + hc * 9.0, 4.0), above = vP.y - headY, on = step(0.4, hc);
         float tw = max(0.0016, px * 1.6);                                        // never under ~1.5 px: no 1-px crawl
         float trail = on * step(0.0, above) * exp(-above / 0.9) * (1.0 - smoothstep(tw * 0.35, tw, abs(dx)))
