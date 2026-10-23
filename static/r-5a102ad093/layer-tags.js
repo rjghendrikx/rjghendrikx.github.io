@@ -184,8 +184,12 @@ export default function mount(live) {
   // camera's right vector)
   function edgeOf(id) {
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-    const first = (byView.get(id) ?? [])[0];
-    if (!first) return null;
+    // merge 021 (panel 021 action 13): the object of the view nearest the frame, not the list's first (on the phone hero
+    // "Agents ->" aimed at the binder off screen while the laptop was a hand's width outside the edge)
+    const list = byView.get(id) ?? [];
+    if (!list.length) return null;
+    const off = (o) => { const q = toScreen(o.box.getCenter(new THREE.Vector3())); return q.behind ? Infinity : Math.hypot(Math.max(0, -q.x, q.x - innerWidth), Math.max(0, -q.y, q.y - innerHeight)); };
+    const first = list.reduce((a, b) => (off(b) < off(a) ? b : a));
     const c = first.box.getCenter(new THREE.Vector3()), s = toScreen(c);
     let side = c.clone().sub(camera.position).dot(right) < 0 ? -1 : 1;
     if (onScreen(s) || (!s.behind && s.x > 0 && s.x < innerWidth)) side = 2;   // in frame but out of reach, or below it
@@ -300,15 +304,20 @@ export default function mount(live) {
   // edge tags: recomputed on arrival and resize, only on the hero
   const edged = new Set();         // the views an edge tag names (the gaze leaves them to it)
   const areas = { key: '', v: {} };
-  function edges() {
+  // merge 021 (panel 021 action 4): `only`, a list of view ids, hangs edge tags for those views alone, also off the hero in
+  // the room (a phone walk whose frame holds no Work object keeps one Work tag on its edge)
+  const edges = () => edgesFor(null);   // as a callback (rAF, an observer): never its argument
+  function edgesFor(only) {
     for (const t of tags.values()) if (t.why === 'edge') hide(t);
     for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
-    if (live.view() !== home || live.root.dataset.intro === 'playing') return;   // not from the flight's camera
+    if ((only ? !live.inRoom?.() : live.view() !== home) || live.root.dataset.intro === 'playing') return;   // not from the flight's camera
     edged.clear();
     // round 020 (panel 019 action 4): the walk's standpoints (desktop) are places too: one out of reach from the hero (the
     // back of the room, behind the camera, where no floor in frame is near) gets the edge tag that points the way. A
     // standpoint is a person-sized column on its spot, never a busy box for the other tags
-    for (const s of live.stands?.() ?? []) if (!byView.has(s.id)) {
+    // round 021 D: the phone walks too now, but keeps 019's edge budget (<= 2 tags a side): there the floor is the road to a
+    // standpoint, and the back of the room is a free walk away, so its tags stay the desktop's
+    for (const s of coarse.matches || only ? [] : live.stands?.() ?? []) if (!byView.has(s.id)) {
       byView.set(s.id, [{ node: null, place: true, mats: [], box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(s.pos.x, 0.85, s.pos.z), new THREE.Vector3(0.5, 1.7, 0.5)) }]);
       tags.set(s.id, make(s.id));
     }
@@ -318,6 +327,7 @@ export default function mount(live) {
     const area = areas.v;
     const per = { [-1]: [], [1]: [], [2]: [] };
     for (const id of byView.keys()) {
+      if (only && !only.includes(id)) continue;
       // in reach: an object's centre in frame and clear of the page's boxes (a small object on the bench is found by its
       // glow and its tag), or a real share of the frame (the clickable px² of the click code's own grid); without the grid,
       // any sample point of an object
@@ -370,20 +380,26 @@ export default function mount(live) {
         for (const { t } of list.sort((a, b) => a.e.x - b.e.x)) { let b = place(t, m, undefined, undefined, done); if (b.x < right) { t.edge.x += right - b.x; b = place(t, m, undefined, undefined, done); } right = Math.max(b.x, right) + b.w + 8; done.push(b); }
         continue;
       }
-      for (const { t } of list.sort((a, b) => a.e.y - b.e.y)) {
+      const n = list.length;
+      for (const [i, { t }] of list.sort((a, b) => a.e.y - b.e.y).entries()) {
         const h = t.el.offsetHeight;
         if (coarse.matches) {
-          // touch: vertically centred below the header, then clear of the window glass and of what a finger can tap
-          const [top, low] = bounds(t, m.cap, h);
-          t.edge.y = (top + low) / 2;
-          let b = place(t, m, undefined, undefined, done);
-          for (let k = 0; k < 30 && overGlass(b) && b.y < low; k++) { t.edge.y = b.y + 12; b = place(t, m, undefined, undefined, done); }
-          for (let k = 0; k < 60 && hits(b) && b.y < low; k++) {
-            t.edge.y = b.y + 8;
-            const nb = place(t, m, undefined, undefined, done);
-            if (nb.y <= b.y) break;             // an obstacle (a pill, the toast) holds it: stay above the object instead
-            b = nb;
+          // touch: below the header, clear of the window glass and of what a finger can tap. Round 021: n tags on one side
+          // each get their own 1/n of the band and take the clear height nearest its centre (else the nearest clear one in
+          // the whole band, else the slot's centre); pushed down from one shared centre they ran to the toast and stacked
+          // there (the phone hero's "Least action →" over "Agents →")
+          const [top0, low0] = bounds(t, m.cap, h), slot = (low0 + h - top0) / n;
+          const top = top0 + slot * i, low = Math.max(top, Math.min(low0, top + slot - h));
+          const at = (y) => { t.edge.y = y; return place(t, m, undefined, undefined, done); };
+          const clear = (q) => !hits(q) && !overGlass(q);
+          let b = null;
+          for (const [lo, hi] of [[top, low], [top0, low0]]) {
+            const c = (lo + hi) / 2, ys = [];
+            for (let y = lo; y <= hi; y += 12) ys.push(y);
+            for (const y of ys.sort((p, q) => Math.abs(p - c) - Math.abs(q - c))) { const q = at(y); if (clear(q)) { b = q; break; } }
+            if (b) break;
           }
+          b ??= at((top + low) / 2);
           done.push(b);
           continue;
         }
@@ -414,7 +430,11 @@ export default function mount(live) {
   canvas.addEventListener('pointerleave', () => { if (hoverId && tags.get(hoverId)?.why === 'hover') hide(tags.get(hoverId)); hoverId = null; });
   canvas.addEventListener('pointerdown', () => { for (const t of tags.values()) if (t.why === 'gaze') hide(t); });
   // panel 019 action 8: a click that moves the camera puts the glow out first (main.js room:move, the move's first frame)
-  addEventListener('room:move', () => hideAll(true));
+  // merge 021 (panel 021 action 4): edge tags hide while the camera moves too (a flight, a walk, a drag, a key step): a tag
+  // that points the way from a frame you are leaving lies; main.js says 'room:still' when a drag or a step has come to rest
+  addEventListener('room:move', () => hideAll());
+  addEventListener('room:drag', () => { for (const t of tags.values()) if (t.why === 'edge') hide(t); });
+  addEventListener('room:still', () => { if (live.view() === home) edges(); });
 
   // gaze: the first look at the room shows where the work is
   let gazeT = 0;
@@ -458,7 +478,11 @@ export default function mount(live) {
       for (const t of tags.values()) if (t.why !== 'edge' || id !== home) hide(t);
       for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
       if (id === home) requestAnimationFrame(edges);
-      else if (live.inRoom?.()) requestAnimationFrame(gaze);   // a standpoint: the work in reach from here hangs its tags
+      else if (live.inRoom?.()) requestAnimationFrame(() => {   // a standpoint: the work in reach from here hangs its tags
+        gaze();
+        // merge 021 (action 4): on a phone, a walk whose frame holds no Work object still names one, on its edge
+        if (coarse.matches && ![...tags.values()].some((t) => t.why === 'gaze' && WORK_VIEWS.includes(t.id))) edgesFor(WORK_VIEWS);
+      });
     },
     api: {
       gaze, edges,

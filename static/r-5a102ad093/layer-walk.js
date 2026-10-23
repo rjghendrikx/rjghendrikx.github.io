@@ -8,7 +8,14 @@
 // close-up, where the floor stays the way back), the cursor (WALK_CURSOR) and go() read the same intent, and a standpoint
 // moves like a view: it pushes #<id>, moving on replaces it, so browser Back lands on the hero and Esc goes home.
 //
-// Cost: one hidden disc (+1 draw call only while the pointer is over walkable floor), no per-frame work at rest.
+// Round 021 D (Ruud, 2026-10-23: "I also want to move in translating directions"): the floor is free. A click on it walks to
+// that spot at eye height (a standpoint within SNAP of the spot is the stop instead), facing the way you went; main.js adds
+// the right-button / two-finger pan and the arrow / WASD steps. All three ask this module's one clearance table (nav): the
+// room's shell (the floor's box, inset by SHELL) and the furniture's footprints (the baked boxes, out by BODY), so the
+// camera never leaves the shell or stands in a piece of furniture. On the phone too: Ruud's ask overrides 019's mouse-only.
+//
+// Cost: one hidden disc (+1 draw call only while the pointer is over walkable floor). Not free at rest: main.js runs its
+// guardEye (one depth() test against the footprints) and the controls' update every frame (merge 021, panel 021 action 15).
 import { noPick } from './layer-common.js';
 
 // The standpoints are the layout's STANDS rows (round 020, panel 019 action 6: lib/layouts/canal_house.py, beside VIEWS),
@@ -23,17 +30,32 @@ const CARDS = {
 };
 const FLOOR = new Set(['at_floor', 'cz_rug']);
 const FLOOR_Y = 0.06;        // m: a hit this low on the floor or the rug is floor (the rug is ~1 cm)
-const REACH = 1.8;           // m: a spot further than this from every other place walks nowhere (a far spot is not a place);
-                            // 1.8 (was 1.5) so the floor strip at the hero's lower right reaches the back of the room
 const POOL_R = 0.42;         // m: the lamp pool's radius on the boards
 const POOL_A = 0.32;         // its peak alpha, additive: a lift of the bake, never a mark
 const POOL_MS = 140;         // its fade, in and out
+// round 021 D: the free walk's clearance table
+const SNAP = 0.6;            // m: a floor spot this close to a standpoint (or the hero) on the plan walks to it, the stop
+const SHELL = 0.25;          // m: the eye stays this far inside the floor's box (the walls, the window wall, the door)
+const BODY = 0.08;           // m: and this far off a piece of furniture's footprint (the window standpoint stands 0.09 m off the stool)
+// merge 021 (panel 021 action 3): a node standing on the floor that reaches TALL[0] m or higher (the bookcase, the chimney
+// breast, the floor lamp) and the eye-height nodes in TALL_NAMES (Plato on his plinth, the plants, the rack) keep the eye
+// TALL[1] m off: the near plane stays off Plato, the eye out of the bookcase's lightmap texels (D's eye went to 0.08 m and saw
+// the plaid). The bench's instruments need no more than BODY: their tops are <= 0.95 m, so the free eye's band (>= 1.45 m)
+// keeps it >= 0.5 m from the optics, the chamber and the scope (free_move_gate); the rest keeps BODY
+const TALL = [0.9, 0.4];
+const TALL_NAMES = /^(plato|at_plinth|cz_plant(_\d+)?|rack)$/;
+const BAND = [1.0, 2.2];     // m: the height range any place may have its eye in (a seated standpoint is 1.2)
+// merge 021 (panel 021 action 2, open call 5's default): the free eye's own range, the pan's up/down: a standing person's
+// eye, not a crane's (D rose to 2.2 m); on release it eases back to EYE (main.js). A place below it (the seat) may only rise
+const FREE_BAND = [1.45, 1.85];
+const MIN_STEP = 0.35;       // m: a walk shorter than this is no walk (a click at your feet)
+const STEP_OVER = 0.2;       // m: a thing lower than this is stepped over (the crash pad by the table, 0.17 m)
+const SEG = 0.08;            // m: the walk's path is tested every SEG
+const ROUTE_STEP = 0.2;      // m: the grid a walk round a piece of furniture picks its waypoint from
 
 export default function mount(live) {
   const { THREE, scene, byName } = live;
-  // merge 019 step 2 (UX's conditional blocker): a mouse only. On touch the floor is no hidden gesture: a tap there does what
-  // it did before the walk (nothing on the hero, back from a view), and the phone reaches every case by its tag
-  if (!matchMedia('(pointer: fine)').matches) return null;
+  // round 021 D: on touch too (Ruud's ask overrides merge 019 step 2's mouse-only ruling): tap the floor to walk
   if (live.gate || !live.addStands || !byName('at_floor')) return null;
   const rows = [];
   scene.traverse((o) => { const d = o.userData; if (d.st_label) rows.push({ id: o.name.replace(/^st_/, ''), label: d.st_label, order: d.st_order ?? 0,
@@ -56,17 +78,110 @@ export default function mount(live) {
   const hero = { id: live.home, pos: live.heroPos };
   const places = [hero, ...stands];
   const dist2 = (s, p) => (s.pos.x - p.x) ** 2 + (s.pos.z - p.z) ** 2;   // on the floor plan
-  // the place a click on this floor hit walks to: of the places other than where you stand (the hero among them), the one
-  // nearest the spot, within REACH of it. Merge 019 (panel 019 action 5): never "where you stand", so the floor at your
-  // feet walks somewhere too: from the hero, the strip at the lower right goes to the back of the room, and every
-  // standpoint has floor that goes home
-  function stepOf(hit, cur) {
+
+  // the clearance table (round 021 D), from the baked meshes' world boxes grouped by top-level node: the shell is the floor's
+  // box; an obstacle is a node that stands in the room (on the floor plan, below head height, not flat, not the shell or the
+  // canal outside). A node wholly outside the inset shell (the door, the poster, a wall's plinth) is the shell's business
+  const fb = new THREE.Box3().setFromObject(byName('at_floor'));
+  const shell = { x0: fb.min.x + SHELL, x1: fb.max.x - SHELL, z0: fb.min.z + SHELL, z1: fb.max.z - SHELL };
+  const boxes = new Map();
+  for (const m of solids) { const t = top(m); if (!t || FLOOR.has(t.name)) continue;
+    const b = new THREE.Box3().setFromObject(m); boxes.set(t, boxes.has(t) ? boxes.get(t).union(b) : b); }
+  const area = (b) => (b.max.x - b.min.x) * (b.max.z - b.min.z), floorArea = area(fb);
+  const obstacles = [];
+  for (const [t, b] of boxes) {
+    if (b.max.y < STEP_OVER || b.min.y > BAND[1] || area(b) > 0.5 * floorArea) continue;   // low enough to step over: no obstacle
+    if (b.max.x < shell.x0 || b.min.x > shell.x1 || b.max.z < shell.z0 || b.min.z > shell.z1) continue;
+    const r = (b.min.y < 0.05 && b.max.y >= TALL[0]) || TALL_NAMES.test(t.name) ? TALL[1] : BODY;
+    obstacles.push({ name: t.name, x0: b.min.x - r, x1: b.max.x + r, z0: b.min.z - r, z1: b.max.z + r, r, top: +b.max.y.toFixed(3) });
+  }
+  // how far p (an eye position) is from allowed: 0 when clear, else the sum of the shell's overshoot and the deepest way
+  // into an obstacle's footprint (its shortest way out)
+  function depth(p) {
+    let d = Math.max(0, shell.x0 - p.x) + Math.max(0, p.x - shell.x1) + Math.max(0, shell.z0 - p.z) + Math.max(0, p.z - shell.z1)
+      + Math.max(0, BAND[0] - p.y) + Math.max(0, p.y - BAND[1]);
+    let o = 0;
+    for (const b of obstacles) if (p.x > b.x0 && p.x < b.x1 && p.z > b.z0 && p.z < b.z1) o = Math.max(o, Math.min(p.x - b.x0, b.x1 - p.x, p.z - b.z0, b.z1 - p.z));
+    return d + o;
+  }
+  const free = (p) => depth(p) === 0;
+  // a straight move a -> b stays clear. From a clear place exactly: b clear (the shell and the band are convex) and the
+  // segment through no footprint (a 2D slab test; gate run 3: sampling every SEG cut a corner of the plinth by 2 mm). From
+  // a place that is itself not clear (a pose the code put there) sampled: it may only get clearer
+  function crosses(a, b, o) {
+    let t0 = 0, t1 = 1;
+    for (const [p, d, lo, hi] of [[a.x, b.x - a.x, o.x0, o.x1], [a.z, b.z - a.z, o.z0, o.z1]]) {
+      if (Math.abs(d) < 1e-12) { if (p <= lo || p >= hi) return false; continue; }
+      let u = (lo - p) / d, v = (hi - p) / d;
+      if (u > v) [u, v] = [v, u];
+      t0 = Math.max(t0, u); t1 = Math.min(t1, v);
+      if (t1 - t0 <= 1e-9) return false;
+    }
+    return true;
+  }
+  function pathClear(a, b) {
+    if (depth(a) === 0) return depth(b) === 0 && !obstacles.some((o) => crosses(a, b, o));
+    const n = Math.max(1, Math.ceil(a.distanceTo(b) / SEG)), q = new THREE.Vector3();
+    let was = depth(a);
+    for (let i = 1; i <= n; i++) { const d = depth(q.copy(a).lerp(b, i / n)); if (d > was + 1e-6) return false; was = Math.min(was, d); }
+    return true;
+  }
+  // a move from a toward b, as far as it stays clear: the whole of it, else sliding along one axis, else nothing
+  function clamp(a, b) {
+    if (pathClear(a, b)) return b.clone();
+    for (const c of [new THREE.Vector3(b.x, b.y, a.z), new THREE.Vector3(a.x, b.y, b.z), new THREE.Vector3(a.x, a.y, a.z).setY(b.y)]) if (pathClear(a, c)) return c;
+    return a.clone();
+  }
+  // a walk between two places whose straight line crosses a footprint goes round it: the one waypoint (on a ROUTE_STEP grid
+  // of clear spots) that makes the shortest clear two-leg walk; [] when the straight line is clear, null when nothing is
+  function route(a, b) {
+    if (pathClear(a, b)) return [];
+    let best = null, len = Infinity;
+    const w = new THREE.Vector3();
+    for (let x = shell.x0; x <= shell.x1 + 1e-6; x += ROUTE_STEP) for (let z = shell.z0; z <= shell.z1 + 1e-6; z += ROUTE_STEP) {
+      w.set(x, (a.y + b.y) / 2, z);
+      const l = a.distanceTo(w) + w.distanceTo(b);
+      if (l >= len || !free(w) || !pathClear(a, w) || !pathClear(w, b)) continue;
+      best = w.clone(); len = l;
+    }
+    return best ? [best] : null;
+  }
+  // is there a clear walk from `a` to the place? Asked by every hover over a snap disc: cached per (spot, place)
+  const reach = new Map();
+  function reachable(a, place) {
+    const k = `${a.x.toFixed(3)},${a.z.toFixed(3)}>${place.id}`;   // merge 021: to the mm (a cm key let a walk 2 mm away reuse a 'yes')
+    if (!reach.has(k)) { if (reach.size > 256) reach.clear(); reach.set(k, route(a, new THREE.Vector3(place.pos.x, a.y, place.pos.z)) !== null); }
+    return reach.get(k);
+  }
+  const tall = rows.filter((s) => s.pos.y > 1.4);
+  const EYE = tall.length ? tall.reduce((a, s) => a + s.pos.y, 0) / tall.length : 1.6;   // the standing standpoints' eye
+
+  // the place a click on this floor hit walks to (round 021 D): a named place (a standpoint, or the hero) within SNAP of the
+  // spot on the plan, never the one you stand at; else the spot itself at eye height ('walk'), when the straight walk there
+  // stays clear; a spot in a footprint or past the shell walks as far as it can toward it. from: the eye now
+  function stepOf(hit, cur, from) {
     if (!FLOOR.has(top(hit.object)?.name) || hit.point.y > FLOOR_Y) return null;
     const other = places.filter((p) => p.id !== cur.id);
     const s = other.reduce((a, b) => (dist2(b, hit.point) < dist2(a, hit.point) ? b : a));
-    return dist2(s, hit.point) > REACH * REACH ? null : s;
+    if (!from) return null;
+    const start = new THREE.Vector3(from.x, EYE, from.z);
+    // a stop only if a clear walk there exists, straight or round one piece of furniture (gate run 1: the seat -> window walk
+    // crossed the table; main.js goTo takes the same route); else the spot is walked toward like any other
+    if (dist2(s, hit.point) <= SNAP * SNAP && reachable(start, s)) return { id: s.id, at: new THREE.Vector3(s.pos.x, 0, s.pos.z) };
+    const want = new THREE.Vector3(hit.point.x, EYE, hit.point.z);
+    let to = want;
+    if (!free(want) || !pathClear(start, want)) {
+      // back along the line toward you to the farthest clear spot the walk reaches
+      const n = Math.ceil(start.distanceTo(want) / SEG);
+      to = null;
+      for (let i = n - 1; i > 0 && !to; i--) { const c = start.clone().lerp(want, i / n); if (free(c) && pathClear(start, c)) to = c; }
+      if (!to) return null;
+    }
+    if (Math.hypot(to.x - from.x, to.z - from.z) < MIN_STEP) return null;
+    return { id: 'walk', at: new THREE.Vector3(to.x, 0, to.z), pos: to };
   }
-  live.addStands(stands, stepOf);
+  live.addStands(stands, stepOf, { free, depth, clamp, pathClear, route, eye: EYE, band: BAND, freeBand: FREE_BAND,
+    bounds: () => ({ shell: { ...shell }, obstacles: obstacles.map((o) => ({ ...o })), shellInset: SHELL, body: BODY, tall: TALL, band: BAND, freeBand: FREE_BAND, eye: EYE, snap: SNAP }) });
 
   // the lamp pool: a soft warm disc on the boards, additive, eased in and out; the only thing the walk draws
   const pool = noPick(new THREE.Mesh(new THREE.CircleGeometry(POOL_R, 40).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({
@@ -83,7 +198,7 @@ export default function mount(live) {
   const fade = () => (live.reduceMotion?.matches ? Infinity : 1000 / POOL_MS);
   function hover(it) {
     want = it.kind === 'walk' ? 1 : 0;
-    if (want) pool.position.set(it.at.x, it.at.y + 0.004, it.at.z);
+    if (want) pool.position.set(it.at.x, 0.004, it.at.z);   // where you will stand, not where the pointer is
     if (want || shown) live.render();
   }
   live.renderer.domElement.addEventListener('pointerleave', () => { want = 0; live.render(); });
@@ -116,6 +231,7 @@ export default function mount(live) {
     api: {
       stands: () => stands.map((s) => ({ id: s.id, label: s.label, pos: s.pos.toArray(), target: s.target.toArray() })),
       dropped: () => [...dropped],
+      bounds: () => live.nav?.()?.bounds() ?? null,
       pool: () => ({ on: want > 0, visible: pool.visible, alpha: pool.material.uniforms.a.value, at: pool.position.toArray(), hinted }),   // on: where it is heading
     },
   };

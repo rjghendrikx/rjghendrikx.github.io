@@ -33,6 +33,13 @@ export const CAPTIONS = [
   // [check] panel 015 action 12: the sweep in numbers
   ['scope', { kicker: 'Pulses · live', title: 'Oscilloscope',
     body: 'Its probe is hooked onto the Geiger counter’s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other.' }],
+  // [check] round 021 A, the bench (vault profile.md: measure before you believe, and label how sure you are). Sources:
+  // areas/car/notes/zda48-tuning.md (the three labels), areas/hifi/notes/power-supply-and-mains.md (the ripple test),
+  // areas/hifi/notes/2026-06-19-dsd-cold-start-mute.md ("not intermittent: deterministic on every cold open")
+  // merge 021 (panel 021 action 8): three lines; the ripple figure as on the page and in the source (8-13 mV pp on the
+  // OWON handheld, on battery), the cold mute's scope as the 2026-07-09 finding has it (the next start after an album ran out)
+  ['pr_notebook', { kicker: 'The bench · how sure', title: 'Lab notebook',
+    body: 'Every line ends in one of three labels: tested, preference, hypothesis. Two 12 V adapters on a handheld scope, on battery, no load: 8 to 13 mV peak to peak, the stock one a little lower. Tested. A fault that felt intermittent happened on every cold open after an album ran out; the gap was in what he had watched.' }],
   // [check] panel 015 action 1: the room has no camera, so the stripes label points, they do not range them
   ['projector', { kicker: 'An object shows its own measurement', title: 'Structured light',
     body: 'Gray-code stripes label every point with a projector column and row; the camera beside the lens reads each label and triangulates the depth. Then the scanned object becomes its own point cloud.' }],   // [check] wave 5 P2
@@ -40,8 +47,18 @@ export const CAPTIONS = [
   ['plato', { kicker: 'Plato’s cave · projection mapping', title: 'Plato',
     body: 'A plaster cast of Plato’s head, scanned by the SMK in Copenhagen and in the public domain. In his cave, prisoners take shadows thrown on a wall for the real thing: projection, 2,400 years early. He mapped light onto festival stages with Resolume and MadMapper; here the projector first measures the head, then paints it.',
     more: { href: 'https://open.smk.dk/artwork/image/KAS2111', label: 'The cast at SMK' } }],
+  // merge 021 (action 11): the chain from library to cone is named here, once (hifi gear/signal-chain.md; the Zen Stream as
+  // "a streamer", no hostnames). [check]
   ['amp', { kicker: 'Listening corner', title: 'Luxman L-308',
-    body: 'His own amplifier, last box in a chain he can name from library to speaker cone. The real one has no meters, so neither does this one.' }],
+    body: 'His own amplifier, the last box in a chain he can name from library to cone: Roon holds the files, HQPlayer upsamples them to DSD256, a streamer hands them to the NEO iDSD 2, the Luxman drives the B&Ws. The real one has no meters, so neither does this one.' }],
+  // merge 021 (panel 021 action 11): one voice per card: the records speak to the stance, the chain is named once, on the
+  // Luxman's card; the shelf is cut to its definition and the compression line (~35 words). [check] notes/captions.md
+  // round 021 B (profile.md zone 4, "mastery of the tool makes flow possible"): the crate's two named sleeves
+  // (objects/pr_records.py; records: the builder's pick, no [check]) and the chain from library to cone (hifi
+  // gear/signal-chain.md, no hostnames). [check] the rest, notes/captions.md
+  ['pr_records', { kicker: 'Listening corner', title: 'The records',
+    body: 'Springsteen’s Greetings from Asbury Park, N.J. and Jamie Cullum’s Twentysomething, two of the albums he tracked down in hi-res. Know a chain well enough and you stop hearing it; then there is only the music.' }],
+  ['pr_records_sleeves', 'pr_records'],
   ['pr_dm603', { kicker: 'Listening corner', title: 'B&W DM603',
     body: 'Three-way floorstanders with the yellow Kevlar midrange B&W is known for. Around 90 dB sensitive: an easy load for the Luxman.' }],
   ['pr_ifi', { kicker: 'Listening corner', title: 'iFi NEO iDSD 2',
@@ -49,33 +66,41 @@ export const CAPTIONS = [
   ['pr_hd660', { kicker: 'Listening corner', title: 'Sennheiser HD 660S2',
     body: 'Open-back, 300 Ω, driven straight from the NEO iDSD 2. The quiet half of the chain.' }],
   ['bookshelf', { kicker: 'Reading', title: 'The shelf',
-    body: 'McGilchrist, Abram, Lane, Koch, Kastrup, Faggin, and a binder of Levin papers: the thinkers he keeps whole collections of notes on.' }],
+    // round 021 B (profile.md zone 3, "consciousness is not computation; the map is not the territory"): his own
+    // definition (vault faggin/SOUL.md) and Abram's compression chain (abram/README.md). [check] notes/captions.md
+    body: 'McGilchrist, Abram, Lane, Koch, Kastrup, Faggin, Levin. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory.' }],
   ['cz_bookcase', 'bookshelf'],
   ['pr_brain', { kicker: 'Reading', title: 'Two hemispheres',
     body: 'McGilchrist’s claim is not left-logic, right-creativity. It is about attention: each half attends differently, and so brings forth a different world.' }],
   ['pr_4004', { kicker: 'Reading', title: 'Intel 4004',
     body: 'The first commercial microprocessor, 1971, designed by Federico Faggin, who later concluded that consciousness cannot be computed. Syntax is not semantics.' }],
-  ['pr_perfume', { kicker: 'Reading', title: 'Perfume',
-    body: 'Luca Turin’s idea: the nose reads molecular vibrations, not shapes. Smell as spectroscopy. Not proven, not refuted.' }],
-  ['pr_ventjar', { kicker: 'Reading', title: 'Vent rock',
-    body: 'Nick Lane’s case for where life began: alkaline vents, where a proton gradient across thin mineral walls does for free what every cell still does.' }],
-  ['pr_prism', { kicker: 'Light', title: 'Prism',
-    body: 'White light, taken apart. Every spectrometer since Newton’s does a version of this.' }],
   ['pr_ledmatrix', { kicker: 'Light', title: 'LED matrix',
     body: 'A grid of squares, each with a live alpha: the core of his Metal visuals engine, the successor to an old Quartz Composer workflow for TVs and LED walls.' }],
   ['pr_3090', { kicker: 'Now', title: 'RTX 3090',
     body: '24 GB of GPU on his own hardware: open models driving an agent harness, for cheap loops, private code and offline work.' }],
+  // round 021 B (profile.md zone 5, "the human still pedals: agency over speed"), merge 021 (panel 021 action 5, open call
+  // 1's default): the laptop zone speaks once. The Atlas figures are C's own case card (index.html #work data-case="atlas");
+  // servant / sparring / mirror is the Agents case's room line (main.js WORK.terminal); here only the one measured ratio of
+  // the command-center review (cc-setup-review-2026-09 research 13, its denominator with it). [check] notes/captions.md
+  ['pr_terminal', { kicker: 'Agents · the human still pedals', title: 'The laptop',
+    body: 'Measured on his own setup over 16 weeks: the model was at work for 29 of the 89 hours a session was live. The rest of the time was his.' }],
   ['pr_wheel', { kicker: 'Now', title: 'Bicycle wheel',
     body: 'Jobs called the computer a bicycle for the mind. The metaphor assumes the human still pedals; with agents that is a choice. He means to keep pedalling.' }],
-  ['pr_climb', { kicker: 'Off the bench', title: 'Climbing shoes',
-    body: 'Yellow and black barefoot climbing shoes. Bouldering: a puzzle you solve with your body.' }],
   ['pr_poster_action', { kicker: 'How the intro flew', title: 'The principle of least action',
     body: 'Every path between two points gets one number, the action S = ∫L dt with L = T − V. Vary the path, q → q + εη with η zero at both ends, and ask that S does not change to first order, δS = 0. Integrate by parts: the boundary term vanishes and the Euler–Lagrange equation is left, d/dt ∂L/∂q̇ − ∂L/∂q = 0, which for L = ½mq̇² − V is F = ma. With p = ∂L/∂q̇ and H = Σ pq̇ − L, write S = ∫(Σ pq̇ − H) dt and vary q and p independently: integrating the p δq̇ term by parts gives Hamilton\'s equations, q̇ = ∂H/∂p and ṗ = −∂H/∂q. Why stationary? Feynman: every path counts, with a phase e^{iS/ħ}; near δS = 0 the phases agree and add up, elsewhere they cancel. The camera that brought you in rode such a path: a bead on a wire along its route, through an invented landscape. After a lecture by Erik Verlinde (University of Amsterdam). Sources: Goldstein, Poole & Safko, Classical Mechanics, 3rd ed., ch. 2 and §8.5; Feynman Lectures on Physics, Vol. II, ch. 19; Thornton & Marion, Classical Dynamics, 5th ed., ch. 7; Cline, Variational Principles in Classical Mechanics, ch. 9.',
     more: { href: 'https://arxiv.org/abs/1001.0785', label: 'Verlinde: F = ma from entropy' } }],
   // [check] 019 action 16, the raindrop named (Ruud's ask, 2026-10-22; David Abram's Sensing talk, the-body-knew-first
   // notes): no node; one rivulet on the hero pane (layer-rain.js rivulet()) is its spot. In the canal view it is the card
   ['raindrop', { kicker: 'At the window', title: 'A drop on the glass',
-    body: 'Watch a drop run down the glass. No model predicts whether it swerves left or right. Not chaos: wild. Out of our control, not out of order. (David Abram, The Spell of the Sensuous, on the shelf.)' }],
+    // round 021 (Ruud, 2026-10-23): the source is the Sensing talk, not the book; a few of its lines, no link to a full text.
+    // merge 021 (panel 021 action 9): the manuscript's card merged in, one card that points from the drop to the essay
+    // (projects/the-body-knew-first/: the talk transcript l.18, l.20; the essay §I opens on the same drop). [check]
+    body: 'Watch a drop run down the glass. David Abram, in a talk on sensing: “We cannot even predict just how that drop is going to fall”; science calls it chaotic, but “a much better word for what they mean is wild.” His essay The Body Knew First opens on this drop; it lies in print on the sill, unpublished.' }],
+  ['pr_manuscript', 'raindrop'],
+  // [check] round 021 A, the window. Source: the same essay, section II (walks, forests, where the thinking happens);
+  // areas/barefoot/ (the shoes)
+  ['pr_barefoot', { kicker: 'At the window · off the bench', title: 'Barefoot shoes',
+    body: 'Thin soles, a wide toe box, kicked off under the window. The walking came before the books: long walks through Dutch forests, along canals, through the dunes. His best thinking happens twenty minutes into a walk, not at a desk.' }],
 ];
 
 const TAP_PX = 6, TAP_MS = 600;   // main.js's click rule: a press that hardly moved
@@ -165,7 +190,7 @@ export default function mount(live) {
       box.union(m.geometry.boundingBox.clone().applyMatrix4(m.matrixWorld));
     }
     const size = box.getSize(new THREE.Vector3());
-    const spot = { name, ...text, node, meshes, box, volume: size.x * size.y * size.z,
+    const spot = { name, ...text, alias: typeof entry === 'string' ? entry : null, node, meshes, box, volume: size.x * size.y * size.z,
       anchor: new THREE.Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2) };
     for (const m of meshes) owner.set(m, spot);
     spots.push(spot);
@@ -195,6 +220,9 @@ export default function mount(live) {
   dot.className = 'hs-dot';
   dot.setAttribute('aria-hidden', 'true');
   for (const s of spots) {
+    // merge 021 (panel 021 action 10): an alias whose card has its own spot (the sleeves on the crate's card, the manuscript
+    // on the drop's) is a second way in for the pointer, not a second stop for the keyboard
+    if (s.alias && spots.some((o) => o.name === s.alias)) continue;
     const li = document.createElement('li');
     const b = document.createElement('button');
     b.type = 'button';
@@ -212,6 +240,7 @@ export default function mount(live) {
     s.button = b;
     s.li = li;
   }
+  for (const s of spots) if (!s.button) { const o = spots.find((x) => x.name === s.alias); s.button = o.button; s.li = o.li; }
   document.body.append(nav, dot, card);
 
   // State: which spot, and how it was opened. hover/peek close on their own; pinned/key wait for Esc

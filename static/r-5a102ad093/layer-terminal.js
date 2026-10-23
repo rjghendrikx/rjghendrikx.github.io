@@ -279,10 +279,10 @@ export default async function mount(live) {
       .term-panel { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
         padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
                  max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
-        background: rgba(8, 7, 6, .62); opacity: 0; transition: opacity .35s ease; }
+        background: rgba(8, 7, 6, .4); opacity: 0; transition: opacity .35s ease; }   /* merge 021 (panel 021 action 7): dims the room to ~60 %, never covers it */
       .term-panel[hidden] { display: none; }
       .term-panel.open { opacity: 1; }
-      .term-card { width: min(980px, 100%); background: #0c0f12; border: 1px solid rgba(239, 230, 218, .14);
+      .term-card { width: min(760px, 100%); background: #0c0f12; border: 1px solid rgba(239, 230, 218, .14);
         border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0, 0, 0, .55);
         transform: scale(.94); transition: transform .35s ease; }
       .term-panel.open .term-card { transform: none; }
