@@ -133,6 +133,7 @@ export default function mount(live) {
     const p = t.el.firstChild;
     p.replaceChildren();
     if (!ids && WORK_VIEWS.includes(t.id)) p.appendChild(Object.assign(document.createElement('span'), { className: 'w', textContent: 'Work' }));
+    else if (!ids && live.own?.(t.id)) p.appendChild(Object.assign(document.createElement('span'), { className: 'w', textContent: 'His own' }));   // round 022 C [check]
     for (const [i, id] of (ids ?? [t.id]).entries()) {
       const label = live.label(id);
       const word = side < 0 && i === 0 ? `← ${label}` : side === 1 && i === (ids.length - 1) ? `${label} →` : side === 2 && i === (ids.length - 1) ? `${label} ↓` : label;
@@ -197,7 +198,7 @@ export default function mount(live) {
   }
   // where a click at (x, y) goes, by the click code itself (main.js intentAt): sampled only where it matters (inside a
   // view's projected boxes, inside a tag's box), never the whole frame (a full 24 px grid cost ~2 s on desktop)
-  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' || it?.kind === 'walk' ? it.id : null; };
+  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' || it?.kind === 'walk' ? it.case ?? it.id : null; };   // round 022 C: an own case's object goes to its case
   function grid(l, t, r2, b, f, max = 160) {
     const w = r2 - l, h = b - t, st = Math.max(SAMPLE, Math.sqrt((w * h) / max));
     for (let y = t + st / 2; y < b; y += st) for (let x = l + st / 2; x < r2; x += st) if (f(x, y, st) === false) return;
@@ -417,7 +418,7 @@ export default function mount(live) {
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
   let hoverId = null;
   function hover(it, x, y) {
-    const id = it.kind === 'go' ? it.id : null;
+    const id = it.kind === 'go' ? it.case ?? it.id : null;   // round 022 C: an own case's object hangs the case's tag
     if (id === hoverId) return;
     if (hoverId && tags.get(hoverId)?.why === 'hover') hide(tags.get(hoverId));
     hoverId = id;

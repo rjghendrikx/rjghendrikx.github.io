@@ -2790,6 +2790,13 @@
    "t": "2026-10-22T20:59:04Z",
    "commit": "a50c029",
    "message": "Binders on the shelf, chimney breast and door, rose at room centre, polarizer at 60% clickable, mailto acts, raindrop hot point (Abram), raycast gate"
+  },
+  {
+   "tag": "room-iter-021-content-free-move",
+   "ts": 1792732227,
+   "t": "2026-10-23T05:10:27Z",
+   "commit": "06898ac",
+   "message": "Content round on profile.md: lab notebook, manuscript and shoes, crate with sleeves, six cases with the colophon build story; free movement (floor walk, right-drag pan, keys, phone), perfume/vent rock/prism out, raindrop quotes the Sensing talk"
   }
  ]
 }

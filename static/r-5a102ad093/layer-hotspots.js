@@ -57,7 +57,7 @@ export const CAPTIONS = [
   // (objects/pr_records.py; records: the builder's pick, no [check]) and the chain from library to cone (hifi
   // gear/signal-chain.md, no hostnames). [check] the rest, notes/captions.md
   ['pr_records', { kicker: 'Listening corner', title: 'The records',
-    body: 'Springsteen’s Greetings from Asbury Park, N.J. and Jamie Cullum’s Twentysomething, two of the albums he tracked down in hi-res. Know a chain well enough and you stop hearing it; then there is only the music.' }],
+    body: 'The library end of the chain. Know a chain well enough and you stop hearing it; then there is only the music.' }],
   ['pr_records_sleeves', 'pr_records'],
   ['pr_dm603', { kicker: 'Listening corner', title: 'B&W DM603',
     body: 'Three-way floorstanders with the yellow Kevlar midrange B&W is known for. Around 90 dB sensitive: an easy load for the Luxman.' }],
@@ -76,8 +76,10 @@ export const CAPTIONS = [
     body: 'The first commercial microprocessor, 1971, designed by Federico Faggin, who later concluded that consciousness cannot be computed. Syntax is not semantics.' }],
   ['pr_ledmatrix', { kicker: 'Light', title: 'LED matrix',
     body: 'A grid of squares, each with a live alpha: the core of his Metal visuals engine, the successor to an old Quartz Composer workflow for TVs and LED walls.' }],
-  ['pr_3090', { kicker: 'Now', title: 'RTX 3090',
-    body: '24 GB of GPU on his own hardware: open models driving an agent harness, for cheap loops, private code and offline work.' }],
+  // round 022 C: the 3090 is the local-inference case's object (main.js CASE_OF): its card carries the case's one figure,
+  // from projects/local-inference-3090/README.md (MTP speculative decoding, 30.0 -> 43.2 tok/s). [check] notes/captions.md
+  ['pr_3090', { kicker: 'His own · local inference', title: 'RTX 3090',
+    body: 'A 27-billion-parameter model on one 24 GB card, driving an agent harness. Speculative decoding: +44%, 30.0 to 43.2 tokens a second, measured before believed.' }],
   // round 021 B (profile.md zone 5, "the human still pedals: agency over speed"), merge 021 (panel 021 action 5, open call
   // 1's default): the laptop zone speaks once. The Atlas figures are C's own case card (index.html #work data-case="atlas");
   // servant / sparring / mirror is the Agents case's room line (main.js WORK.terminal); here only the one measured ratio of
@@ -95,12 +97,11 @@ export const CAPTIONS = [
     // round 021 (Ruud, 2026-10-23): the source is the Sensing talk, not the book; a few of its lines, no link to a full text.
     // merge 021 (panel 021 action 9): the manuscript's card merged in, one card that points from the drop to the essay
     // (projects/the-body-knew-first/: the talk transcript l.18, l.20; the essay §I opens on the same drop). [check]
-    body: 'Watch a drop run down the glass. David Abram, in a talk on sensing: “We cannot even predict just how that drop is going to fall”; science calls it chaotic, but “a much better word for what they mean is wild.” His essay The Body Knew First opens on this drop; it lies in print on the sill, unpublished.' }],
+    // round 022 A (profile.md, the window: nature, forests and long walks as where he thinks): the nature thread is this
+    // card's last line, once (the essay §II, memory/MEMORY.md); the shoes' card no longer repeats it. [check]
+    body: 'Watch a drop run down the glass. David Abram, in a talk on sensing: “We cannot even predict just how that drop is going to fall”; science calls it chaotic, but “a much better word for what they mean is wild.” His essay The Body Knew First opens on this drop; it lies in print on the sill, unpublished. The thinking behind it is done outside, on long walks through forests and along the water.' }],
   ['pr_manuscript', 'raindrop'],
-  // [check] round 021 A, the window. Source: the same essay, section II (walks, forests, where the thinking happens);
-  // areas/barefoot/ (the shoes)
-  ['pr_barefoot', { kicker: 'At the window · off the bench', title: 'Barefoot shoes',
-    body: 'Thin soles, a wide toe box, kicked off under the window. The walking came before the books: long walks through Dutch forests, along canals, through the dunes. His best thinking happens twenty minutes into a walk, not at a desk.' }],
+  // merge 022 (panel 022 action 9): the barefoot shoes are gone from the room, and their card with them
 ];
 
 const TAP_PX = 6, TAP_MS = 600;   // main.js's click rule: a press that hardly moved
@@ -150,7 +151,7 @@ const CSS = `
 `;
 
 export default function mount(live) {
-  const { THREE, camera, renderer, byName } = live;
+  const { THREE, camera, renderer, byName, scene } = live;
   if (live.gate) return null;            // the gates measure the bake alone: no DOM, no listeners
   const canvas = renderer.domElement;
   const isBaked = (o) => o.isMesh && o.raycast === THREE.Mesh.prototype.raycast && !o.material?.isShaderMaterial;
@@ -245,12 +246,12 @@ export default function mount(live) {
 
   // State: which spot, and how it was opened. hover/peek close on their own; pinned/key wait for Esc
   // or a tap elsewhere. peek = keyboard focus, title only; key = Enter, the full card.
-  let open = null, mode = null, hideTimer = 0;
+  let open = null, mode = null, hideAt = 0, fadeIn = null, frameNo = 0;
   const last = { x: NaN, y: NaN, vis: null };
   const v = new THREE.Vector3();
 
   function show(spot, how) {
-    clearTimeout(hideTimer);
+    hideAt = 0;
     if (open && open !== spot) open.button.setAttribute('aria-expanded', 'false');
     const changed = open !== spot;
     open = spot; mode = how;
@@ -272,11 +273,11 @@ export default function mount(live) {
     card.hidden = false;
     if (how === 'pinned' || how === 'key') dispatchEvent(new CustomEvent('room:pick', { detail: spot.name }));
     last.x = NaN;                       // update() places it next frame, from read()'s boxes (no forced layout)
-    requestAnimationFrame(() => { if (open === spot) { card.classList.add('on'); dot.classList.add('on'); } });
+    fadeIn = { spot, at: frameNo };     // the fade starts in a later frame's update() (round 022: no write between frames)
   }
 
   function hide() {
-    clearTimeout(hideTimer);
+    hideAt = 0;
     if (!open) return;
     open.button.setAttribute('aria-expanded', 'false');
     open = null; mode = null;
@@ -284,7 +285,9 @@ export default function mount(live) {
     dot.classList.remove('on', 'key');
     card.hidden = true;
   }
-  const hideSoon = () => { clearTimeout(hideTimer); hideTimer = setTimeout(hide, HIDE_MS); };
+  // round 022: the grace runs on the frame clock and the hide writes in update(), so no timer writes the DOM between two
+  // frames (the next frame's read() then forced a layout: perf --motion, 1 in ~236 hover frames in 2 of 4 runs)
+  const hideSoon = () => { hideAt = performance.now() + HIDE_MS; };
 
   // Place the card above the anchor (below if there is no room), clamped to a 16 px gutter and kept
   // off the page caption (top on phones) and the viewpoint strip (bottom).
@@ -295,6 +298,47 @@ export default function mount(live) {
   const canvasBox = () => (CR ??= canvas.getBoundingClientRect());
   const boxes = () => ({ cap: document.querySelector('.caption')?.getBoundingClientRect(),
     views: document.querySelector('.views')?.getBoundingClientRect(), w: card.offsetWidth, h: card.offsetHeight });
+  // the screen box of a world box, CSS px [l, t, r, b], clipped to the window; null when behind the camera
+  const rc = new THREE.Vector3();
+  function rectOf(box, from = 0) {
+    const r = canvasBox(), out = [Infinity, Infinity, -Infinity, -Infinity];
+    const y0 = box.min.y + from * (box.max.y - box.min.y);
+    for (let i = 0; i < 8; i++) {
+      rc.set(i & 1 ? box.max.x : box.min.x, i & 2 ? box.max.y : y0, i & 4 ? box.max.z : box.min.z).project(camera);
+      if (rc.z > 1) return null;
+      const x = r.left + (rc.x + 1) / 2 * r.width, y = r.top + (1 - rc.y) / 2 * r.height;
+      out[0] = Math.min(out[0], x); out[1] = Math.min(out[1], y); out[2] = Math.max(out[2], x); out[3] = Math.max(out[3], y);
+    }
+    return [Math.max(out[0], 0), Math.max(out[1], 0), Math.min(out[2], innerWidth), Math.min(out[3], innerHeight)];
+  }
+  // round 022 (panel 021 action 14): where the frame is dark. One render of the room at 1/LUM_DIV size, read back once per
+  // camera pose when a card opens (not per frame), so a card can hang on the darker side of its object, off the lit
+  // subject (a screen, the lamp's pool, the top shelf)
+  const LUM_DIV = 8, LUM_MS = 400;
+  let lum = null;
+  function lumAt() {
+    const key = camera.matrixWorld.elements.map((e) => e.toFixed(3)).join() + innerWidth + 'x' + innerHeight;
+    if (lum && (lum.key === key || performance.now() - lum.t < LUM_MS)) return lum;   // a card that follows a drag re-reads at most every LUM_MS
+    const w = Math.max(1, Math.round(innerWidth / LUM_DIV)), h = Math.max(1, Math.round(innerHeight / LUM_DIV));
+    const rt = new THREE.WebGLRenderTarget(w, h), px = new Uint8Array(w * h * 4);
+    renderer.setRenderTarget(rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+    renderer.readRenderTargetPixels(rt, 0, 0, w, h, px);
+    rt.dispose();
+    const sum = new Float64Array((w + 1) * (h + 1));   // a summed-area table, rows top-down, of luma 0..1
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = 4 * ((h - 1 - y) * w + x), l = (0.2126 * px[i] + 0.7152 * px[i + 1] + 0.0722 * px[i + 2]) / 255;
+      sum[(y + 1) * (w + 1) + x + 1] = l + sum[y * (w + 1) + x + 1] + sum[(y + 1) * (w + 1) + x] - sum[y * (w + 1) + x];
+    }
+    lum = { key, w, h, sum, t: performance.now() };
+    return lum;
+  }
+  // the mean luma (0..1) under a CSS px rect
+  function lumOf(L, [a, b, c, d]) {
+    const cl = (v, n) => Math.min(n, Math.max(0, Math.round(v / LUM_DIV)));
+    const x0 = cl(a, L.w), x1 = cl(c, L.w), y0 = cl(b, L.h), y1 = cl(d, L.h), W1 = L.w + 1;
+    const n = (x1 - x0) * (y1 - y0);
+    return n > 0 ? (L.sum[y1 * W1 + x1] - L.sum[y0 * W1 + x1] - L.sum[y1 * W1 + x0] + L.sum[y0 * W1 + x0]) / n : 0;
+  }
   function position() {
     if (!open) return;
     const r = canvasBox();
@@ -310,11 +354,27 @@ export default function mount(live) {
     RB = null;
     if (cap && cap.top < H / 2) top = Math.max(top, cap.bottom + 8);
     if (views && views.height) bottom = Math.min(bottom, views.top - 8);
-    if (!vis) { x = W / 2; y = bottom; }             // off-screen at this viewpoint: rest above the strip
-    let cy = y - 14 - h;
-    if (cy < top) cy = y + 14;
-    cy = Math.min(Math.max(cy, top), Math.max(top, bottom - h));
-    const cx = Math.min(Math.max(x - w / 2, g), W - g - w);
+    // off-screen at this viewpoint: rest above the strip; an object whose anchor is off but whose box shows at the frame's
+    // edge (the sill from the bench) hangs by the part in frame
+    const R0 = rectOf(open.box), inFrame = R0 && R0[2] - R0[0] >= 8 && R0[3] - R0[1] >= 8;
+    if (!vis) { x = inFrame ? (R0[0] + R0[2]) / 2 : W / 2; y = inFrame ? R0[1] : bottom; }
+    const fit = ([cx, cy]) => [Math.min(Math.max(cx, g), W - g - w), Math.min(Math.max(cy, top), Math.max(top, bottom - h))];
+    let [cx, cy] = fit([x - w / 2, y - 14 - h < top ? y + 14 : y - 14 - h]);
+    // round 022 (panel 021 action 14): the card hangs beside the lit subject, never on it. It used to drop below the anchor
+    // where above did not fit, onto the object (the laptop's screen, the shelf). Now it takes, of above, below, right and
+    // left of the object's screen box, the one that covers least of the object and, of those, the darkest frame under it
+    if (inFrame) {
+      const R = R0, L = lumAt(), my = (R[1] + R[3]) / 2;
+      const over = ([a, b]) => Math.max(0, Math.min(a + w, R[2]) - Math.max(a, R[0])) * Math.max(0, Math.min(b + h, R[3]) - Math.max(b, R[1])) / (w * h);
+      let best = null, least = Infinity;
+      const cands = [[x - w / 2, R[1] - 14 - h], [x - w / 2, R[3] + 14], [R[2] + 14, my - h / 2], [R[0] - 14 - w, my - h / 2]];
+      if (!vis) cands.push([W / 2 - w / 2, bottom - h]);   // a sliver at the edge may also rest above the strip, as before
+      for (const c of cands) {
+        const f = fit(c), score = 2 * over(f) + lumOf(L, [f[0], f[1], f[0] + w, f[1] + h]);
+        if (score < least) { least = score; best = f; }
+      }
+      [cx, cy] = best;
+    }
     card.style.transform = '';
     card.style.left = `${Math.round(cx)}px`;
     card.style.top = `${Math.round(cy)}px`;
@@ -372,6 +432,10 @@ export default function mount(live) {
     const name = ev.target.closest('button')?.dataset.hotspot;
     const s = name && spots.find((x) => x.name === name);
     if (!s) return;
+    // merge 022 (panel 022 action 7): Enter on an object that leads somewhere does what a click on it does (the RTX 3090
+    // opens #inference, a view's object flies there); the card stays the road for the objects that lead nowhere
+    const to = live.hot?.(s.node);
+    if (to && leads(s)) { hide(); live.go?.(to); return; }
     if (open === s && mode === 'key') show(s, 'peek'); else show(s, 'key');
   });
   document.addEventListener('keydown', (ev) => {
@@ -389,6 +453,9 @@ export default function mount(live) {
     hover,
     read() { RB = open ? boxes() : null; },
     update() {
+      frameNo++;
+      if (hideAt && performance.now() >= hideAt) hide();
+      if (fadeIn && frameNo > fadeIn.at) { if (open === fadeIn.spot) { card.classList.add('on'); dot.classList.add('on'); } fadeIn = null; }
       if (open) position();             // follow the camera; DOM only, no WebGL frame needed
       return false;
     },
@@ -399,6 +466,9 @@ export default function mount(live) {
       caption: (name) => { const s = spots.find((x) => x.name === name); return s && { kicker: s.kicker, title: s.title, body: s.body, more: s.more }; },
       open: (name) => { const s = spots.find((x) => x.name === name); if (s) show(s, 'pinned'); return !!s; },
       close: hide,
+      // merge 022 (panel 022 action 3): the open card is placed (update() ran position() for it) and faded in; the gates wait
+      // for this, not a fixed delay: under load no frame may run in 200 ms and the card is read where the last one hung
+      placed: () => !!open && !Number.isNaN(last.x) && !fadeIn,
       // glow on the captioned objects in view (the box centre), once: at most one per cluster (objects whose centres
       // lie within GLOW_GAP px; the biggest stands for its neighbours), staggered left to right over GLOW_SPREAD s.
       // Reduced motion: all at once, no animation, gone after GLOW_HOLD. Returns how many glowed.
@@ -433,6 +503,8 @@ export default function mount(live) {
         return kept.length;
       },
       state: () => ({ open: open?.name ?? null, mode }),
+      // round 022: would a hover on this spot show its card here (not an object that leads to another view)
+      hoverable: (name) => { const s = spots.find((x) => x.name === name); return !!s && !leads(s); },
       // screen px of each hotspot's anchor and box centre, for tests (null if off-screen)
       anchors: () => {
         const r = canvas.getBoundingClientRect();

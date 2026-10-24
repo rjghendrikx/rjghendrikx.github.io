@@ -25,7 +25,9 @@ import { noPick } from './layer-common.js';
 const CARDS = {
   door: 'From here: the C64, Agents on the laptop, the bench and the canal.',
   // round 020: the STANDS row turned this one out over the sill (it looked back at the bookcase): the card says so
-  window: 'From here: the canal and the University through the panes, the bench under the sill.',
+  // round 022 A: the STANDS row now looks down into the right pane (the manuscript, the lantern on the quay)
+  // merge 022: turned out through the left pane at the University and the canal (the light show's stage, round 022 E)
+  window: 'From here: the canal, the boats and the University across the water.',
   seat: 'From here: the hi-fi, Simulations in the cloud chamber, the C64.',
 };
 const FLOOR = new Set(['at_floor', 'cz_rug']);
@@ -42,8 +44,22 @@ const BODY = 0.08;           // m: and this far off a piece of furniture's footp
 // TALL[1] m off: the near plane stays off Plato, the eye out of the bookcase's lightmap texels (D's eye went to 0.08 m and saw
 // the plaid). The bench's instruments need no more than BODY: their tops are <= 0.95 m, so the free eye's band (>= 1.45 m)
 // keeps it >= 0.5 m from the optics, the chamber and the scope (free_move_gate); the rest keeps BODY
+// round 022 D (the tech artist's texel-aware clearance) replaces that fixed 0.4 m: each node keeps the eye as far off as its
+// bake needs, so a texel never covers more than TEXEL_PX CSS px: distance >= K / (TEXEL_PX * rho), K the viewport's px a
+// metre at 1 m (main.js pxPerMetre: the hero's lens, portrait-widened) and rho the node's texels a metre (from its UVs).
+// On the plan that is r = sqrt(D^2 - g^2), g the height between the free band and the node's box, at least BODY, and capped
+// where a designed place (the hero, a standpoint) already stands nearer: the bookcase's 89 texels/m would need 7 m on
+// desktop, and the hero shows it at 6.8 px a texel. TALL[0] now only names the wall-like nodes (main.js walkTo's room ahead)
 const TALL = [0.9, 0.4];
-const TALL_NAMES = /^(plato|at_plinth|cz_plant(_\d+)?|rack)$/;
+const TALL_NAMES = /^(plato|at_plinth|cz_plant(_\d+)?|rack)$/;   // merge 022: back from merge 021 (eye-height nodes kept R_MAX off)
+// CSS px a texel at most (gates.py TEXEL_PX_MAX); Ruud's eyes on the phone set it: ?texelpx=3 tries another (measure-on-device.md)
+const TEXEL_PX = Math.max(0.5, +new URLSearchParams(location.search).get('texelpx') || 1.5);
+// ... and never more than R_MAX m on the plan: a node whose bake is too coarse for TEXEL_PX within it (the bookcase, 89
+// texels/m, needs 7.2 m on desktop; at 1.5 px everywhere the walkable floor fell from 48 % to 13 % of the room and the
+// hero's walk cells from 89 to 27) is held at R_MAX and listed as under-resolved (bounds().coarse): its fix is a bake.
+// 0.4 m is the old TALL[1] and, measured on desktop 1440x900, the largest that keeps the designed places connected: at 0.5
+// the hero's walks to the window and the seat have no route (?rmax= tries another)
+const R_MAX = Math.max(BODY, +new URLSearchParams(location.search).get('rmax') || 0.4);
 const BAND = [1.0, 2.2];     // m: the height range any place may have its eye in (a seated standpoint is 1.2)
 // merge 021 (panel 021 action 2, open call 5's default): the free eye's own range, the pan's up/down: a standing person's
 // eye, not a crane's (D rose to 2.2 m); on release it eases back to EYE (main.js). A place below it (the seat) may only rise
@@ -88,15 +104,65 @@ export default function mount(live) {
   for (const m of solids) { const t = top(m); if (!t || FLOOR.has(t.name)) continue;
     const b = new THREE.Box3().setFromObject(m); boxes.set(t, boxes.has(t) ? boxes.get(t).union(b) : b); }
   const area = (b) => (b.max.x - b.min.x) * (b.max.z - b.min.z), floorArea = area(fb);
-  const obstacles = [];
+  // round 022 D: each node's baked texel density, texels a metre: the texture's side times sqrt(UV area / world area) over
+  // its meshes (Smart UV Project packs every island at one scale, so the mean is the density)
+  const texels = new Map();
+  { const a = new THREE.Vector3(), b = new THREE.Vector3(), c = new THREE.Vector3();
+    for (const m of solids) {
+      const t = top(m), g = m.geometry, P = g.attributes.position, U = g.attributes.uv, S = m.material.map?.image?.width;
+      if (!t || !U || !S) continue;
+      const ix = g.index, n = ix ? ix.count : P.count, at = (k) => (ix ? ix.getX(k) : k);
+      let wa = 0, ua = 0;
+      for (let k = 0; k < n; k += 3) {
+        const i = at(k), j = at(k + 1), l = at(k + 2);
+        a.fromBufferAttribute(P, i).applyMatrix4(m.matrixWorld); b.fromBufferAttribute(P, j).applyMatrix4(m.matrixWorld); c.fromBufferAttribute(P, l).applyMatrix4(m.matrixWorld);
+        wa += b.sub(a).cross(c.sub(a)).length() / 2;
+        ua += Math.abs((U.getX(j) - U.getX(i)) * (U.getY(l) - U.getY(i)) - (U.getX(l) - U.getX(i)) * (U.getY(j) - U.getY(i))) / 2 * S * S;
+      }
+      const e = texels.get(t) ?? { wa: 0, ua: 0 }; e.wa += wa; e.ua += ua; texels.set(t, e);
+    } }
+  const rhoOf = (t) => { const e = texels.get(t); return e && e.wa > 0 ? Math.sqrt(e.ua / e.wa) : null; };
+  const obstacles = [], raw = [];
   for (const [t, b] of boxes) {
     if (b.max.y < STEP_OVER || b.min.y > BAND[1] || area(b) > 0.5 * floorArea) continue;   // low enough to step over: no obstacle
     if (b.max.x < shell.x0 || b.min.x > shell.x1 || b.max.z < shell.z0 || b.min.z > shell.z1) continue;
-    const r = (b.min.y < 0.05 && b.max.y >= TALL[0]) || TALL_NAMES.test(t.name) ? TALL[1] : BODY;
-    obstacles.push({ name: t.name, x0: b.min.x - r, x1: b.max.x + r, z0: b.min.z - r, z1: b.max.z + r, r, top: +b.max.y.toFixed(3) });
+    const rho = rhoOf(t);
+    raw.push(b);
+    obstacles.push({ name: t.name, top: +b.max.y.toFixed(3), bottom: +b.min.y.toFixed(3), rho: rho && +rho.toFixed(1) });
+  }
+  // the texel clearance, per viewport (a phone turned, a window resized): K changes, so the footprints do
+  let K = 0;
+  // a designed place's distance to a node as the free eye would have it standing there (in the free band: g), and the
+  // footprint's own metric for the cap (a box grown by r on each side: a place is out when max(dx, dz) >= r)
+  const gap2 = (b, p) => [Math.max(b.min.x - p.x, 0, p.x - b.max.x), Math.max(b.min.z - p.z, 0, p.z - b.max.z)];
+  obstacles.forEach((o, i) => { const b = raw[i], g = Math.max(0, FREE_BAND[0] - b.max.y, b.min.y - FREE_BAND[1]);
+    o.design = +Math.min(...places.map((q) => Math.hypot(...gap2(b, q.pos), g))).toFixed(3);
+    o.planCap = Math.min(...places.map((q) => Math.max(...gap2(b, q.pos)))) - 0.002; });
+  function sizeClear() {
+    K = live.pxPerMetre?.() ?? 0;
+    obstacles.forEach((o, i) => {
+      const b = raw[i], g = Math.max(0, FREE_BAND[0] - b.max.y, b.min.y - FREE_BAND[1]);
+      // the texel rule, capped at the nearest a designed place (the hero, a standpoint) already stands: a node whose bake the
+      // hero shows coarser than TEXEL_PX (the bookcase: 89 texels/m, 6.8 px a texel from the hero) is kept at least as far
+      // as that place, never pushed out of the room
+      const D = o.rho && K ? Math.min(K / (TEXEL_PX * o.rho), o.design) : 0;
+      // and on the plan never past a designed place (gate run 1 of 022 D: the free band's g is under a standing place's own,
+      // so its r passed the hero by 5 cm and the window place by 45; a move from a place that is not clear may only get
+      // clearer, and the hero's pan froze). Rounded down to the mm, so the place stays clear
+      const want = Math.sqrt(Math.max(0, D * D - g * g));
+      // merge 022 (panel 022 D, the tech artist's probe: the worst reachable texel unchanged at 26.7 px, 15 % of the clear eye
+      // cells lost): the texel rule is a report and a regression gate only (want, coarse, held); the footprint is merge
+      // 021's, R_MAX for the wall-like and eye-height nodes, BODY for the rest, still never past a designed place. The fix
+      // for a coarse node is its bake (bet 023-D)
+      const tall = (b.min.y < 0.05 && b.max.y >= TALL[0]) || TALL_NAMES.test(o.name);
+      const r = Math.floor(1000 * Math.max(BODY, Math.min(o.planCap, tall ? R_MAX : BODY))) / 1000;
+      Object.assign(o, { x0: b.min.x - r, x1: b.max.x + r, z0: b.min.z - r, z1: b.max.z + r, r, coarse: want > R_MAX + 1e-3, held: want > r + 1e-3 });   // held: nearer than the texel rule (a place, or R_MAX)
+    });
+    reach?.clear();
   }
   // how far p (an eye position) is from allowed: 0 when clear, else the sum of the shell's overshoot and the deepest way
   // into an obstacle's footprint (its shortest way out)
+  const shellOut = (p) => Math.max(0, shell.x0 - p.x) + Math.max(0, p.x - shell.x1) + Math.max(0, shell.z0 - p.z) + Math.max(0, p.z - shell.z1);
   function depth(p) {
     let d = Math.max(0, shell.x0 - p.x) + Math.max(0, p.x - shell.x1) + Math.max(0, shell.z0 - p.z) + Math.max(0, p.z - shell.z1)
       + Math.max(0, BAND[0] - p.y) + Math.max(0, p.y - BAND[1]);
@@ -122,8 +188,11 @@ export default function mount(live) {
   function pathClear(a, b) {
     if (depth(a) === 0) return depth(b) === 0 && !obstacles.some((o) => crosses(a, b, o));
     const n = Math.max(1, Math.ceil(a.distanceTo(b) / SEG)), q = new THREE.Vector3();
-    let was = depth(a);
-    for (let i = 1; i <= n; i++) { const d = depth(q.copy(a).lerp(b, i / n)); if (d > was + 1e-6) return false; was = Math.min(was, d); }
+    // round 022 D: and never further out of the shell (gate run 1: from deep in a footprint the sum let a key step trade the
+    // footprint's depth for 1.06 m past the window wall)
+    let was = depth(a), out = shellOut(a);
+    for (let i = 1; i <= n; i++) { q.copy(a).lerp(b, i / n); const d = depth(q), o = shellOut(q);
+      if (d > was + 1e-6 || o > out + 1e-6) return false; was = Math.min(was, d); out = Math.min(out, o); }
     return true;
   }
   // a move from a toward b, as far as it stays clear: the whole of it, else sliding along one axis, else nothing
@@ -144,10 +213,53 @@ export default function mount(live) {
       if (l >= len || !free(w) || !pathClear(a, w) || !pathClear(w, b)) continue;
       best = w.clone(); len = l;
     }
-    return best ? [best] : null;
+    return best ? [best] : grid(a, b);
+  }
+  // round 022: where no one waypoint does (gate run on 06898ac: a walk from a spot by the table to the window found none and
+  // went straight, 61-101 mm through a footprint), the shortest way over the ROUTE_STEP grid of clear spots (8 neighbours,
+  // each edge a clear straight move; a and b join every spot they see), pulled tight to the fewest waypoints; null when the
+  // grid has none either. Run per click only (a hover's reach is cached per spot): ~600 spots, ~5k short segment tests
+  function grid(a, b) {
+    const nx = Math.floor((shell.x1 - shell.x0) / ROUTE_STEP) + 1, nz = Math.floor((shell.z1 - shell.z0) / ROUTE_STEP) + 1, y = (a.y + b.y) / 2;
+    const pts = [], ok = [];
+    for (let i = 0; i < nx; i++) for (let j = 0; j < nz; j++) { const w = new THREE.Vector3(shell.x0 + i * ROUTE_STEP, y, shell.z0 + j * ROUTE_STEP); pts.push(w); ok.push(free(w)); }
+    const A = pts.length, B = A + 1;
+    pts.push(a, b);
+    const dist = new Float64Array(A + 2).fill(Infinity), prev = new Int32Array(A + 2).fill(-1), done = new Uint8Array(A + 2);
+    const edges = (k) => {
+      if (k === A) return pts.slice(0, A).map((w, n) => n).filter((n) => ok[n] && pathClear(a, pts[n]));
+      const i = Math.floor(k / nz), j = k % nz, out = [];
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        const n = (i + di) * nz + j + dj;
+        if ((di || dj) && i + di >= 0 && i + di < nx && j + dj >= 0 && j + dj < nz && ok[n] && pathClear(pts[k], pts[n])) out.push(n);
+      }
+      if (pathClear(pts[k], b)) out.push(B);
+      return out;
+    };
+    dist[A] = 0;
+    for (;;) {   // Dijkstra: ~600 nodes, a linear scan for the nearest is fine
+      let k = -1;
+      for (let n = 0; n < A + 2; n++) if (!done[n] && dist[n] < Infinity && (k < 0 || dist[n] < dist[k])) k = n;
+      if (k < 0) return null;
+      if (k === B) break;
+      done[k] = 1;
+      for (const n of edges(k)) { const d = dist[k] + pts[k].distanceTo(pts[n]); if (d < dist[n]) { dist[n] = d; prev[n] = k; } }
+    }
+    const chain = [];
+    for (let k = B; k >= 0; k = prev[k]) chain.unshift(pts[k]);
+    const way = [];   // pull tight: from each kept point, on to the farthest one in a clear straight line
+    for (let s = 0; s < chain.length - 1;) {
+      let t = chain.length - 1;
+      while (t > s + 1 && !pathClear(chain[s], chain[t])) t--;
+      if (t < chain.length - 1) way.push(chain[t].clone());
+      s = t;
+    }
+    return way;
   }
   // is there a clear walk from `a` to the place? Asked by every hover over a snap disc: cached per (spot, place)
   const reach = new Map();
+  sizeClear();
+  addEventListener('resize', sizeClear);
   function reachable(a, place) {
     const k = `${a.x.toFixed(3)},${a.z.toFixed(3)}>${place.id}`;   // merge 021: to the mm (a cm key let a walk 2 mm away reuse a 'yes')
     if (!reach.has(k)) { if (reach.size > 256) reach.clear(); reach.set(k, route(a, new THREE.Vector3(place.pos.x, a.y, place.pos.z)) !== null); }
@@ -180,8 +292,29 @@ export default function mount(live) {
     if (Math.hypot(to.x - from.x, to.z - from.z) < MIN_STEP) return null;
     return { id: 'walk', at: new THREE.Vector3(to.x, 0, to.z), pos: to };
   }
-  live.addStands(stands, stepOf, { free, depth, clamp, pathClear, route, eye: EYE, band: BAND, freeBand: FREE_BAND,
-    bounds: () => ({ shell: { ...shell }, obstacles: obstacles.map((o) => ({ ...o })), shellInset: SHELL, body: BODY, tall: TALL, band: BAND, freeBand: FREE_BAND, eye: EYE, snap: SNAP }) });
+  // round 022 D: stepOf's cheap twin for the arrival's framing (main.js walkTo asks it of up to 36 rays a pose): the hit is
+  // bare floor at least MIN_STEP off on the plan and the first MIN_STEP toward it is clear, so a click there walks (stepOf's
+  // routes and its walk-back made a walk's pick 927 ms at CPU x6)
+  // the same test before any mesh ray, exact for a miss: where the ray meets the floor plane (outside the floor's box, under
+  // MIN_STEP, or with the first step blocked, no mesh hit can make it a walk). It spares the walk's pick most of its rays
+  function floorMaybe(from, dir) {
+    if (dir.y >= -1e-6) return false;
+    const t = -from.y / dir.y, px = from.x + dir.x * t, pz = from.z + dir.z * t;
+    if (px < fb.min.x || px > fb.max.x || pz < fb.min.z || pz > fb.max.z) return false;
+    const dx = px - from.x, dz = pz - from.z, l = Math.hypot(dx, dz);
+    if (l < MIN_STEP) return false;
+    return pathClear(new THREE.Vector3(from.x, EYE, from.z), new THREE.Vector3(from.x + dx / l * MIN_STEP, EYE, from.z + dz / l * MIN_STEP));
+  }
+  function floorAhead(hit, from) {
+    if (!FLOOR.has(top(hit.object)?.name) || hit.point.y > FLOOR_Y) return false;
+    const dx = hit.point.x - from.x, dz = hit.point.z - from.z, l = Math.hypot(dx, dz);
+    if (l < MIN_STEP) return false;
+    const a = new THREE.Vector3(from.x, EYE, from.z);
+    return pathClear(a, new THREE.Vector3(from.x + dx / l * MIN_STEP, EYE, from.z + dz / l * MIN_STEP));
+  }
+  live.addStands(stands, stepOf, { free, depth, clamp, pathClear, route, floorAhead, floorMaybe, eye: EYE, band: BAND, freeBand: FREE_BAND,
+    bounds: () => ({ shell: { ...shell }, obstacles: obstacles.map((o) => ({ ...o })), shellInset: SHELL, body: BODY, tall: TALL, band: BAND, freeBand: FREE_BAND, eye: EYE, snap: SNAP, texelPx: TEXEL_PX, rMax: R_MAX, K: +K.toFixed(1), coarse: obstacles.filter((o) => o.coarse).map((o) => o.name),
+      rho: Object.fromEntries([...texels.keys()].map((t) => [t.name, +rhoOf(t).toFixed(1)])) }) });
 
   // the lamp pool: a soft warm disc on the boards, additive, eased in and out; the only thing the walk draws
   const pool = noPick(new THREE.Mesh(new THREE.CircleGeometry(POOL_R, 40).rotateX(-Math.PI / 2), new THREE.ShaderMaterial({

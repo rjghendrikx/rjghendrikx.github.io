@@ -21,7 +21,7 @@ const LIVE = !params.has('nolive');   // ?nolive: the bake alone
 // onView(id), api for the gates). One failing layer must not take the room down.
 // layer-terminal.js first (its canvas is ready before the others mount); layer-intro.js last, it takes
 // the camera from the room's first frame
-const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-tags.js', 'layer-walk.js', 'layer-lidar.js', 'layer-c64.js', 'layer-intro.js'];
+const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-tags.js', 'layer-walk.js', 'layer-lidar.js', 'layer-stage.js', 'layer-c64.js', 'layer-intro.js'];
 // panel 019 action 3b: the polarizer's act says what a press will do, from the eraser's own state ([check] copy)
 const POLARIZER = (L) => (L.eraser?.info().inBeam ? 'Take the polarizer out' : 'Insert the polarizer');
 // Case cards: one project per work viewpoint (lib/layouts/canal_house.py VIEWS), shown in .case (aria-live)
@@ -70,10 +70,12 @@ const CASES = {
 // outside, Esc and browser Back all lead to the room as from the view. One source again: index.html #work
 // article[data-case] (the no-JS sheet), `in` naming the view. The zone cards' acts that open them: [check] captions.md
 const OWN = { atlas: 'His own: the Atlas', inference: 'His own: a model on the 3090', metal: 'His own: Metal visuals' };
+// round 022 C: Metal visuals is the medium the projector plays: its card runs the show (the head becomes the canvas)
+const OWN_ACTS = { metal: [{ label: 'Show the idea in the room', run: (L) => L.projector?.start() }] };   // [check] merge 022 (panel 022 action 6): WebGL, not the Metal pipeline
 for (const a of document.querySelectorAll('#work article[data-case]')) {
   const id = a.dataset.case, c = OWN[id] && workCase(null, { room: '', acts: [] }, a);
   if (!c || !CASES[a.dataset.in]) continue;
-  CASES[id] = { ...c, in: a.dataset.in };
+  CASES[id] = { ...c, in: a.dataset.in, acts: [...(OWN_ACTS[id] ?? []), ...c.acts] };
   CASES[a.dataset.in].acts.push({ label: OWN[id], case: id });
 }
 // wave 5 P2: where the scan target is the Plato head (canal_house) the projector's cards say so. [check] notes/captions.md
@@ -125,7 +127,16 @@ const HOT = {
   case_simulations: 'chamber', case_agents: 'terminal', case_mapping: 'experiment',
   // round 021 B: the record crate and its two named sleeves (objects/pr_records.py) belong to the listening corner
   pr_records: 'hifi', pr_records_sleeves: 'hifi',
+  // round 022 C: the RTX 3090 on the bench (objects/pr_3090.py), its own case's object (CASE_OF)
+  pr_3090: 'bench',
 };
+// round 022 C (panel 021, bets for 022, C): the own cases as objects. A click on one of these nodes flies to its view (HOT)
+// and opens the own case there (openCase: #<case> replaces the view's entry, so outside, Esc and Back lead home as from the
+// view). The case's view is its `in` (index.html #work data-in); a node whose case lives in another view stays a plain view
+// link. The tag over it names the case (live.label). The Atlas stays on the laptop's Agents card: the laptop is the
+// Agents work case's one object on the phone hero (the binder is off screen there), so it cannot also be the Atlas's.
+const CASE_OF = { pr_3090: 'inference', projector: 'metal' };
+const OWN_TAG = { inference: 'Local inference', metal: 'Metal visuals' };   // the paper tag's words (layer-tags.js) [check]
 // round 020 (panel 019 action 7): part of a node goes somewhere: a hit on it below `y` m (glTF up) leads to `id`. The
 // bookcase's lower shelves, under Plato's plinth top, are the Bookcase view's own target; above them the books stay
 // scenery, so the case's box (a third of the hero) never becomes a hot box for the tags
@@ -147,9 +158,18 @@ const ORBIT_KEY = 0.06;          // rad per arrow-key press (keyboard orbit insi
 const KEY_STEP = 0.3;            // m a key press
 const KEY_MS = 220;              // a step's glide (instant under reduced motion)
 const FACE_ROOM = 1.2;           // m of room ahead a walk's gaze wants on arrival (else it turns off the wall)
-// merge 021 (action 2): a walk's arrival looks at the nearest hot object within `cone` deg of the gaze it had, `near`-`far` m
-// off on the plan, seen 12-34 deg down; otherwise the old gaze at a walker's pitch, 12-24 deg down (the floor ahead in frame)
-const ARRIVE = { cone: 60, near: 0.9, far: 6, pitch: [12, 24], hotPitch: 34, floor: 0.34 };   // floor: share of the lower half's rays that walk on
+// round 022 D (the premise the 021 merge left open: "frame a hot object" and "keep the floor in frame" conflict mid-room):
+// a walk's arrival turns to the nearest hot object within `cone` deg of the way it walked, `near`-`far` m off on the plan,
+// seen 12-34 deg down, if that frame keeps >= `floor` of its cells on walkable floor (the next click) and its centre ninth
+// at most `wall` on a wall nearer than FACE_ROOM; else it keeps the travel direction at a walker's pitch (12-24 deg down),
+// turned off a wall only. The same measures as free_move_gate (frame_after_walk): the whole frame's cells, not a half
+// pick: the share main.js asks of its own 48 rays, over the gate's 6 % for the sampling (gate run on 022 D: a pose this
+// code read at >= 6 % measured 5 % on the gate's 570 cells); hot: the nearest this many hot objects are tried
+// merge 022 (panel 022 action 2, the chair's fallback): back to panel 021's rule, 10 % floor, a hot object within 60 deg of the
+// pre-walk gaze or that gaze kept, never a turn past 60 deg; the floor counted by stepOf, the click's own test (as hotMap)
+// Ruud 2026-10-23 ("blik iets omlaag"): after a walk the gaze tilts down, 12 deg, then 16 and 20 only if the floor needs it
+const ARRIVE = { cone: 60, near: 0.9, far: 6, tilt: [12, 16, 20], hotPitch: 34, floor: 0.10, pick: 0.10, wall: 0.2, hot: 5 };
+const WALL_NODES = new Set(['cz_canal', 'cz_ceiling', 'cz_door', 'cz_chimney', 'cz_bookcase']);   // gates.py SHELL_NODES
 const SETTLE_M = 0.08;           // m: a pan or a step that moved the gaze's centre this far makes where you stand a spot ('walk')
 const RISE_MS = 400;             // merge 021: a pan's release eases the eye back to eye height over this
 const SETTLE_MOVE = 5e-4;        // m: a pan change that moves the eye less than this (the damping tail) does not restart the settle timer
@@ -311,7 +331,7 @@ async function start() {
   const byName = (n) => scene.getObjectByName(n);
   const head = !!byName('plato');   // wave 5 P2
   if (head) {
-    Object.assign(CASES.projector, PLATO.projector);
+    Object.assign(CASES.projector, PLATO.projector, { acts: [...PLATO.projector.acts, ...CASES.projector.acts.filter((a) => a.case)] });
     if (CASES.experiment) CASES.experiment.b = CASES.experiment.b.replace(WORK.experiment.room, PLATO.room);
   }
   if (GLASS) { const cc = byName('cloud_chamber'); if (cc) addGlass(cc); addPropGlass(scene); }
@@ -409,6 +429,7 @@ async function start() {
   const spot = { id: 'walk', label: 'Where you stand', pos: new THREE.Vector3(), target: new THREE.Vector3(), fov: 0, shift: [0, 0], stand: true };
   let onArrive = () => {};          // set once the layers are mounted
   let arrivedAt = null;             // merge 021: the hot object the last walk's arrival framed (__room.camera().framed)
+  let lastArrival = null;           // round 022 D: the poses the last walk's arrival tried (__room.arrival(), for the gates)
   place(current.pos, current.target, current.fov, current.shift);
   setLimits(current.pos, current.target);
   controls.update();
@@ -481,21 +502,26 @@ async function start() {
     // route); a flight to a close-up is the head's move, as before
     // merge 021: from a pose the code left a hair out of bounds the sampled test may find no route where the click's own test
     // (from the same spot at eye height) did: ask that one too before walking straight
-    const via = walk && walkNav ? walkNav.route(from.pos, v.pos) ?? walkNav.route(new THREE.Vector3(from.pos.x, walkNav.eye, from.pos.z), v.pos) ?? [] : [];
+    const found = walk && walkNav ? walkNav.route(from.pos, v.pos) ?? walkNav.route(new THREE.Vector3(from.pos.x, walkNav.eye, from.pos.z), v.pos) : [];
+    const via = found ?? [];
     const legs = [from.pos, ...via, v.pos].slice(1).map((p, i, a) => p.distanceTo(i ? a[i - 1] : from.pos));
     const metres = legs.reduce((x, y) => x + y, 0), swing = THREE.MathUtils.radToDeg(d0.angleTo(d1));
     // a walk (to or from a standpoint) that turns more than MOVE.turnFirst: turn first on a sine, then walk, slow enough
     // that the gaze never passes MOVE.gazeMax
     const first = swing > MOVE.turnFirst && (walk || !!viewOf(left)?.stand);   // a flight off a standpoint turns first too
-    const gazeMs = first ? 1000 * SINE_PEAK * swing / (MOVE.turnFirstBy * MOVE.gazeMax * MOVE.gazeHeadroom) : 0;
+    // round 022 (merge 021 open item c): a walk that turns less than that turned its gaze on the cubic (3x its mean rate) in
+    // 0.7 of a move timed by the walk alone: window -> seat, 71.6 deg in 785 ms, peaked at 315-332 deg/s against the 330
+    // limit. A walk's gaze now turns on the sine, as its eyes do (1.57x), and every walk is timed by the same gaze cap
+    const turnBy = first ? MOVE.turnFirstBy : swing > MOVE.turnFrom ? MOVE.turnBy : 1;
+    const gazeMs = first || walk ? 1000 * SINE_PEAK * swing / (turnBy * MOVE.gazeMax * MOVE.gazeHeadroom) : 0;
     // a walk goes at a body's pace (WALK.perMetre over the part of the move the eyes travel), a flight keeps MOVE's
     const ms = walk ? Math.min(WALK.max, Math.max(WALK.min, WALK.perMetre * metres / (first ? 1 - MOVE.walkFrom : 1), gazeMs, MOVE.perDegree * swing))
       : first ? Math.min(MOVE.walkMax, Math.max(moveMs(metres, swing), gazeMs)) : moveMs(metres, swing);
     const turn = new THREE.Quaternion().setFromUnitVectors(d0, d1);
-    lastMove = { from: from.id ?? null, to: id, ms: Math.round(ms), metres: +metres.toFixed(3), swing: +swing.toFixed(1), turnFirst: first, walk, via: via.length };
+    lastMove = { from: from.id ?? null, to: id, ms: Math.round(ms), metres: +metres.toFixed(3), swing: +swing.toFixed(1), turnFirst: first, walk, via: via.length, routed: found ? (via.length ? 'via' : 'straight') : 'none' };
     return new Promise((resolve) => {
       tween = { from, to: v, t0: performance.now(), ms, d0, r0, r1, turn, first, walk, via, legs, metres,
-        turnBy: first ? MOVE.turnFirstBy : swing > MOVE.turnFrom ? MOVE.turnBy : 1, resolve };
+        turnBy, resolve };
     });
   }
 
@@ -527,6 +553,9 @@ async function start() {
     }
     return null;
   }
+  // round 022 C: the own case a hot node opens, where its case lives in the node's view (CASE_OF)
+  let shown = null, pending = null;   // the case card on show; the own case waiting for its view's arrival (openCase)
+  const caseOf = (node) => { const c = CASE_OF[node?.name]; return c && CASES[c]?.in && CASES[c].in === hot.get(node) ? c : null; };
   // where a click leads from here: the window views own no object, so in one of them all of outside is the way back
   // (never the other pane's view: that would be a neighbour, not home)
   const leadOf = (p, obj) => { const to = hotOf(p, obj); return to && !to.node && FAR_VIEWS.includes(current.id) ? null : to; };
@@ -665,6 +694,8 @@ async function start() {
     // panel 018 action 2: in a close-up, outside means back, not the neighbour: the furniture's own view (the bench) and
     // the window are no destinations from there; another object's view still is
     if (to && to.id !== current.id && !inRoom() && (FURNITURE.includes(to.id) || !to.node)) to = null;
+    const own = to?.node && caseOf(to.node);
+    if (own && own !== shown) return { kind: 'go', id: to.id, node: to.node, case: own, pick: null };
     // action 3: a layer's pick fires only where the camera ends with its effect in frame: here (on the view's own object,
     // or on one that leads nowhere), or in the view the click flies to when that view is the pick's own; never on a
     // step back (B's Geiger toggle + step back)
@@ -687,24 +718,26 @@ async function start() {
     const it = intentAt(r, x, y, touch);
     if (it.pick) fire(it.pick);
     if (tween) return;                          // the layer's own pick moved the camera (the C64, the laptop)
-    if (it.kind === 'walk' && it.pos) walkTo(it.pos);
+    if (it.case) openCase(it.case);
+    else if (it.kind === 'walk' && it.pos) walkTo(it.pos);
     else if (it.kind === 'go' || it.kind === 'back' || it.kind === 'walk') go(it.id);
     else if (it.kind === 'act') { ACT[it.id](state.layers ?? {}); needsRender = true; }
   }
   // the cursor tells the truth (rule 1), from the one intent: pointer where a click flies somewhere or acts, a step where it
   // walks (round 019 A), zoom-out where it steps back, grab (drag to look) where it does nothing
   const cursorOf = (it) => CURSOR[it.pick ? 'pick' : it.kind] ?? CURSOR.none;
-  // round 021 D: a free walk to `pos` (eye height, cleared by layer-walk.js). merge 021 (panel 021 action 2, "an arrival that
-  // frames something"): the head keeps the gaze it had before the walk (the seats saw D's arrivals face the pier, nose to
-  // the wall, Plato cut by the near plane), or turns to the nearest hot object within ARRIVE.cone of it, which it then looks
-  // at; never at a wall closer than FACE_ROOM m. The pitch stays a walker's (ARRIVE.pitch), so the floor ahead, the next
-  // click, stays in frame (free_move_gate: >= 10% walk cells after each walk)
+  // round 021 D: a free walk to `pos` (eye height, cleared by layer-walk.js). round 022 D (the arrival's premise, settled):
+  // the head turns to the nearest hot object within ARRIVE.cone of the way it walked when that frame keeps ARRIVE.floor of
+  // the floor and no near wall at its centre; else it keeps the travel direction (a body faces where it went), and turns
+  // off it only to miss a wall closer than FACE_ROOM m. free_move_gate holds every hero walk and the 5th percentile of 200
+  // random walks to >= ARRIVE.floor
   function walkTo(pos) {
+    const t0 = performance.now();
     const from = camera.position, gaze = controls.target.clone().sub(from);
     const B = walkNav?.bounds(), sh = B?.shell;
     // room ahead along d (on the plan): to the shell, or to the first tall footprint (a wall-like node: the chimney breast, the
     // bookcase, the floor lamp; its own box, not the clearance), whichever comes first
-    const walls = (B?.obstacles ?? []).filter((o) => o.r >= B.tall[1]).map((o) => ({ name: o.name, x0: o.x0 + o.r, x1: o.x1 - o.r, z0: o.z0 + o.r, z1: o.z1 - o.r }));
+    const walls = (B?.obstacles ?? []).filter((o) => o.bottom < 0.05 && o.top >= B.tall[0]).map((o) => ({ name: o.name, x0: o.x0 + o.r, x1: o.x1 - o.r, z0: o.z0 + o.r, z1: o.z1 - o.r }));
     const run = (d, skip = null) => { if (!sh) return Infinity; let t = Infinity;
       if (d.x) t = Math.min(t, ((d.x > 0 ? sh.x1 : sh.x0) - pos.x) / d.x);
       if (d.z) t = Math.min(t, ((d.z > 0 ? sh.z1 : sh.z0) - pos.z) / d.z);
@@ -720,51 +753,85 @@ async function start() {
       }
       return t; };
     const deg = THREE.MathUtils.degToRad;
-    const way = new THREE.Vector3(gaze.x, 0, gaze.z);
-    if (way.lengthSq() < 1e-8) way.set(pos.x - from.x, 0, pos.z - from.z);
+    const way = new THREE.Vector3(pos.x - from.x, 0, pos.z - from.z);   // the travel direction (lastArrival reports it)
+    if (way.lengthSq() < 1e-8) way.set(gaze.x, 0, gaze.z);
     way.normalize();
+    // merge 022: every turn is measured from the pre-walk gaze, not the travel direction (panel 022: D's travel-relative
+    // turns of 135-180 deg faced the door on 6 of 8 desktop hero walks)
+    const look = new THREE.Vector3(gaze.x, 0, gaze.z);
+    if (look.lengthSq() < 1e-8) look.copy(way);
+    look.normalize();
     let r = Math.max(1.5, Math.min(4, gaze.length()));
-    let pitch = THREE.MathUtils.clamp(Math.atan2(-gaze.y, Math.hypot(gaze.x, gaze.z)), deg(ARRIVE.pitch[0]), deg(ARRIVE.pitch[1]));
-    // the poses to try, best first: each hot object in the cone (nearest first), far enough to frame, with room behind it and
-    // seen from a walker's pitch; then the old gaze, a little lower, then turned off it, as far as turning round (a spot at
-    // the shell's or a footprint's edge may frame the room only behind you)
-    const up = new THREE.Vector3(0, 1, 0), c = new THREE.Vector3(), tries = [];
+    let pitch = deg(ARRIVE.tilt[0]);
+    // the poses to try, best first: each hot object within ARRIVE.cone of the pre-walk gaze (nearest first), far enough to
+    // frame, with room behind it and seen from a walker's pitch; then that gaze kept, a little lower; then turned off it by
+    // 30 and 60 deg. Nothing past ARRIVE.cone: a walk never turns you round (panel 022 merge plan step 2)
+    const up = new THREE.Vector3(0, 1, 0), c = new THREE.Vector3(), near = [];
     for (const [o, box] of hotBoxes) {
       box.getCenter(c);
       const v = new THREE.Vector3(c.x - pos.x, 0, c.z - pos.z), d = v.length();
-      if (d < ARRIVE.near || d > ARRIVE.far || v.normalize().angleTo(way) > deg(ARRIVE.cone) || run(v, o.name) < FACE_ROOM) continue;
+      if (d < ARRIVE.near || d > ARRIVE.far || run(v.normalize(), o.name) < FACE_ROOM) continue;
       const p = Math.atan2(pos.y - c.y, d);
-      if (p < deg(ARRIVE.pitch[0]) || p > deg(ARRIVE.hotPitch)) continue;
-      tries.push({ d, way: v, pitch: p, r: d / Math.cos(p), name: o.name, node: o });
+      if (p < deg(ARRIVE.tilt[0]) || p > deg(ARRIVE.hotPitch)) continue;
+      const q = Math.min(p, deg(ARRIVE.tilt.at(-1)));   // the object above centre when it lies lower than the cap
+      if (v.angleTo(look) <= deg(ARRIVE.cone)) near.push({ d, way: v, pitch: q, r: d / Math.cos(q), name: o.name, node: o });
     }
-    tries.sort((x, y) => x.d - y.d);
-    for (const [turn, dp] of [[0, 0], [0, 8], [30, 6], [-30, 6], [60, 6], [-60, 6], [90, 6], [-90, 6], [135, 6], [-135, 6], [180, 6]]) {
-      const w = way.clone().applyAxisAngle(up, deg(turn));
-      tries.push({ way: w, pitch: Math.min(deg(ARRIVE.pitch[1] + 8), pitch + deg(dp)), r, name: null, node: null, wall: run(w) < FACE_ROOM });
-    }
-    // what a pose frames, by the click code's own rays: the share of the lower half's rays on walkable floor (the next click)
-    // and whether the frame's centre meets something other than its own object nearer than FACE_ROOM
+    // one rule (Ruud 2026-10-23): each direction (a hot object within the cone, the gaze kept, then 30 and 60 deg off it)
+    // at the first tilt that keeps ARRIVE.floor of the frame on walkable floor, 12 deg down, 16 or 20 only if needed
+    const turns = (list) => list.flatMap((turn) => { const w = look.clone().applyAxisAngle(up, deg(turn)), wall = run(w) < FACE_ROOM;
+      return ARRIVE.tilt.map((t) => ({ way: w, pitch: deg(t), r, name: null, node: null, wall })); });
+    const nearest = (l) => l.sort((x, y) => x.d - y.d).slice(0, ARRIVE.hot);
+    const tries = [...nearest(near), ...turns([0, 30, -30, 60, -60])];
+    // what a pose frames: the share of the frame's rays a click would walk on (stepOf, the click's own test, as hotMap
+    // counts; D's floorAhead wanted the first straight step clear and so read 0 against furniture while hotMap found 19 %)
+    // and the share of the centre ninth's rays on a wall (WALL_NODES) nearer than FACE_ROOM
+    const probe = { id: spot.id }, cells = new Map();
     const frameOf = (t) => {
       const f = t.way.clone().multiplyScalar(Math.cos(t.pitch)).setY(-Math.sin(t.pitch)).normalize();
       const rt = f.clone().cross(up).normalize(), u = rt.clone().cross(f);
       const th = Math.tan(deg(home.fov) / 2), ta = th * camera.aspect;
       const hit = (x, y) => { ray.ray.set(pos, f.clone().addScaledVector(rt, x * ta).addScaledVector(u, y * th).normalize()); return solid ? firstHit(solid) : null; };
-      let floor = 0, n = 0;
-      // a sample the page covers (the caption, a card) is no click, as in hotMap: skipped
-      for (const y of [-0.85, -0.6, -0.35]) for (const x of [-0.8, -0.48, -0.16, 0.16, 0.48, 0.8]) {
-        if (document.elementFromPoint((x + 1) / 2 * innerWidth, (1 - y) / 2 * innerHeight) !== renderer.domElement) continue;
-        n++; const h = hit(x, y); if (h && stepOf?.(h, spot, pos)) floor++; }   // the click code's own test: a walk from here there exists
-      const h = hit(0, 0), near = !!h && h.distance < FACE_ROOM && topOf(h.object) !== t.node;
-      return { floor: n ? floor / n : 0, near };
+      // the floor first, by the click code's rays (the meshes; a box test in iteration 2 hid the floor past the table and
+      // turned 9 of 12 hero walks round), on the samples, stopped as soon as the share is decided either way; then, for a
+      // pose that keeps the floor, the wall by 9 rays
+      let wall = 0, floor = 0;
+      if (!samples.length || !stepOf) return { floor: 0, wall: 0 };
+      const all = 2 * samples.length, need = Math.ceil(ARRIVE.pick * all);   // the upper half counted as no floor
+      for (let k = 0; k < samples.length && floor < need && floor + samples.length - k >= need; k++) {
+        const [x, y] = samples[k], d = f.clone().addScaledVector(rt, x * ta).addScaledVector(u, y * th).normalize();
+        if (d.y >= -1e-6) continue;   // above the horizon: no floor
+        const t = -pos.y / d.y, px = pos.x + d.x * t, pz = pos.z + d.z * t;   // where it meets the floor plane: outside the
+        if (sh && (px < sh.x0 - 0.3 || px > sh.x1 + 0.3 || pz < sh.z0 - 0.3 || pz > sh.z1 + 0.3)) continue;   // room, no walk
+        const h = hit(x, y); if (!h) continue;
+        // the click's own test once per 10 cm floor cell a walk (poses and tilts look at the same boards): the pick's cost
+        const key = `${Math.round(h.point.x * 10)},${Math.round(h.point.z * 10)},${h.point.y > 0.06 ? 1 : 0}`;
+        let ok = cells.get(key); if (ok === undefined) { ok = !!stepOf(h, probe, pos); cells.set(key, ok); }
+        if (ok) floor++; }
+      if (floor < need) return { floor: floor / all, wall: 0 };
+      for (const y of [-1 / 3, 0, 1 / 3]) for (const x of [-1 / 3, 0, 1 / 3]) {
+        const h = hit(x, y); if (h && h.distance < FACE_ROOM && WALL_NODES.has(topOf(h.object)?.name)) wall++; }
+      return { floor: ARRIVE.pick, wall: wall / 9 };
     };
-    let pick = null, most = -1;
+    // the floor's samples, once a walk: a grid over the frame, its lower half only (a walker's pitch puts the floor
+    // there; the upper half counts as none, so the share is a floor under the gate's), bottom row first, less what the page
+    // covers (a card, the caption: no click, as in hotMap)
+    const samples = [];
+    // merge 022: 4 x 2 (was 6 x 3): every pose and tilt casts its own rays, and 15 poses at 18 rays took 116 ms at CPU x6
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 4; i++) {
+      const x = -0.75 + i * 0.5, y = -0.75 + j * 0.5;
+      if (document.elementFromPoint((x + 1) / 2 * innerWidth, (1 - y) / 2 * innerHeight) === renderer.domElement) samples.push([x, y]); }
+    let pick = null;
+    const log = [];
     for (const t of tries) {
       if (t.wall) continue;
-      const fr = frameOf(t);
-      if (fr.floor >= ARRIVE.floor && !fr.near) { pick = t; break; }
-      if (fr.floor - (fr.near ? 1 : 0) > most) { most = fr.floor - (fr.near ? 1 : 0); pick = t; }
+      const fr = frameOf(t), ok = fr.floor >= ARRIVE.pick && fr.wall <= ARRIVE.wall;
+      log.push([t.name, Math.round(THREE.MathUtils.radToDeg(t.way.angleTo(look))), +fr.floor.toFixed(3), +fr.wall.toFixed(2), ok]);
+      if (ok) { pick = t; break; }
     }
-    pick ??= tries.at(-1);
+    // none passes: the pre-walk gaze kept (the chair's fallback), not the pose with the most floor somewhere round you
+    pick ??= tries.find((t) => !t.name && t.pitch >= deg(ARRIVE.tilt.at(-1)) - 1e-6) ?? tries.find((t) => !t.name);
+    lastArrival = { travel: +THREE.MathUtils.radToDeg(Math.atan2(way.x, -way.z)).toFixed(1), turned: Math.round(THREE.MathUtils.radToDeg(pick.way.angleTo(look))), framed: pick.name, tried: log,
+      ms: +(performance.now() - t0).toFixed(1) };   // the pick's main-thread cost (perf.py --motion: under a long task)
     way.copy(pick.way); pitch = pick.pitch; r = pick.r;
     arrivedAt = pick.name;
     spot.pos.copy(pos);
@@ -905,7 +972,7 @@ async function start() {
     const kt = Math.min(1, k / turnBy);
     // the eyes: a sine over the move, or, turning first, over what is left once the turn is mostly done
     const e = first ? eyes(Math.max(0, (k - MOVE.walkFrom) / (1 - MOVE.walkFrom))) : eyes(k);
-    const et = first ? easePos(kt) : ease(kt);
+    const et = first || walk ? easePos(kt) : ease(kt);
     if (!via.length) eye.copy(from.pos).lerp(to.pos, e);
     else {   // along the legs by arc length
       let s = e * metres, i = 0;
@@ -1005,8 +1072,11 @@ async function start() {
   await Promise.all(loads);
   const layers = LIVE ? await mountLayers({ THREE, scene, camera, renderer, byName, gate: GATE, reduceMotion, picks,
     params, root, view: () => current.id, render: () => { needsRender = true; }, clickAt, resolveAt, intentAt, cursorOf,
-    moving: () => !!tween, go, panning: () => controls.enablePan, where: hotOf, glow, intent: (x, y, touch) => intentAt(resolveAt(x, y), x, y, touch), cardOf: (id) => (!CASES[id] && CAPTION_OF[id]) || null,
-    hot: (o) => hot.get(topOf(o)) ?? null, label: (id) => viewOf(id)?.label ?? id, home: home.id, inRoom: () => inRoom(),
+    moving: () => !!tween, go: (id, ...a) => (CASES[id]?.in ? openCase(id) : go(id, ...a)), panning: () => controls.enablePan, where: hotOf, glow, intent: (x, y, touch) => intentAt(resolveAt(x, y), x, y, touch), cardOf: (id) => (!CASES[id] && CAPTION_OF[id]) || null,
+    hot: (o) => caseOf(topOf(o)) ?? hot.get(topOf(o)) ?? null, label: (id) => viewOf(id)?.label ?? OWN_TAG[id] ?? id, own: (id) => !!OWN_TAG[id], home: home.id, inRoom: () => inRoom(),
+    // round 022 D: CSS px a metre at 1 m through the hero's lens at this viewport (portrait-widened as fitFov does)
+    pxPerMetre: () => { const a = innerWidth / innerHeight, t = Math.tan(THREE.MathUtils.degToRad(home.fov) / 2) * (a >= heroAspect ? 1 : Math.min(heroAspect / a, PORTRAIT_MAX));
+      return innerHeight / (2 * t); },
     fovOf: lensToFov, heroPos: home.pos.clone(), heroTarget: home.target.clone(), stands: () => stands, nav: () => walkNav, cursors: CURSOR,
     addStands: (list, step, table) => { stands.push(...list.map((s) => ({ ...s, shift: [0, 0], stand: true }))); stepOf = step; walkNav = table ?? null; } }) : [];
   syncPan();
@@ -1063,7 +1133,7 @@ async function start() {
   addEventListener('room:pick', () => relabel());   // a pick in the scene (the polarizer itself) changes the act's words too
   // round 021 C: an own case opens on its zone's view: in place when the camera is there, else after the flight there
   // (onArrive takes `pending`). Its hash replaces the view's entry, so Back still lands on the hero (rule 5)
-  let shown = null, pending = null;
+  // shown, pending: declared with caseOf (round 022 C: the click code reads `shown` before this point runs)
   function openCase(id) {
     const c = CASES[id];
     if (!c?.in || !viewOf(c.in)) return null;
@@ -1366,6 +1436,7 @@ async function start() {
     framed: current === spot ? arrivedAt : null, t: frameNow });
   state.views = () => views.map((v) => ({ id: v.id, label: v.label, pos: v.pos.toArray(), target: v.target.toArray() }));
   state.goTo = goTo;
+  state.arrival = () => lastArrival;
   // click navigation gate: a grid of screen points (CSS px, `step` apart), each sorted by where a click there leads, by
   // the click's own code (resolveAt + intentAt; merge 018 step 6, A's targets()): { <view id>: [[x, y], ...],
   // back: [...] (to the hero), stay: [...] (its own object or a pick), none: [...] (hero scenery), 'walk:<standpoint>': [...]
@@ -1377,12 +1448,13 @@ async function start() {
       if (document.elementFromPoint(x, y) !== renderer.domElement) continue;
       const it = intentAt(resolveAt(x, y), x, y, touch);
       (out[it.kind === 'go' ? it.id : it.kind === 'walk' ? `walk:${it.id}` : it.kind] ??= []).push([x, y]);
+      if (it.case) (out[`case:${it.case}`] ??= []).push([x, y]);   // round 022 C: the cells that open an own case
     }
     return out;
   };
   // where a click at (x, y) leads, for the gates: { kind, id, pick: the pick object's name, hit: the baked surface's }
   state.intent = (x, y, touch = false) => { const r = resolveAt(x, y), it = intentAt(r, x, y, touch);
-    return { kind: it.kind, id: it.id ?? null, pick: it.pick?.object.name ?? null, hit: r.hit?.object.name ?? null,
+    return { kind: it.kind, id: it.id ?? null, case: it.case ?? null, pick: it.pick?.object.name ?? null, hit: r.hit?.object.name ?? null,
       top: r.hit ? topOf(r.hit.object)?.name ?? null : null, at: r.hit?.point.toArray().map((c) => +c.toFixed(3)) ?? null,
       to: it.kind === 'walk' ? it.at.toArray().map((c) => +c.toFixed(3)) : null }; };   // round 021 D: where a walk lands (floor)
   // panel 019 action 10: the fast raycaster checked, not trusted. On a grid of rays from the current camera (CSS px, `step`
@@ -1406,6 +1478,8 @@ async function start() {
   state.layers = api;
   // round 021 D: the clearance table and its test, for the gates (the same table the walk, the pan and the keys use)
   state.bounds = () => walkNav?.bounds() ?? null;
+  // round 022: the walk's way between two eye positions ([] straight, [[x, y, z], ...] round furniture, null none)
+  state.route = (a, b) => (walkNav ? walkNav.route(new THREE.Vector3(...a), new THREE.Vector3(...b))?.map((p) => p.toArray()) ?? null : null);
   state.free = (p) => (walkNav ? walkNav.depth(new THREE.Vector3(...p)) : null);   // 0: clear; > 0: metres out of bounds
   state.cursors = () => ({ ...CURSOR });
   state.cases = () => Object.keys(CASES).filter((id) => views.some((v) => v.id === id));
