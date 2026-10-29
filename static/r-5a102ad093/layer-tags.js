@@ -1,57 +1,57 @@
-// Paper tags (round 18, variant C: diegetic labels). The room is the menu: no HTML navigation in the default state,
-// only handwritten tags that belong to the objects. research/click-navigation.md, "The grammar".
+// Discovery by light, not by labels (round 023 B, Ruud 2026-10-23: "ik vind die gele tags niet zo mooi, zou beter zijn als
+// het zonder kan, want dat heb je in een game ook niet"). The paper tags of rounds 018-022 are gone; what they did is done
+// with light. research/click-navigation.md, "The grammar", rules 1 and 9.
 //
-// - Hover (mouse): a tag hangs next to the object under the pointer, naming where a click takes you (the view's label;
-//   the work views say "Work"). Out of the window: the tag hangs at the pointer.
-// - Gaze (every device): when the room is first shown, the work objects' tags hang for GAZE_MS, the touch stand-in for
-//   hover; a tap on an object flies at once, no hover step.
-// - Around the corner: a view whose objects are all out of frame from the hero (the C64, the hi-fi, the poster) gets a
-//   tag at that edge of the screen, pointing the way; it is the only road there, so it stays while on the hero.
-// Tags are clickable and go where the object goes (live.go). They are aria-hidden and out of the tab order: the
-// keyboard's road is the viewpoint chips (main.js) and the object list (layer-hotspots.js).
-// Cost: DOM only, no draw calls; positions are updated per frame only while a tag is up.
+// - Hover (mouse): the object under the pointer glows (glow.js) and the cursor says what a click does (main.js CURSOR,
+//   the same table as the click). No words in the scene.
+// - Rest: in the room the hot objects keep a faint lift of the same warm glow (REST), weighted by the baked luminance, so
+//   it shows where the lamps fall and stays out of the shadows; furniture views (table, bench, bookcase) get none, and no
+//   close-up does (there the object shows its bake as it is).
+// - First look (every device): the work objects glow for GAZE_MS, the touch stand-in for hover.
+// - Around the corner: a view whose objects are all out of reach from the hero (the C64, the hi-fi, the poster, the
+//   back of the room) gets a cue at that edge of the screen: lamp light spilling in from where the object lies, at its
+//   height. One light, one place; it brightens under the pointer and a click or tap goes there (live.go).
+// The names stay where they are needed and nowhere else: the cues are aria-hidden and out of the tab order, as the tags
+// were; the keyboard and screen-reader roads are the Views control (main.js), the object list (layer-hotspots.js), the
+// canvas's description and the no-JS #work sheet (index.html).
+// Cost: DOM only, no draw calls (the rest lift rides the existing glow uniforms).
 
-const GAZE_MS = 6500;          // the first-look tags, long enough to read three words twice
-const EDGE_PAD = 10;           // px from the screen edge
+const GAZE_MS = 6500;          // the first-look glow on the work objects
+const FLASH_S = 2.2, FLASH_HOLD_S = 2.4;   // s, each captioned object's first-look pulse (reduced motion: all at once, held)
+const REST = 0.22;             // the hot objects' resting share of the hover glow
+const NO_REST = ['table', 'bench', 'wall'];
+const NO_REST_NODES = ['cloud_chamber', 'optics'];   // merge 023 action 6: no resting lift on these nodes   // furniture views: a lifted table or bookcase would read as a selection
 // merge 018 action 4: a view whose clickable share of the hero frame (the click code's own grid, off the page's boxes) is
-// under MIN_REACH px² gets an edge tag: a sliver at the frame edge is not a road (the desktop hi-fi was 3 cells)
+// under MIN_REACH px² gets an edge cue: a sliver at the frame edge is not a road (the desktop hi-fi was 3 cells)
 const MIN_REACH = 2 * 48 * 48;
 const REACH_SHARE = 0.03;      // ... or under this share of the frame, for a view none of whose objects has its centre in frame
-const TILT = 12;               // px kept between a tag and another box: room for both tilts (w · sin 3.5° on a wide tag)
 const SAMPLE = 12;             // px, the finest step of those samples
+const MASK_PX = { touch: 12, mouse: 16 };   // px, the lattice a cue's place is tested on (steals): the phone's slivers are thinner
+const GAP = 8;                 // px kept between two cues, and between a cue and the page's boxes
 const WORK_VIEWS = ['chamber', 'terminal', 'experiment'];
+// merge 023 (panel 023 merge plan step 4): a cue is the light of what lies that way; the decks' is their own screens' cool
+// glow (layer-deck.js), not the lamps' warm one
+const CUE_RGB = { decks: '150, 200, 255' };
 
 const CSS = `
-.tag { position: fixed; left: 0; top: 0; z-index: 3; margin: 0; padding: 8px; border: 0; background: none; cursor: pointer;
-  font: 700 16.5px/1.1 "Kalam", "Bradley Hand", "Noteworthy", cursive; font-synthesis: none; color: #2b2119; white-space: nowrap;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .45)); opacity: 0; transform: rotate(var(--r, -3deg)) translateY(3px);
-  transition: opacity .18s ease, transform .18s ease; pointer-events: none; }
-/* the paper, half a stop under the old cream (#efe3c9): the tags were +0.44 stop over the lamp pool, the brightest flat
-   value in the frame (round 019, panel 018 action 6); the button around it is an invisible 8 px margin that takes the click too (merge 018 action 4) */
-.tag .p { position: relative; display: block; padding: 5px 11px 6px 17px; background: linear-gradient(#cdc3ac, #c3b69c);
-  border-radius: 3px 9px 9px 3px; clip-path: polygon(9px 0, 100% 0, 100% 100%, 9px 100%, 0 50%); }
-.tag .p::before { content: ""; position: absolute; left: 7px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%;
-  background: rgba(20, 17, 15, .75); }
-.tag .w { display: block; font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .14em; text-transform: uppercase;
-  color: #a4471d; margin-bottom: 2px; }
-.tag .t + .t::before { content: "·"; padding: 0 .4em; color: #7a6650; }
-.tag.on { opacity: 1; transform: rotate(var(--r, -3deg)); pointer-events: auto; }
-.tag.edge .p { clip-path: none; border-radius: 9px; padding-left: 11px; }
-.tag.edge .p::before { display: none; }
-.tag:hover .p { background: linear-gradient(#d3cab5, #c9ba9d); }
-.tag-line { position: fixed; left: 0; top: 0; z-index: 2; height: 1px; transform-origin: 0 50%; pointer-events: none;
-  background: rgba(239, 230, 218, .7); opacity: 0; transition: opacity .18s ease; }
-.tag-line.on { opacity: 1; }
-.gate .tag, .gate .tag-line { display: none; }
-/* the chips are up (a keyboard visitor, or the "Views" pill): the tags (a pointer's road) step aside */
-body:has(.views:focus-within) .tag, body:has(.views:focus-within) .tag-line, body:has(.views.open) .tag, body:has(.views.open) .tag-line { display: none; }
-/* touch: no invisible margin, a 44 px paper; each place on a shared edge tag is its own 44 px target. The tag takes the
-   touch: a tap goes where it says; a drag that starts on it orbits the room (panel 020 action 15: handed to the canvas) */
-@media (pointer: coarse) { .tag { font-size: 16px; padding: 0; touch-action: none; }
-  .tag .p { padding-top: 8px; padding-bottom: 9px; min-height: 44px; box-sizing: border-box; }
-  .tag.edge .p { padding-top: 0; padding-bottom: 0; }
-  .tag.edge .t { display: inline-flex; align-items: center; min-height: 44px; } }
-@media (prefers-reduced-motion: reduce) { .tag, .tag-line { transition: none; transform: rotate(var(--r, -3deg)); } }
+.cue { position: fixed; left: 0; top: 0; z-index: 3; margin: 0; padding: 0; border: 0; cursor: pointer; opacity: 0;
+  width: 72px; height: 128px; transition: opacity .35s ease; pointer-events: none; touch-action: none;
+  --c: 255, 190, 120; background: none; }
+/* merge 023 (panel 023 action 6): no orb; the target is a clear box and the only light is a hair of the lamp's colour on
+   the frame edge itself, where the light comes in (a light pool on the wall or floor there is action 7, not done) */
+.cue::before { content: ""; position: absolute; top: 18%; bottom: 18%; left: 0; width: 2px; border-radius: 2px;
+  background: linear-gradient(rgba(var(--c), 0), rgba(var(--c), .75), rgba(var(--c), 0)); }
+.cue.right::before { left: auto; right: 0; }
+.cue.below::before { top: auto; bottom: 0; left: 18%; right: 18%; width: auto; height: 2px;
+  background: linear-gradient(90deg, rgba(var(--c), 0), rgba(var(--c), .75), rgba(var(--c), 0)); }
+.cue.below { width: 132px; height: 48px; }
+.cue.on { opacity: 1; pointer-events: auto; }
+.cue:hover::before, .cue:active::before { filter: brightness(1.6); }
+.gate .cue { display: none; }
+/* the chips are up (a keyboard visitor, or the "Views" pill): the cues (a pointer's road) step aside */
+body:has(.views:focus-within) .cue, body:has(.views.open) .cue { display: none; }
+@media (pointer: coarse) { .cue { width: 44px; height: 64px; } .cue.below { width: 72px; height: 44px; } }
+@media (prefers-reduced-motion: reduce) { .cue { transition: none; } }
 `;
 
 export default function mount(live) {
@@ -76,32 +76,34 @@ export default function mount(live) {
     byView.get(id).push({ node, box, mats });
   }
   if (!byView.size) return null;
+  // the resting lift is a discovery aid in the room (the hero, a standpoint, a spot walked to); in a close-up the object is
+  // the subject and shows its bake as it is (the fringes on the optics card, the fidelity of each view)
+  // merge 023 (panel 023 action 6, part): the resting lift stays off the instruments whose contrast is the content (the
+  // chamber's plate under its tracks, the optics' screens); their hover glow is unchanged
+  const restMats = [...byView].filter(([id]) => !NO_REST.includes(id)).flatMap(([, l]) => l.filter((o) => !NO_REST_NODES.includes(o.node?.name)).flatMap((o) => o.mats));
+  const rest = () => live.glow?.rest?.(restMats, live.view() === home || live.inRoom?.() ? REST : 0);
+  rest();
 
   const style = document.createElement('style');
   style.textContent = CSS;
   document.head.appendChild(style);
 
-  // one tag element per view (a view is one place to go, however many objects lead there)
+  // one cue per view (a view is one place to go, however many objects lead there)
   const holder = document.createElement('div');
-  holder.className = 'tags';
+  holder.className = 'cues';
   document.body.appendChild(holder);
-  const tags = new Map();
-  for (const id of byView.keys()) tags.set(id, make(id));
-  for (const id of ['canal', 'university']) if (!tags.has(id) && live.label(id) !== id) tags.set(id, make(id));
+  const cues = new Map();
+  for (const id of byView.keys()) cues.set(id, make(id));
   function make(id) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tag';
+    b.className = 'cue';
     b.tabIndex = -1;
     b.setAttribute('aria-hidden', 'true');
-    b.dataset.view = id;
-    b.innerHTML = '<span class="p"></span>';
-    b.style.setProperty('--r', `${((id.length * 7) % 5) - 3.5}deg`);   // each its own small tilt, stable
-    // a shared edge tag (touch: "← C64 · Hi-fi") holds one place per view: the place under the finger is where it goes
-    // a press that moved (a drag that started on the tag) is not a click (round 019). Panel 020 action 15: on touch that
-    // drag orbits, as it does anywhere else on the room: past 6 px the pointer is handed to the canvas (a pointerdown
-    // there at the press point, then the capture), so OrbitControls takes the rest of the drag (the tag over the
-    // table ate it: D's orb.py repro)
+    b.dataset.view = b.dataset.go = id;
+    if (CUE_RGB[id]) b.style.setProperty('--c', CUE_RGB[id]);
+    // a press that moved (a drag that started on the cue) is not a click (round 019). Panel 020 action 15: on touch that
+    // drag orbits, as it does anywhere else on the room: past 6 px the pointer is handed to the canvas
     let press = null;
     b.addEventListener('pointerdown', (ev) => { press = [ev.clientX, ev.clientY]; });
     b.addEventListener('pointermove', (ev) => {
@@ -113,53 +115,31 @@ export default function mount(live) {
         clientX: x, clientY: y, button: 0, buttons: 1, bubbles: true, cancelable: true }));
       try { canvas.setPointerCapture(ev.pointerId); } catch { /* the pointer ended meanwhile */ }
     });
+    // the cue glows its objects too, wherever they are: a hover on the light is a hover on the thing
+    b.addEventListener('pointerenter', () => lit(id, true));
+    b.addEventListener('pointerleave', () => { if (hoverId !== id) lit(id, false); });
     b.addEventListener('click', (ev) => {
       ev.stopPropagation();
       const moved = press && ev.detail && Math.hypot(ev.clientX - press[0], ev.clientY - press[1]) > 6;
       press = null;
       if (moved) return;
-      const to = ev.target.closest?.('[data-go]')?.dataset.go ?? id; hideAll(); live.go(to);
+      hideAll(); live.go(id);
     });
     holder.appendChild(b);
-    const line = document.createElement('div');
-    line.className = 'tag-line';
-    holder.appendChild(line);
-    const t = { el: b, line, id, at: null, edge: null, why: null };
-    text(t);
-    return t;
-  }
-  // the tag's words: its view's label (work views with the small "Work" line), or on an edge the way to one or more views
-  function text(t, ids = null, side = 0) {
-    const p = t.el.firstChild;
-    p.replaceChildren();
-    if (!ids && WORK_VIEWS.includes(t.id)) p.appendChild(Object.assign(document.createElement('span'), { className: 'w', textContent: 'Work' }));
-    else if (!ids && live.own?.(t.id)) p.appendChild(Object.assign(document.createElement('span'), { className: 'w', textContent: 'His own' }));   // round 022 C [check]
-    for (const [i, id] of (ids ?? [t.id]).entries()) {
-      const label = live.label(id);
-      const word = side < 0 && i === 0 ? `← ${label}` : side === 1 && i === (ids.length - 1) ? `${label} →` : side === 2 && i === (ids.length - 1) ? `${label} ↓` : label;
-      const sp = Object.assign(document.createElement('span'), { className: 't', textContent: word });
-      sp.dataset.go = id;
-      p.appendChild(sp);
-    }
+    return { el: b, id, on: false, box: null };
   }
   const coarse = matchMedia('(pointer: coarse)');
-  const pad = () => (coarse.matches ? 0 : 8);   // the invisible margin round the paper (CSS .tag padding)
 
   const v = new THREE.Vector3();
-  // the canvas box, read once per resize (never between a tag's writes: merge 018 step 2)
+  // the canvas box, read once per resize (merge 018 step 2)
   let R = null;
   const r = () => (R ??= canvas.getBoundingClientRect());
   addEventListener('resize', () => { R = null; });
   const toScreen = (p) => { v.copy(p).project(camera); const R = r();
     return { x: R.left + (v.x + 1) / 2 * R.width, y: R.top + (1 - v.y) / 2 * R.height, behind: v.z > 1 }; };
   const onScreen = (s, m = 8) => !s.behind && s.x > m && s.x < innerWidth - m && s.y > m && s.y < innerHeight - m;
-  // the anchor of a view's tag: the top middle of its biggest on-screen object
   // the page's own boxes (caption, controls) cover part of the frame: an object under them is out of reach
-  const readCovers = () => ['.caption', '.controls'].map((q) => document.querySelector(q)?.getBoundingClientRect()).filter((b) => b && b.width);
-  // panel 018 action 7: what read() took at the start of this frame, before any layer wrote (main.js calls every read()
-  // first): the hover and update() use it, so a hover frame forces no layout. { cov, m: measure(), size: tag -> [w, h] }
-  let F = null;
-  const covers = () => F?.cov ?? readCovers();
+  const covers = () => ['.caption', '.controls'].map((q) => document.querySelector(q)?.getBoundingClientRect()).filter((b) => b && b.width);
   const under = (s, B = covers()) => B.some((b) => s.x >= b.left && s.x <= b.right && s.y >= b.top && s.y <= b.bottom);
   // the points of a box a visitor could click: its centre, top centre and corners pulled 20% in
   const samples = (box, inset = 0.2) => {
@@ -168,25 +148,11 @@ export default function mount(live) {
     return out;
   };
   const reach = (box) => samples(box).find((p) => { const s = toScreen(p); return onScreen(s) && !under(s); }) ?? null;
-  // node: only that object's box (a hover hangs the tag on the object under the pointer: a binder, not its case's chamber)
-  function anchorOf(id, node = null) {
-    let best = null, bestA = 0;
-    for (const { box, node: n } of byView.get(id) ?? []) {
-      if (node && n !== node) continue;
-      const p = reach(box);
-      if (!p) continue;
-      const a = box.getSize(new THREE.Vector3()).length();
-      if (a > bestA) { bestA = a; best = p.clone(); }
-    }
-    return best;
-  }
-  // where the view's objects lie from here (-1 left, 1 right, 2 below the caption), for its edge tag; the projected box
-  // centre of the first object gives the height (behind the camera the projection mirrors: the side comes from the
+  // where the view's objects lie from here (-1 left, 1 right, 2 below the caption), for its cue; the projected box centre
+  // of the object nearest the frame gives the height (behind the camera the projection mirrors: the side comes from the
   // camera's right vector)
   function edgeOf(id) {
     const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
-    // merge 021 (panel 021 action 13): the object of the view nearest the frame, not the list's first (on the phone hero
-    // "Agents ->" aimed at the binder off screen while the laptop was a hand's width outside the edge)
     const list = byView.get(id) ?? [];
     if (!list.length) return null;
     const off = (o) => { const q = toScreen(o.box.getCenter(new THREE.Vector3())); return q.behind ? Infinity : Math.hypot(Math.max(0, -q.x, q.x - innerWidth), Math.max(0, -q.y, q.y - innerHeight)); };
@@ -194,13 +160,12 @@ export default function mount(live) {
     const c = first.box.getCenter(new THREE.Vector3()), s = toScreen(c);
     let side = c.clone().sub(camera.position).dot(right) < 0 ? -1 : 1;
     if (onScreen(s) || (!s.behind && s.x > 0 && s.x < innerWidth)) side = 2;   // in frame but out of reach, or below it
-    return { side, x: s.behind ? NaN : s.x, y: s.behind ? innerHeight / 2 : s.y, ay: s.behind ? NaN : s.y };
+    return { side, x: s.behind ? NaN : s.x, y: s.behind ? NaN : s.y };
   }
-  // where a click at (x, y) goes, by the click code itself (main.js intentAt): sampled only where it matters (inside a
-  // view's projected boxes, inside a tag's box), never the whole frame (a full 24 px grid cost ~2 s on desktop)
-  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' || it?.kind === 'walk' ? it.case ?? it.id : null; };   // round 022 C: an own case's object goes to its case
-  function grid(l, t, r2, b, f, max = 160) {
-    const w = r2 - l, h = b - t, st = Math.max(SAMPLE, Math.sqrt((w * h) / max));
+  // where a click at (x, y) goes, by the click code itself (main.js intentAt)
+  const goesTo = (x, y) => { const it = live.intent?.(x, y, coarse.matches); return it?.kind === 'go' || it?.kind === 'walk' ? it.case ?? it.id : null; };
+  function grid(l, t, r2, b, f, max = 160, min = SAMPLE) {
+    const w = r2 - l, h = b - t, st = Math.max(min, Math.sqrt((w * h) / max));
     for (let y = t + st / 2; y < b; y += st) for (let x = l + st / 2; x < r2; x += st) if (f(x, y, st) === false) return;
   }
   // the clickable px² of a view on screen, off the page's boxes
@@ -218,276 +183,196 @@ export default function mount(live) {
     }
     return area;
   }
-  // a tag's box over the window glass (a click there would go out of the window)
-  function overGlass(bx) {
-    let glass = false;
-    grid(bx.x, bx.y, bx.x + bx.w, bx.y + bx.h, (x, y) => { const g = goesTo(x, y); if (g === 'canal' || g === 'university') { glass = true; return false; } return true; }, 40);
-    return glass;
+  // the cells of a cue's box where a click would reach another place (the cue would take that click): a furniture view and
+  // the floor are roads with plenty of room elsewhere; an object (the projector, the laptop) or a pane (the University's,
+  // a sliver on the phone hero) is not
+  // Sampled on a fixed MASK px lattice and cached with the reach areas (same camera, same frame size): one raycast a lattice
+  // point however many candidate places and cues test it (a fresh grid per candidate cost ~40k rays an arrival: the click
+  // nav gate's camera never settled under load). The lattice is fine enough for the phone's University sliver (8 px wide)
+  const lattice = new Map();
+  function steals(bx, id) {
+    let n = 0;
+    const MASK = coarse.matches ? MASK_PX.touch : MASK_PX.mouse;
+    for (let y = Math.ceil((bx.y - MASK / 2) / MASK) * MASK + MASK / 2; y < bx.y + bx.h; y += MASK)
+      for (let x = Math.ceil((bx.x - MASK / 2) / MASK) * MASK + MASK / 2; x < bx.x + bx.w; x += MASK) {
+        const k = `${x},${y}`;
+        if (!lattice.has(k)) { const it = live.intent?.(x, y, coarse.matches); lattice.set(k, it?.kind === 'go' && !NO_REST.includes(it.id) ? it.case ?? it.id : ''); }
+        const to = lattice.get(k);
+        if (to && to !== id) n++;
+      }
+    return n;
   }
 
-  const x0 = (t) => (t.edge ? (t.edge.side < 0 ? 0 : t.edge.side === 1 ? innerWidth : t.edge.x) : toScreen(t.at).x);
-  // the page's own boxes a tag keeps clear of, read in one go before any tag is written (merge 018 step 2)
-  const OBST = ['.prompt:not([hidden])', '.case:not(:empty)', '.back:not([hidden])', '.toast'];
-  function measure() {
-    const rect = (q) => { const b = document.querySelector(q)?.getBoundingClientRect(); return b && b.width ? b : null; };
-    return { cap: document.querySelector('.caption')?.getBoundingClientRect(), obst: OBST.map(rect).filter(Boolean) };
-  }
-  const bounds = (t, cap, h) => {
-    const top = cap && cap.top < innerHeight / 2 ? cap.bottom + 10 : 16;
-    const bottom = innerHeight - 16 - (cap && cap.top >= innerHeight / 2 && x0(t) < cap.right ? innerHeight - cap.top + 10 : 0);
-    return [top, Math.max(top, bottom - h)];
-  };
-  // a string from (ax, ay) to (bx, by)
-  function string(t, ax, ay, bx, by) {
-    const dx = bx - ax, dy = by - ay;
-    t.line.style.width = `${Math.hypot(dx, dy)}px`;
-    t.line.style.transform = `translate(${ax}px, ${ay}px) rotate(${Math.atan2(dy, dx)}rad)`;
-    t.line.classList.add('on');
-  }
-  function place(t, m = measure(), w = t.el.offsetWidth, h = t.el.offsetHeight, avoid = []) {
-    const el = t.el, cap = m.cap, P = pad();
-    const [top, low] = bounds(t, cap, h);
-    let x, y;
-    if (t.edge) {
-      x = t.edge.side < 0 ? EDGE_PAD - P : t.edge.side === 1 ? innerWidth - EDGE_PAD - w + P : t.edge.x - w / 2;
-      y = t.edge.side === 2 ? (cap && cap.top >= innerHeight / 2 && t.edge.x < cap.right + 20 ? cap.top - 12 - h : innerHeight - 16 - h) : t.edge.y;
-    } else {
-      const s = toScreen(t.at);
-      x = s.x + 16 - P; y = s.y - 26 - h / 2;
-      if (x + w > innerWidth - 12) x = s.x - 16 - w + P;       // no room on the right: hang on the left
+  // the page's own boxes a cue keeps clear of, read in one go before any cue is written (merge 018 step 2)
+  const OBST = ['.caption', '.prompt:not([hidden])', '.case:not(:empty)', '.back:not([hidden])', '.toast', '.controls', '.views', '.nav-hint.on'];
+  const obstacles = () => OBST.map((q) => document.querySelector(q)?.getBoundingClientRect()).filter((b) => b && b.width > 4)   // not the chips' 1 px clip
+    .map((b) => ({ x: b.left, y: b.top, w: b.width, h: b.height }));
+  const meet = (a, b, g = GAP) => a.x < b.x + b.w + g && a.x + a.w > b.x - g && a.y < b.y + b.h + g && a.y + a.h > b.y - g;
+  // a cue's place: at the frame edge on its side, at its object's height, else the nearest clear height (or, below the
+  // frame, the nearest clear x), clear of the page's boxes, of the cues placed so far and of what a click there reaches
+  // a cue's place: at the frame edge on its side, at its object's height, else the nearest clear height (or, below the
+  // frame, the nearest clear x), clear of the page's boxes and of the cues placed so far, taking no other place's click
+  // (steals). A side edge with no such height (the phone's left edge: the University's pane, the projector, the laptop)
+  // hands the light to the bottom edge, in the corner on that side: it still comes from that way
+  function place(t, e, done) {
+    const free = (b) => !done.some((d) => meet(b, d));
+    function along(side, want, lo, hi) {
+      t.el.classList.toggle('right', side === 1);
+      t.el.classList.toggle('below', side === 2);
+      const w = t.el.offsetWidth, h = t.el.offsetHeight, top = 52, low = innerHeight - 16 - h;
+      const at = (q) => (side === 2 ? { x: Math.min(Math.max(q - w / 2, 8), innerWidth - 8 - w), y: innerHeight - h, w, h }
+        : { x: side < 0 ? 0 : innerWidth - w, y: Math.min(Math.max(q - h / 2, top), low), w, h });
+      const span = side === 2 ? [Math.max(lo, 8 + w / 2), Math.min(hi, innerWidth - 8 - w / 2)] : [top + h / 2, low + h / 2];
+      const qs = [];
+      for (let q = span[0]; q <= span[1]; q += 12) qs.push(q);
+      qs.sort((a, b) => Math.abs(a - want) - Math.abs(b - want));
+      let best = null, cost = Infinity;
+      for (const b of qs.map(at).filter(free)) { const c = steals(b, t.id); if (c < cost) { best = b; cost = c; } if (!c) break; }
+      return { best: best ?? at(want), cost, side };
     }
-    y = Math.min(Math.max(y, top), low);
-    x = Math.min(Math.max(x, 8 - P), innerWidth - 8 - w + P);
-    // never over the page's own pills and cards, nor over another tag up at the same time: the nearest free height
-    // just above or below one of them, inside the frame's band (else above the obstacle, as before)
-    const boxes = [...m.obst.map((o) => [o.left, o.top, o.right, o.bottom]), ...avoid.map((o) => [o.x, o.y, o.x + o.w, o.y + o.h])];
-    // TILT: the tags hang tilted (up to 3.5°), so their screen boxes are taller than their layout boxes
-    const clash = (yy) => boxes.some(([l, tt, rr, bb]) => x < rr + TILT && x + w > l - TILT && yy < bb + TILT && yy + h > tt - TILT);
-    if (clash(y)) {
-      const c = boxes.flatMap(([, tt, , bb]) => [tt - h - TILT - 2, bb + TILT + 2]).filter((yy) => yy >= top && yy <= low && !clash(yy));
-      y = c.length ? c.reduce((a, b) => (Math.abs(b - y) < Math.abs(a - y) ? b : a)) : (m.obst.find((o) => x < o.right && x + w > o.left && y < o.bottom && y + h > o.top)?.top ?? y + h + 8) - h - 8;
+    let r = e.side === 2 ? along(2, Number.isFinite(e.x) ? e.x : innerWidth / 2, 0, innerWidth)
+      : along(e.side, Number.isFinite(e.y) ? e.y : innerHeight * 0.62);
+    if (r.cost > 0 && e.side !== 2) {
+      const c = e.side < 0 ? along(2, 0, 0, innerWidth / 2) : along(2, innerWidth, innerWidth / 2, innerWidth);
+      if (c.cost < r.cost) r = c;
+      else along(e.side, 0);   // back to the side's classes and size
     }
-    el.style.left = `${Math.round(x)}px`;
-    el.style.top = `${Math.round(y)}px`;
-    if (!t.edge) {
-      const s = toScreen(t.at);
-      string(t, s.x, s.y, x < s.x ? x + w - P : x + P, y + h / 2);
-    } else if (t.edge.side !== 2) {
-      // every edge tag hangs by its string from the frame edge on the side its object lies, at the object's height (or
-      // above the tag), never floats (action 4)
-      const ex = t.edge.side < 0 ? 0 : innerWidth, tx = t.edge.side < 0 ? x + P + 14 : x + w - P - 14;
-      const ay = Math.max(top - 6, Math.min(Number.isFinite(t.edge.ay) ? t.edge.ay : y - 30, y + P - 14));
-      string(t, ex, ay, tx, y + P);
-    } else {
-      string(t, x + w / 2, innerHeight, x + w / 2, y + h - P);   // below the frame: the string runs down to it
-    }
-    return (t.box = { x, y, w, h });
+    t.el.classList.toggle('right', r.side === 1);
+    t.el.classList.toggle('below', r.side === 2);
+    t.el.style.left = `${Math.round(r.best.x)}px`;
+    t.el.style.top = `${Math.round(r.best.y)}px`;
+    return (t.box = r.best);
   }
 
-  function show(id, why, at = null, node = null) {
-    const t = tags.get(id);
-    if (!t || id === live.view()) return;
-    if (t.node && t.node !== node) lit(id, false, t.node);
-    t.why = why; t.at = at; t.edge = null; t.node = node;
-    t.el.classList.add('on');
-    lit(id, true, node);
-    live.render();                 // update() places it, with the frame's other reads
-  }
-  function hide(t) { if (t.why && t.why !== 'edge') lit(t.id, false, t.node); t.why = null; t.node = null; t.el.classList.remove('on'); t.line.classList.remove('on'); }
-  // merge 018 step 5: what a hover or first-look tag names glows with it (glow.js, a warm lift of the bake). Panel 019
-  // action 8: a hover lights the hovered object's own meshes only (the Geiger counter, never the bench under it)
+  function hide(t) { t.on = false; t.el.classList.remove('on'); }
+  // what a hover or the first look names glows (glow.js, a warm lift of the bake). Panel 019 action 8: a hover lights the
+  // hovered object's own meshes only (the Geiger counter, never the bench under it)
   function lit(id, on, node = null) {
     if (live.glow) live.glow.set((byView.get(id) ?? []).filter((o) => !node || o.node === node).flatMap((o) => o.mats), on);
     live.render();
   }
-  function hideAll(keepEdge = false) { for (const t of tags.values()) if (!(keepEdge && t.why === 'edge')) hide(t); }
+  function hideAll() { for (const t of cues.values()) hide(t); }
 
-  // edge tags: recomputed on arrival and resize, only on the hero
-  const edged = new Set();         // the views an edge tag names (the gaze leaves them to it)
+  // edge cues: recomputed on arrival and resize, on the hero (and, on a phone, for the work from a walk: `only`)
+  const edged = new Set();
   const areas = { key: '', v: {} };
-  // merge 021 (panel 021 action 4): `only`, a list of view ids, hangs edge tags for those views alone, also off the hero in
-  // the room (a phone walk whose frame holds no Work object keeps one Work tag on its edge)
   const edges = () => edgesFor(null);   // as a callback (rAF, an observer): never its argument
   function edgesFor(only) {
-    for (const t of tags.values()) if (t.why === 'edge') hide(t);
-    for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
+    hideAll();
     if ((only ? !live.inRoom?.() : live.view() !== home) || live.root.dataset.intro === 'playing') return;   // not from the flight's camera
     edged.clear();
     // round 020 (panel 019 action 4): the walk's standpoints (desktop) are places too: one out of reach from the hero (the
-    // back of the room, behind the camera, where no floor in frame is near) gets the edge tag that points the way. A
-    // standpoint is a person-sized column on its spot, never a busy box for the other tags
-    // round 021 D: the phone walks too now, but keeps 019's edge budget (<= 2 tags a side): there the floor is the road to a
-    // standpoint, and the back of the room is a free walk away, so its tags stay the desktop's
+    // back of the room, behind the camera) gets the cue that points the way; on the phone the floor is that road
     for (const s of coarse.matches || only ? [] : live.stands?.() ?? []) if (!byView.has(s.id)) {
       byView.set(s.id, [{ node: null, place: true, mats: [], box: new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(s.pos.x, 0.85, s.pos.z), new THREE.Vector3(0.5, 1.7, 0.5)) }]);
-      tags.set(s.id, make(s.id));
+      cues.set(s.id, make(s.id));
     }
-    // the areas hold while the camera and the frame do (edges() runs on arrival, at the first-look pulse and on resize)
     const key = `${camera.matrixWorld.elements.map((e) => e.toFixed(4))}|${innerWidth}x${innerHeight}|${covers().map((b) => b.bottom | 0)}`;
-    if (areas.key !== key) { areas.key = key; areas.v = {}; }
-    const area = areas.v;
-    const per = { [-1]: [], [1]: [], [2]: [] };
+    if (areas.key !== key) { areas.key = key; areas.v = {}; lattice.clear(); }
+    const area = areas.v, want = [];
     for (const id of byView.keys()) {
       if (only && !only.includes(id)) continue;
-      // in reach: an object's centre in frame and clear of the page's boxes (a small object on the bench is found by its
-      // glow and its tag), or a real share of the frame (the clickable px² of the click code's own grid); without the grid,
-      // any sample point of an object
+      // in reach: an object's centre in frame and clear of the page's boxes, or a real share of the frame
       const list = byView.get(id) ?? [];
       if (list.some(({ box }) => { const c = toScreen(box.getCenter(new THREE.Vector3())); return onScreen(c) && !under(c); })) continue;
       const e = edgeOf(id);
       if (!e) continue;
-      // off frame (left, right): a sliver at the edge is no road; in frame under the caption (below): a real patch is
       const need = e.side === 2 ? MIN_REACH : Math.max(MIN_REACH, REACH_SHARE * innerWidth * innerHeight);
       area[id] ??= reachArea(id);
       if (area[id] !== null ? area[id] >= need : list.some(({ box }) => reach(box))) continue;
-      per[e.side].push({ t: tags.get(id), e });
+      want.push({ t: cues.get(id), e });
     }
-    const m = measure();
-    const busy = [];
-    for (const [, list] of byView) for (const { box, place } of list) {
-      if (place) continue;
-      const pts = samples(box, 0).map(toScreen).filter((q) => onScreen(q, 0) && !under(q));
-      if (pts.length) busy.push([Math.min(...pts.map((q) => q.x)), Math.min(...pts.map((q) => q.y)), Math.max(...pts.map((q) => q.x)), Math.max(...pts.map((q) => q.y))]);
-    }
-    const near = (a, b, g = 6) => a.x < b[2] + g && a.x + a.w > b[0] - g && a.y < b[3] + g && a.y + a.h > b[1] - g;
-    const hits = (b) => busy.some((q) => near(b, q));
-    const done = [];                 // every side's tags placed so far: no two meet (a long shared tag on a phone)
-    for (const side of [-1, 1, 2]) {
-      let list = per[side];
-      if (!list.length) continue;
-      // panel 019 action 4: the work is always findable. A work view keeps its own edge tag (it never folds into a
-      // furniture tag that flies elsewhere); the furniture views on a side fold into one tag, the nearer view's, naming
-      // every view that way ("← Hi-fi · C64 · Table"), one place each; on desktop too (C's left stack was three deep)
-      const own = (q) => WORK_VIEWS.includes(q.t.id) || !!byView.get(q.t.id)?.[0]?.place;
-      // a standpoint keeps its own tag too (round 020), low on its edge, by the floor it walks over
-      const work = list.filter(own).map((q) => (byView.get(q.t.id)?.[0]?.place ? { ...q, e: { ...q.e, y: innerHeight * 0.78, ay: NaN } } : q));
-      let rest = list.filter((q) => !own(q));
-      if (rest.length > 1) {
-        const dist = (q) => (side < 0 ? -q.e.x : side === 1 ? q.e.x : -q.e.y);
-        rest.sort((a, b) => (Number.isFinite(dist(a)) ? dist(a) : 1e9) - (Number.isFinite(dist(b)) ? dist(b) : 1e9));
-        rest = [{ t: rest[0].t, e: rest[0].e, ids: rest.map((q) => q.t.id) }];
-      }
-      list = [...work, ...rest];
-      for (const q of list) {
-        const t = q.t;
-        for (const id of q.ids ?? [t.id]) { const o = tags.get(id); if (o.why && o.why !== 'edge') hide(o); }   // a first-look tag gives way
-        t.why = 'edge'; t.edge = { ...q.e }; t.at = null;
-        t.el.classList.add('edge', side < 0 ? 'left' : 'right', 'on');
-        text(t, q.ids ?? [t.id], side);
-        for (const id of q.ids ?? [t.id]) edged.add(id);
-      }
-      if (side === 2) {   // below: in a row, in their projected order
-        let right = -Infinity;
-        for (const { t } of list.sort((a, b) => a.e.x - b.e.x)) { let b = place(t, m, undefined, undefined, done); if (b.x < right) { t.edge.x += right - b.x; b = place(t, m, undefined, undefined, done); } right = Math.max(b.x, right) + b.w + 8; done.push(b); }
-        continue;
-      }
-      const n = list.length;
-      for (const [i, { t }] of list.sort((a, b) => a.e.y - b.e.y).entries()) {
-        const h = t.el.offsetHeight;
-        if (coarse.matches) {
-          // touch: below the header, clear of the window glass and of what a finger can tap. Round 021: n tags on one side
-          // each get their own 1/n of the band and take the clear height nearest its centre (else the nearest clear one in
-          // the whole band, else the slot's centre); pushed down from one shared centre they ran to the toast and stacked
-          // there (the phone hero's "Least action →" over "Agents →")
-          const [top0, low0] = bounds(t, m.cap, h), slot = (low0 + h - top0) / n;
-          const top = top0 + slot * i, low = Math.max(top, Math.min(low0, top + slot - h));
-          const at = (y) => { t.edge.y = y; return place(t, m, undefined, undefined, done); };
-          const clear = (q) => !hits(q) && !overGlass(q);
-          let b = null;
-          for (const [lo, hi] of [[top, low], [top0, low0]]) {
-            const c = (lo + hi) / 2, ys = [];
-            for (let y = lo; y <= hi; y += 12) ys.push(y);
-            for (const y of ys.sort((p, q) => Math.abs(p - c) - Math.abs(q - c))) { const q = at(y); if (clear(q)) { b = q; break; } }
-            if (b) break;
-          }
-          b ??= at((top + low) / 2);
-          done.push(b);
-          continue;
-        }
-        // mouse: at the object's height, climbing until clear of what a visitor can click here and of each other
-        let b = place(t, m);
-        const clash = (q) => hits(q) || done.some((d) => near(q, [d.x, d.y, d.x + d.w, d.y + d.h], TILT));
-        for (let k = 0; k < 120 && clash(b); k++) { t.edge.y = b.y - 8; const nb = place(t, m); if (nb.y === b.y) break; b = nb; }
-        if (clash(b)) { t.edge.y = Math.max(...done.map((d) => d.y + d.h + 10), b.y); b = place(t, m); }   // stuck at the top
-        done.push(b);
-      }
+    // the work first (it is always findable), then the nearer the object to the frame, the nearer its light to its height
+    want.sort((a, b) => (WORK_VIEWS.includes(b.t.id) - WORK_VIEWS.includes(a.t.id)) || ((a.e.y || 0) - (b.e.y || 0)));
+    const done = obstacles();
+    for (const { t, e } of want) {
+      t.el.classList.add('on');
+      t.on = true;
+      done.push(place(t, e, done));
+      edged.add(t.id);
     }
   }
 
-  // hover (mouse): the tag of where a click goes; main.js resolves the pointer once per frame and hands its intent here
-  const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  let hoverId = null;
-  function hover(it, x, y) {
-    const id = it.kind === 'go' ? it.case ?? it.id : null;   // round 022 C: an own case's object hangs the case's tag
-    if (id === hoverId) return;
-    if (hoverId && tags.get(hoverId)?.why === 'hover') hide(tags.get(hoverId));
-    hoverId = id;
-    if (!id || tags.get(id)?.why === 'edge') return;
-    // the window has no object: the tag hangs where the pointer is, on the glass
-    const at = it.node ? anchorOf(id, it.node) ?? anchorOf(id) : (() => { const B = r(); ndc.set(((x - B.left) / B.width) * 2 - 1, -((y - B.top) / B.height) * 2 + 1);
-      ray.setFromCamera(ndc, camera); return ray.ray.at(3, new THREE.Vector3()); })();
-    if (at) show(id, 'hover', at, it.node ?? null);
+  // hover (mouse): the glow of where a click goes; main.js resolves the pointer once per frame and hands its intent here
+  let hoverId = null, hoverNode = null;
+  function hover(it) {
+    const id = it.kind === 'go' ? it.case ?? it.id : null;
+    const node = id ? it.node ?? null : null;
+    if (id === hoverId && node === hoverNode) return;
+    if (hoverId) lit(hoverId, false, hoverNode);
+    hoverId = id; hoverNode = node;
+    if (id) lit(id, true, node);
   }
-  canvas.addEventListener('pointerleave', () => { if (hoverId && tags.get(hoverId)?.why === 'hover') hide(tags.get(hoverId)); hoverId = null; });
-  canvas.addEventListener('pointerdown', () => { for (const t of tags.values()) if (t.why === 'gaze') hide(t); });
-  // panel 019 action 8: a click that moves the camera puts the glow out first (main.js room:move, the move's first frame)
-  // merge 021 (panel 021 action 4): edge tags hide while the camera moves too (a flight, a walk, a drag, a key step): a tag
-  // that points the way from a frame you are leaving lies; main.js says 'room:still' when a drag or a step has come to rest
-  addEventListener('room:move', () => hideAll());
-  addEventListener('room:drag', () => { for (const t of tags.values()) if (t.why === 'edge') hide(t); });
-  addEventListener('room:still', () => { if (live.view() === home) edges(); });
-
-  // gaze: the first look at the room shows where the work is
-  let gazeT = 0;
+  canvas.addEventListener('pointerleave', () => { if (hoverId) lit(hoverId, false, hoverNode); hoverId = hoverNode = null; });
+  // gaze: the first look at the room shows where the work is, by its glow
+  let gazeT = 0, gazed = [];
+  const ungaze = () => { clearTimeout(gazeT); for (const id of gazed) if (id !== hoverId) lit(id, false); gazed = []; };
+  canvas.addEventListener('pointerdown', ungaze);
   function gaze() {
     if (live.view() !== home && !live.inRoom?.()) return;   // the hero, or one of the walk's standpoints (panel 019 action 5)
-    clearTimeout(gazeT);
-    for (const id of WORK_VIEWS) { const at = anchorOf(id); if (at && !edged.has(id)) show(id, 'gaze', at); }
-    gazeT = setTimeout(() => { for (const t of tags.values()) if (t.why === 'gaze') hide(t); }, GAZE_MS);
+    ungaze();
+    gazed = WORK_VIEWS.filter((id) => (byView.get(id) ?? []).some(({ box }) => reach(box)));
+    for (const id of gazed) lit(id, true);
+    gazeT = setTimeout(ungaze, GAZE_MS);
   }
-  // the edges at once (the only road to what is out of frame); the gaze comes with main.js's first-look glow (pulse)
+  // merge 023 (panel 023 action 6): the first-look pulse (layer-hotspots.js pulse()) lights the captioned objects' own
+  // surfaces, staggered, for FLASH_S each; it ends without dimming what a hover or the gaze holds lit
+  let flashT = [], flashed = [];
+  function unflash() {
+    for (const t of flashT) clearTimeout(t);
+    flashT = [];
+    const keep = new Set([hoverId, ...gazed].filter(Boolean).flatMap((id) => (byView.get(id) ?? []).flatMap((o) => o.mats)));
+    live.glow?.set(flashed.filter((m) => !keep.has(m)), false);
+    flashed = [];
+  }
+  function flash(list = []) {
+    unflash();
+    if (live.view() !== home && !live.inRoom?.()) return;
+    const still = live.reduceMotion?.matches;
+    let end = 0;
+    for (const { mats, delay } of list) {
+      end = Math.max(end, delay);
+      flashT.push(setTimeout(() => { live.glow?.set(mats, true); flashed.push(...mats); }, 1000 * delay));
+    }
+    flashT.push(setTimeout(unflash, 1000 * (end + (still ? FLASH_HOLD_S : FLASH_S))));
+  }
+  canvas.addEventListener('pointerdown', unflash);   // a press or a wheel turn: the visitor has started (main.js had the dots go on 'start')
+  canvas.addEventListener('wheel', unflash, { passive: true });
+  // panel 019 action 8: a click that moves the camera puts the glow out first (main.js room:move); merge 021: the cues go
+  // while the camera moves (a light that points the way from a frame you are leaving lies) and come back when it rests
+  addEventListener('room:move', () => { hideAll(); ungaze(); unflash(); });
+  addEventListener('room:drag', () => { hideAll(); unflash(); });
+  addEventListener('room:still', () => { if (live.view() === home) edges(); });
   if (live.root.dataset.intro === 'playing') addEventListener('room:intro', () => setTimeout(edges, 500), { once: true });
   else setTimeout(edges, 300);
   addEventListener('resize', () => { edges(); });
-  addEventListener('room:intro-prompt', () => requestAnimationFrame(edges));   // the prompt pill came up: hang clear of it
-  // round 020: the case card fills on the hero after the edges ran (the scan notice at the end of the intro): measure()
-  // read it empty, so a tag on its edge sat under it. Its content changing is the obstacle changing: hang clear again
+  addEventListener('room:intro-prompt', () => requestAnimationFrame(edges));   // the prompt came up: clear of it
+  // the case card filling on the hero is the obstacle changing: place clear again (merge 020)
   const caseEl = document.querySelector('.case');
-  // merge 020: in the observer itself (a microtask before the next paint), not a frame later: the gate's "ui: no overlaps"
-  // caught the one frame where the filled card and the old tag place met (1024x768, the scan notice at the intro's end)
   if (caseEl) new MutationObserver(() => edges()).observe(caseEl, { childList: true });
 
   return {
     name: 'tags',
     hover,
-    read() {
-      const up = [...tags.values()].filter((t) => t.why && t.why !== 'edge');
-      F = { cov: readCovers(), m: up.length ? measure() : null, size: new Map(up.map((t) => [t, [t.el.offsetWidth, t.el.offsetHeight]])) };
-    },
-    update(dt) {
-      if (live.glow?.tick(dt)) live.render();
-      // the reads were read()'s (the page's boxes, each tag's size), here only the writes; a tag shown since then waits
-      // one frame, still at opacity 0 (its .18 s fade)
-      const up = [...tags.values()].filter((t) => t.why && t.why !== 'edge' && F?.size.has(t));
-      if (!up.length || !F.m) return false;
-      const edge = [...tags.values()].filter((t) => t.why === 'edge').map((t) => t.box).filter(Boolean);
-      const done = [...edge];
-      for (const t of up) done.push(place(t, F.m, ...F.size.get(t), done));
-      return false;
-    },
+    update(dt) { if (live.glow?.tick(dt)) live.render(); return false; },
     onView(id) {
-      for (const t of tags.values()) if (t.why !== 'edge' || id !== home) hide(t);
-      for (const t of tags.values()) if (!t.why) { t.el.classList.remove('edge', 'left', 'right'); text(t); }
+      unflash();
+      rest();
       if (id === home) requestAnimationFrame(edges);
-      else if (live.inRoom?.()) requestAnimationFrame(() => {   // a standpoint: the work in reach from here hangs its tags
-        gaze();
-        // merge 021 (action 4): on a phone, a walk whose frame holds no Work object still names one, on its edge
-        if (coarse.matches && ![...tags.values()].some((t) => t.why === 'gaze' && WORK_VIEWS.includes(t.id))) edgesFor(WORK_VIEWS);
-      });
+      else {
+        hideAll();
+        if (live.inRoom?.()) requestAnimationFrame(() => {   // a standpoint: the work in reach from here glows
+          gaze();
+          // merge 021 (action 4): on a phone, a walk whose frame holds no Work object still has one light on its edge
+          if (coarse.matches && !gazed.length) edgesFor(WORK_VIEWS);
+        });
+      }
     },
     api: {
-      gaze, edges,
-      shown: () => [...tags.values()].filter((t) => t.why).map((t) => ({ view: t.id, why: t.why, box: (({ left, top, right, bottom }) => [left, top, right, bottom])(t.el.getBoundingClientRect()) })),
+      gaze, edges, flash,
+      // the views whose objects glow at full strength now (a hover, the first look): what a visitor sees light up
+      lit: () => [...byView].filter(([, l]) => l.some((o) => o.mats.some((m) => m.userData.glow?.want === 1))).map(([id]) => id),
+      shown: () => [...cues.values()].filter((t) => t.on).map((t) => ({ view: t.id, why: 'edge', box: (({ left, top, right, bottom }) => [left, top, right, bottom])(t.el.getBoundingClientRect()) })),
     },
   };
 }

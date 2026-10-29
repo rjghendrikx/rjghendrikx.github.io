@@ -59,6 +59,12 @@ export const CAPTIONS = [
   ['pr_records', { kicker: 'Listening corner', title: 'The records',
     body: 'The library end of the chain. Know a chain well enough and you stop hearing it; then there is only the music.' }],
   ['pr_records_sleeves', 'pr_records'],
+  // round 023 A (Ruud 2026-10-23): the DJ corner; the track on the screen and this card is his own choice (gates.py
+  // COPY_ALLOW), the sound a stand-in synthesised in the browser (layer-deck.js). [check] notes/captions.md
+  ['pr_xdj', { kicker: 'Listening corner', title: 'The decks',
+    body: 'Two decks and a two-channel mixer. Press play and the facades across the water play along: the left fader drives the University\'s offices, the right the canal houses, the crossfader balances the two, and a low cut drops them into a breakdown. Deck 1 has 1988 (Original Mix) by Youandewan cued. You hear a synthesised stand-in at 122 BPM, not the record: its tempo and length are the stand-in\'s.',
+    more: { href: 'https://www.discogs.com/master/354325-Youandewan-1988', label: 'The record: Youandewan, 1988' } }],
+  ['pr_djm450', 'pr_xdj'],
   ['pr_dm603', { kicker: 'Listening corner', title: 'B&W DM603',
     body: 'Three-way floorstanders with the yellow Kevlar midrange B&W is known for. Around 90 dB sensitive: an easy load for the Luxman.' }],
   ['pr_ifi', { kicker: 'Listening corner', title: 'iFi NEO iDSD 2',
@@ -139,15 +145,8 @@ const CSS = `
 .hs-more:focus-visible { outline: 2px solid var(--accent, #e3a35b); outline-offset: 2px; border-radius: 2px; }
 .hs-card.peek .hs-body, .hs-card.peek .hs-more { display: none; }
 .hs-card.peek { padding: 7px 11px 8px; }
-/* the first-view pulse ("click anything that glows"): one soft warm glow per object cluster, no ring outline,
-   staggered left to right (pulse() sets the delay) */
-.hs-glow { position: fixed; left: 0; top: 0; width: 52px; height: 52px; margin: -26px 0 0 -26px; border-radius: 50%; pointer-events: none; z-index: 2;
-  background: radial-gradient(closest-side, rgba(255, 214, 150, .82), rgba(227, 163, 91, .36) 50%, rgba(227, 163, 91, 0));
-  opacity: 0; animation: hs-glow 2.2s ease-in-out 1 both; }
-@keyframes hs-glow { 0% { opacity: 0; transform: scale(.7); } 35% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.1); } }
-.gate .hs-card, .gate .hs-dot, .gate .hs-glow { display: none; }
-@media (prefers-reduced-motion: reduce) { .hs-card, .hs-dot { transition: none; transform: none; }
-  .hs-glow { animation: none; opacity: .85; } }
+.gate .hs-card, .gate .hs-dot { display: none; }
+@media (prefers-reduced-motion: reduce) { .hs-card, .hs-dot { transition: none; transform: none; } }
 `;
 
 export default function mount(live) {
@@ -217,6 +216,7 @@ export default function mount(live) {
   card.innerHTML = '<p class="hs-kicker"></p><h2 class="hs-title" id="hs-card-title"></h2><p class="hs-body"></p><a class="hs-more" target="_blank" rel="noopener"></a>';
   card.setAttribute('aria-labelledby', 'hs-card-title');
   const [kickerEl, titleEl, bodyEl, moreEl] = card.children;
+  let pulsed = [];                        // the last first-look pulse's screen centres (pulse())
   const dot = document.createElement('div');
   dot.className = 'hs-dot';
   dot.setAttribute('aria-hidden', 'true');
@@ -297,7 +297,8 @@ export default function mount(live) {
   addEventListener('resize', () => { CR = null; });
   const canvasBox = () => (CR ??= canvas.getBoundingClientRect());
   const boxes = () => ({ cap: document.querySelector('.caption')?.getBoundingClientRect(),
-    views: document.querySelector('.views')?.getBoundingClientRect(), w: card.offsetWidth, h: card.offsetHeight });
+    views: document.querySelector('.views')?.getBoundingClientRect(), w: card.offsetWidth, h: card.offsetHeight,
+    kase: document.querySelector('.case:not(:empty)')?.getBoundingClientRect() });
   // the screen box of a world box, CSS px [l, t, r, b], clipped to the window; null when behind the camera
   const rc = new THREE.Vector3();
   function rectOf(box, from = 0) {
@@ -350,7 +351,7 @@ export default function mount(live) {
     last.x = x; last.y = y; last.vis = vis;
     const W = innerWidth, H = innerHeight, g = 16;
     let top = g, bottom = H - g;
-    const { cap, views, w, h } = RB ?? boxes();
+    const { cap, views, w, h, kase } = RB ?? boxes();
     RB = null;
     if (cap && cap.top < H / 2) top = Math.max(top, cap.bottom + 8);
     if (views && views.height) bottom = Math.min(bottom, views.top - 8);
@@ -363,14 +364,24 @@ export default function mount(live) {
     // round 022 (panel 021 action 14): the card hangs beside the lit subject, never on it. It used to drop below the anchor
     // where above did not fit, onto the object (the laptop's screen, the shelf). Now it takes, of above, below, right and
     // left of the object's screen box, the one that covers least of the object and, of those, the darkest frame under it
-    if (inFrame) {
-      const R = R0, L = lumAt(), my = (R[1] + R[3]) / 2;
-      const over = ([a, b]) => Math.max(0, Math.min(a + w, R[2]) - Math.max(a, R[0])) * Math.max(0, Math.min(b + h, R[3]) - Math.max(b, R[1])) / (w * h);
+    // merge 023 (panel 022 action 14): in a close-up (the bench, the optics, the table, the hi-fi) the subject is the frame
+    // and its neighbours crowd every side of it (the notebook's card sat on the scope's screen), so the card docks to the
+    // frame's corners, as the case card does, and the leader dot keeps the anchor; never over the case card
+    const docked = !live.inRoom?.();
+    if (inFrame || docked) {
+      const R = R0 ?? [x, y, x, y], L = lumAt(), my = (R[1] + R[3]) / 2;
+      const ov = ([a, b], q) => q ? Math.max(0, Math.min(a + w, q[2]) - Math.max(a, q[0])) * Math.max(0, Math.min(b + h, q[3]) - Math.max(b, q[1])) / (w * h) : 0;
+      const K = kase && [kase.left - 8, kase.top - 8, kase.right + 8, kase.bottom + 8];
+      const over = (f) => ov(f, R);
+      // docked: and off the frame's other objects (the scope, the 3090 at the bench frame's right edge), the most covered one
+      const others = docked ? spots.filter((t) => t !== open).map((t) => rectOf(t.box)).filter((q) => q && q[2] - q[0] >= 8 && q[3] - q[1] >= 8) : [];
+      const crowd = (f) => others.reduce((m, q) => Math.max(m, ov(f, q)), 0);
       let best = null, least = Infinity;
-      const cands = [[x - w / 2, R[1] - 14 - h], [x - w / 2, R[3] + 14], [R[2] + 14, my - h / 2], [R[0] - 14 - w, my - h / 2]];
-      if (!vis) cands.push([W / 2 - w / 2, bottom - h]);   // a sliver at the edge may also rest above the strip, as before
+      const cands = docked ? [[g, top], [g, bottom - h], [W - g - w, top], [W - g - w, bottom - h]]
+        : [[x - w / 2, R[1] - 14 - h], [x - w / 2, R[3] + 14], [R[2] + 14, my - h / 2], [R[0] - 14 - w, my - h / 2]];
+      if (!vis && !docked) cands.push([W / 2 - w / 2, bottom - h]);   // a sliver at the edge may also rest above the strip, as before
       for (const c of cands) {
-        const f = fit(c), score = 2 * over(f) + lumOf(L, [f[0], f[1], f[0] + w, f[1] + h]);
+        const f = fit(c), score = 2 * over(f) + 4 * ov(f, K) + crowd(f) + lumOf(L, [f[0], f[1], f[0] + w, f[1] + h]);
         if (score < least) { least = score; best = f; }
       }
       [cx, cy] = best;
@@ -459,7 +470,7 @@ export default function mount(live) {
       if (open) position();             // follow the camera; DOM only, no WebGL frame needed
       return false;
     },
-    onView() { if (mode === 'hover') hide(); document.querySelectorAll('.hs-glow').forEach((e) => e.remove()); },
+    onView() { if (mode === 'hover') hide(); pulsed = []; },
     api: {
       list: () => spots.map((s) => s.name),
       // merge 018 step 3 (from A): a caption as data, for the case card of a view that has no case of its own
@@ -469,19 +480,21 @@ export default function mount(live) {
       // merge 022 (panel 022 action 3): the open card is placed (update() ran position() for it) and faded in; the gates wait
       // for this, not a fixed delay: under load no frame may run in 200 ms and the card is read where the last one hung
       placed: () => !!open && !Number.isNaN(last.x) && !fadeIn,
-      // glow on the captioned objects in view (the box centre), once: at most one per cluster (objects whose centres
-      // lie within GLOW_GAP px; the biggest stands for its neighbours), staggered left to right over GLOW_SPREAD s.
-      // Reduced motion: all at once, no animation, gone after GLOW_HOLD. Returns how many glowed.
+      // the first look at the captioned objects in view (the box centre), once: at most one per cluster (objects whose
+      // centres lie within GLOW_GAP px; the biggest stands for its neighbours), staggered left to right over GLOW_SPREAD s.
+      // Merge 023 (panel 023 action 6): the light is the objects' own surfaces, not a DOM dot over them (it sat on the desk
+      // and on Plato's cheek): returns [{ mats, delay }] for layer-tags.js flash(), which lifts them through glow.js (the
+      // bake-weighted lift, <= +0.5 stop) and holds them (its FLASH_S). Reduced motion: all at once.
       pulse() {
-        document.querySelectorAll('.hs-glow').forEach((e) => e.remove());
         const r = canvas.getBoundingClientRect();
-        const GLOW_GAP = Math.max(64, Math.min(r.width, r.height) * 0.12), GLOW_SPREAD = 2.0, GLOW_DUR = 2.2, GLOW_HOLD = 2.4;
+        const GLOW_GAP = Math.max(64, Math.min(r.width, r.height) * 0.12), GLOW_SPREAD = 2.0;
         const seen = [];
         for (const s of spots) {
+          if (!s.meshes?.length) continue;          // the raindrop has no surface of its own to light
           v.copy(s.box.getCenter(new THREE.Vector3())).project(camera);
           const x = r.left + (v.x + 1) / 2 * r.width, y = r.top + (1 - v.y) / 2 * r.height;
           if (v.z > 1 || x < r.left + 8 || x > r.right - 8 || y < r.top + 8 || y > r.bottom - 8) continue;
-          seen.push({ x, y, vol: s.volume });
+          seen.push({ x, y, vol: s.volume, mats: [...new Set(s.meshes.flatMap((m) => [m.material].flat()).filter(Boolean))] });
         }
         const kept = [];
         for (const p of seen.sort((a, b) => b.vol - a.vol)) {
@@ -490,18 +503,11 @@ export default function mount(live) {
         kept.sort((a, b) => a.x - b.x);
         const still = live.reduceMotion.matches;
         const x0 = kept[0]?.x ?? 0, span = Math.max(1, (kept.at(-1)?.x ?? 0) - x0);
-        for (const p of kept) {
-          const delay = still ? 0 : GLOW_SPREAD * (p.x - x0) / span;
-          const g = document.createElement('div');
-          g.className = 'hs-glow';
-          g.setAttribute('aria-hidden', 'true');
-          g.style.left = `${p.x}px`; g.style.top = `${p.y}px`;
-          g.style.animationDelay = `${delay.toFixed(2)}s`;
-          document.body.appendChild(g);
-          setTimeout(() => g.remove(), 1000 * (still ? GLOW_HOLD : delay + GLOW_DUR) + 100);
-        }
-        return kept.length;
+        pulsed = kept.map((p) => [p.x, p.y]);
+        return kept.map((p) => ({ mats: p.mats, delay: still ? 0 : GLOW_SPREAD * (p.x - x0) / span }));
       },
+      // for the gates: the screen centres the last first-look pulse lit (cleared on a view change)
+      pulsed: () => pulsed,
       state: () => ({ open: open?.name ?? null, mode }),
       // round 022: would a hover on this spot show its card here (not an object that leads to another view)
       hoverable: (name) => { const s = spots.find((x) => x.name === name); return !!s && !leads(s); },

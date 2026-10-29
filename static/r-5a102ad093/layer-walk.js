@@ -27,7 +27,7 @@ const CARDS = {
   // round 020: the STANDS row turned this one out over the sill (it looked back at the bookcase): the card says so
   // round 022 A: the STANDS row now looks down into the right pane (the manuscript, the lantern on the quay)
   // merge 022: turned out through the left pane at the University and the canal (the light show's stage, round 022 E)
-  window: 'From here: the canal, the boats and the University across the water.',
+  window: 'From here: the elm on the quay, the lantern under it, the canal and the University across the water.',
   seat: 'From here: the hi-fi, Simulations in the cloud chamber, the C64.',
 };
 const FLOOR = new Set(['at_floor', 'cz_rug']);

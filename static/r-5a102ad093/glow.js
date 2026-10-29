@@ -3,6 +3,8 @@
 // onBeforeCompile (the same function object, so one program cache key): the baked materials keep sharing one program.
 // At rest the colour is (1, 1, 1) and the term (0, 0, 0): the bake renders exactly as before (the align and fidelity
 // gates). Eased in and out over EASE_S, at once under prefers-reduced-motion.
+// Round 023 B: rest() gives a set of materials a resting level instead of 0 (layer-tags.js: the hot objects' faint lift, off
+// under ?gate, where that layer does not mount); set(off) eases back to it.
 //
 // Panel 019 action 8: the glow as light, not selection. A third of 018's strength; the lift is weighted by the baked
 // luminance (smoothstep over SHADOW, linear), so the mids rise and a deep shadow keeps ~70 % of its darkness; the
@@ -29,12 +31,16 @@ export default function makeGlow(THREE, reduceMotion) {
   const live = new Set();          // materials easing or lit
   return {
     attach(mat) {
-      mat.userData.glow = { u: { value: new THREE.Vector3() }, l: { value: new THREE.Vector3() }, k: 0, want: 0 };
+      mat.userData.glow = { u: { value: new THREE.Vector3() }, l: { value: new THREE.Vector3() }, k: 0, want: 0, base: 0 };
       mat.onBeforeCompile = patch;
     },
-    // light (on) or dim a set of materials
+    // light (on) or dim a set of materials; dimmed means back to its resting level
     set(mats, on) {
-      for (const m of mats) { const g = m.userData.glow; if (!g) continue; g.want = on ? 1 : 0; live.add(m); }
+      for (const m of mats) { const g = m.userData.glow; if (!g) continue; g.want = on ? 1 : g.base; live.add(m); }
+    },
+    // round 023 B: the resting level (0..1 of the full glow) a set of materials eases to and dims back to; 0 = the bake
+    rest(mats, k) {
+      for (const m of mats) { const g = m.userData.glow; if (!g) continue; if (g.want === g.base) g.want = k; g.base = k; live.add(m); }
     },
     // -> true while something changed (the caller draws a frame)
     tick(dt) {
@@ -48,7 +54,7 @@ export default function makeGlow(THREE, reduceMotion) {
           g.u.value.set(ADD[0] * k, ADD[1] * k, ADD[2] * k);
           changed = true;
         }
-        if (g.k === g.want && !g.want) live.delete(m);
+        if (g.k === g.want && g.want === g.base) live.delete(m);
       }
       return changed;
     },

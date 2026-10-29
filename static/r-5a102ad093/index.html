@@ -18,10 +18,6 @@
 <meta property="og:image:alt" content="Night through a tall sash window: a dark canal below, a moored barge with its arched windows lit warm, a lantern on the quay, and the lit windows of the houses across the water; a printed essay leans on the sill.">
 <meta name="twitter:card" content="summary_large_image">
 <style>
-  /* round 019 (panel 018 action 6): one handwritten face for the paper tags on every OS: Kalam Bold (OFL, kalam-OFL.txt),
-     self-hosted, subset to Basic Latin plus · and ’ (12 kB); no request leaves the site. The arrows fall back to the system. */
-  @font-face { font-family: "Kalam"; src: url("kalam-tags.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap;
-    unicode-range: U+0020-007E, U+00B7, U+2019; }
   :root { --bg: #14110f; --ink: #efe6da; --muted: #c4b7a5; --accent: #e3a35b; }
   html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
   body {
@@ -94,6 +90,16 @@
   .case .acts a, .case .acts button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); text-decoration: none; cursor: pointer;
     padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
   .case .acts a::after { content: " \2197"; color: var(--accent); }
+  /* round 023 C: an own case's figure (main.js OWN_FIG): the 3090's readout (layer-gpu.js), the Atlas's count */
+  .case .fig { margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
+  .case .fig p { margin: 0; }
+  .case .readout .big { font: 600 26px/1.1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
+  .case .readout .u { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .case .readout .s { font-size: 12px; color: var(--ink); margin-top: 2px; }
+  .case .readout .note, .case .count { font-size: 11.5px; color: var(--muted); }
+  .case .count { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .case .count b { font: 600 17px/1.2 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
+  @media (max-width: 640px) { .case .readout .big { font-size: 22px; } .case .readout .note { font-size: 11px; } }
   /* panel 019 action 9: the offer, the card's last act: filled, no outbound arrow (it opens the mail app, not a page) */
   .case .acts a.mail { background: rgba(227, 163, 91, .2); border-color: var(--accent); }
   .case .acts a.mail::after { content: none; }
@@ -243,13 +249,15 @@
   /* round 019 (panel 018 action 13): plus one quiet "Views" pill in the controls corner opens them for a pointer (main.js) */
   .js .views:not(:focus-within):not(.open) { width: 1px; height: 1px; max-width: none; overflow: hidden; clip-path: inset(50%); padding: 0;
     -webkit-mask-image: none; mask-image: none; }
-  /* the way home, only away from the hero, named for where it goes; a paper tag like the others */
-  .back { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 4; transform: translateX(-50%) rotate(-1.5deg);
-    font: 700 15px/1 "Kalam", "Bradley Hand", "Noteworthy", cursive; font-synthesis: none; color: #2b2119; cursor: pointer; white-space: nowrap;
-    padding: 9px 15px 10px; border: 0; border-radius: 9px; background: linear-gradient(#cdc3ac, #c3b69c); box-shadow: 0 4px 12px rgba(0, 0, 0, .45); }
-  .back::before { content: "\2190"; margin-right: 7px; }
-  .back .esc { font: 600 11px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; color: #7a6650; }
-  .back:hover { background: linear-gradient(#d3cab5, #c9ba9d); }
+  /* the way home, only away from the hero, named for where it goes. Round 023 B (no tags): the room's own quiet pill, as
+     the prompt, no longer a paper tag (the Kalam face went with the tags) */
+  .back { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 4; transform: translateX(-50%);
+    font: 500 13.5px/1 ui-sans-serif, system-ui, sans-serif; color: var(--ink); cursor: pointer; white-space: nowrap; min-height: 44px; box-sizing: border-box;
+    padding: 9px 16px; border-radius: 999px; background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 12px rgba(0, 0, 0, .35); }
+  .back::before { content: "\2190"; margin-right: 7px; color: var(--accent); }
+  .back .esc { font: 600 10.5px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; color: var(--muted); }
+  .back:hover { background: rgba(38, 31, 26, .88); }
   .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
   .back[hidden] { display: none; }
   .away .prompt { display: none; }   /* the first-look prompt belongs to the hero */

@@ -21,7 +21,7 @@ const LIVE = !params.has('nolive');   // ?nolive: the bake alone
 // onView(id), api for the gates). One failing layer must not take the room down.
 // layer-terminal.js first (its canvas is ready before the others mount); layer-intro.js last, it takes
 // the camera from the room's first frame
-const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-tags.js', 'layer-walk.js', 'layer-lidar.js', 'layer-stage.js', 'layer-c64.js', 'layer-intro.js'];
+const LAYERS = ['layer-terminal.js', 'layer-projector.js', 'layer-chamber.js', 'layer-geiger.js', 'layer-eraser.js', 'layer-rain.js', 'layer-water.js', 'layer-audio.js', 'layer-hotspots.js', 'layer-tags.js', 'layer-walk.js', 'layer-lidar.js', 'layer-deck.js', 'layer-stage.js', 'layer-c64.js', 'layer-intro.js', 'layer-gpu.js'];
 // panel 019 action 3b: the polarizer's act says what a press will do, from the eraser's own state ([check] copy)
 const POLARIZER = (L) => (L.eraser?.info().inBeam ? 'Take the polarizer out' : 'Insert the polarizer');
 // Case cards: one project per work viewpoint (lib/layouts/canal_house.py VIEWS), shown in .case (aria-live)
@@ -71,7 +71,49 @@ const CASES = {
 // article[data-case] (the no-JS sheet), `in` naming the view. The zone cards' acts that open them: [check] captions.md
 const OWN = { atlas: 'His own: the Atlas', inference: 'His own: a model on the 3090', metal: 'His own: Metal visuals' };
 // round 022 C: Metal visuals is the medium the projector plays: its card runs the show (the head becomes the canvas)
-const OWN_ACTS = { metal: [{ label: 'Show the idea in the room', run: (L) => L.projector?.start() }] };   // [check] merge 022 (panel 022 action 6): WebGL, not the Metal pipeline
+// round 023 C: each own case does something when it opens (OWN_FIG, from showCase, so a click and Enter run the same act),
+// and its card ends one click from the room's version of it. Metal visuals: the light show on the facades opposite is
+// its pattern vocabulary (layer-stage.js, which plays at the window), so the card's second act walks there. [check]
+const METAL_CUE_BEAT = (16 + 16 - 8) * 4;   // layer-deck.js SECTIONS: intro 16 bars, build 16; its last 8 bars
+const OWN_ACTS = {
+  metal: [{ label: 'Show the idea in the room', run: (L) => L.projector?.start() },   // [check] merge 022 (panel 022 action 6): WebGL, not the Metal pipeline
+    // merge 023 (panel 023 action 12): one facade, one owner: the act cues A's stage (layer-stage.js cue) on the University
+    // only, at the build's last 8 bars (the drop within ~16 s), on its own silent clock, and frames the University
+    { label: 'See it on the facades opposite', run: (L) => L.stage?.cue?.({ beat: METAL_CUE_BEAT, university: true }), go: 'university' }],   // [check]
+  inference: [{ label: 'Replay the readout', run: (L) => L.gpu?.play() }],   // [check]
+};
+// round 023 C: the figure an own case opens with, drawn into the card under its title. The 3090's readout is its layer's
+// (layer-gpu.js: the fans spin up, 30.0 -> 43.2 tok/s, the bench replayed). The Atlas counts its own figures up once:
+// each number must stand in the case's own text (index.html #work), or it is left out, so the card never shows a
+// figure the article (and the vault README behind it) does not. [check] the labels, notes/captions.md
+// [number, label, the words that must stand in the case's text]
+const ATLAS_FIG = [['46', 'agents', '46 agents'], ['28', 'minutes', '28 minutes'], ['157', 'cards', '157 cards'], ['651', 'claims', '651 claims'],
+  ['8', 'of 2,144 citations unresolved', '2,144 citations, 8 are unresolved']];
+const COUNT_MS = 1200;
+function countFig(el, text, still) {
+  const figs = ATLAS_FIG.filter(([, , src]) => text.includes(src));
+  el.classList.add('fig', 'count');
+  el.setAttribute('aria-hidden', 'true');   // the figures are in the case's text: a live region would read every step
+  el.replaceChildren(...figs.map(([n, l]) => {
+    const s = document.createElement('span');
+    s.innerHTML = `<b data-to="${n}">${still ? n : 0}</b> ${l}`;
+    return s;
+  }));
+  el.dataset.state = still ? 'done' : 'running';
+  if (still) return;
+  const t0 = performance.now();
+  const tick = (now) => {
+    if (!el.isConnected) return;
+    const k = Math.min(1, (now - t0) / COUNT_MS), e = 1 - (1 - k) ** 3;
+    for (const b of el.querySelectorAll('b')) b.textContent = String(Math.round(+b.dataset.to * e));
+    if (k < 1) requestAnimationFrame(tick); else el.dataset.state = 'done';
+  };
+  requestAnimationFrame(tick);
+}
+const OWN_FIG = {
+  atlas: (L, el, c, still) => countFig(el, c.b, still),
+  inference: (L, el) => L.gpu?.play(el),
+};
 for (const a of document.querySelectorAll('#work article[data-case]')) {
   const id = a.dataset.case, c = OWN[id] && workCase(null, { room: '', acts: [] }, a);
   if (!c || !CASES[a.dataset.in]) continue;
@@ -93,7 +135,7 @@ const PLATO = {
 };
 // merge 018 step 3 (A's table, D's rule): a view without a case shows its object's caption as the card, on arrival
 // (the hover only names it, with the tag). View id -> layer-hotspots.js CAPTIONS name; a missing caption is skipped.
-const CAPTION_OF = { c64: 'c64', optics: 'optics', hifi: 'amp', canal: 'raindrop' };   // canal: 019 action 16, the phone's road to the drop   // not the poster: it is its own text (D)
+const CAPTION_OF = { c64: 'c64', optics: 'optics', hifi: 'amp', canal: 'raindrop', decks: 'pr_xdj' };   // canal: 019 action 16, the phone's road to the drop   // not the poster: it is its own text (D)
 // panel 018 action 3: the acts of a caption card. The polarizer is in the #optics frame since round 020 C (parked on its
 // post beside the card): a click on it or the card's act puts it in the beam, and the fringes on the card come back
 // panel 019 actions 5 and 11: a place that is not a case still says, in one line, what a click reaches from it: the furniture
@@ -102,9 +144,16 @@ const PLACE_CARDS = {
   table: 'From here: the C64, Agents on the laptop, the hi-fi.',
   wall: 'From here: the work files on the shelf, Plato and the projection mapping, the wheel.',
 };
-const CAPTION_ACTS = { optics: [{ label: POLARIZER, run: (L) => L.eraser?.toggle(false) }] };
+// round 023 A: the deck's act says what a press will do, from the deck's own state ([check] copy)
+const DECK_ACT = (L) => (L.deck?.info().playing ? 'Stop the track' : 'Play the track');
+const CAPTION_ACTS = { optics: [{ label: POLARIZER, run: (L) => L.eraser?.toggle(false) }], decks: [{ label: DECK_ACT, run: (L) => L.deck?.toggle() }] };
 // the nav's Work group, in this order (panel 015 action 6); the layout's other views go behind "More views"
 const WORK_ORDER = ['chamber', 'terminal', 'experiment'];
+const CHIP_STANDS = ['window'];   // merge 023: standpoints that also get a chip in the room row (their STANDS label)
+// round 023 B (Ruud 2026-10-23, no tags: "dat heb je in een game ook niet"): the one discovery hint, after the fly-in, on a
+// first visit only; its words are index.html's .prompt button (mouse) and this (touch). [check] notes/captions.md
+const GLOW_HINT = { touch: 'Tap anything that glows' };
+const GLOW_HINT_KEY = 'room.glowhint.v1';
 const NAV_HINT_KEY = 'room.navhint.v2';   // localStorage: the one-time hint was shown (merge 018 step 7; v2 merge 021: one hint)
 // [check] notes/captions.md: the hint, split for touch and mouse (C's grammar: outside is back)
 const NAV_HINT = { touch: 'Tap anywhere outside it to go back to the room', mouse: 'Click anywhere outside it, or press Esc, to go back to the room' };
@@ -129,6 +178,8 @@ const HOT = {
   pr_records: 'hifi', pr_records_sleeves: 'hifi',
   // round 022 C: the RTX 3090 on the bench (objects/pr_3090.py), its own case's object (CASE_OF)
   pr_3090: 'bench',
+  // round 023 A: the DJ corner (objects/pr_xdj.py, pr_djm450.py): the decks and the mixer have their own close view
+  pr_xdj: 'decks', pr_djm450: 'decks',
 };
 // round 022 C (panel 021, bets for 022, C): the own cases as objects. A click on one of these nodes flies to its view (HOT)
 // and opens the own case there (openCase: #<case> replaces the view's entry, so outside, Esc and Back lead home as from the
@@ -136,7 +187,12 @@ const HOT = {
 // link. The tag over it names the case (live.label). The Atlas stays on the laptop's Agents card: the laptop is the
 // Agents work case's one object on the phone hero (the binder is off screen there), so it cannot also be the Atlas's.
 const CASE_OF = { pr_3090: 'inference', projector: 'metal' };
-const OWN_TAG = { inference: 'Local inference', metal: 'Metal visuals' };   // the paper tag's words (layer-tags.js) [check]
+const OWN_TAG = { inference: 'Local inference', metal: 'Metal visuals' };   // the case's name (live.label: aria, the Views list) [check]
+// merge 023 (panel 022 action 8): an own case whose object is small in its zone's view gets a close view of its own, posed
+// from the node's box (no room coordinates here): the eye on the line from the `from` view's eye to the box centre, at the
+// distance where the box's bounding sphere spans `fill` of the frame's height, at the `from` view's lens. The case's `in`
+// and the node's HOT row become that view; a layout without the node keeps index.html's data-in. Label: OWN_TAG's words.
+const CLOSE = { inference: { node: 'pr_3090', from: 'bench', fill: 0.5 } };
 // round 020 (panel 019 action 7): part of a node goes somewhere: a hit on it below `y` m (glTF up) leads to `id`. The
 // bookcase's lower shelves, under Plato's plinth top, are the Bookcase view's own target; above them the books stay
 // scenery, so the case's box (a third of the hero) never becomes a hot box for the tags
@@ -146,7 +202,9 @@ const ACT = { experiment: (L) => L.projector?.start(), projector: (L) => L.proje
 const FAR_VIEWS = ['canal', 'university'];
 const FURNITURE = ['bench', 'table', 'wall'];   // views of a piece of furniture: from a close-up on it, a click there is back
 const LEFT_PANE_X = 0;           // glTF x of the window's mullion: left of it is the University pane, right the canal
-const TAP_SLOP = 22;             // px: a tap this close to a small hot object counts as on it (44 px targets on a phone)
+const CASE_REACH = 0.02;        // share of the frame a case's object is padded to under a mouse (round 023 B, padOf)
+const CASE_TAP = 64;            // CSS px: on touch a case's object pads to this, so a 44 px square of it stays clear of its neighbours (023 B)
+const TAP_MIN = 44;              // CSS px: on touch a hot object smaller than this is padded to it about its centre (WCAG 2.5.8)
 const PULL_PX = 240;             // wheel delta past the far limit that steps back into the room
 const TOAST_MS = 8000;          // the end-of-flight toast's time on screen, at least 8 s (panel 016 action 8)
 // the walk's cursor (round 019 A): two steps on the boards, cream on a dark edge; the fallback names a click, never a drag
@@ -359,6 +417,18 @@ async function start() {
   // The first viewpoint is the hero: use the camera's exact values so the gate's pixel diff holds.
   if (views[0]) Object.assign(views[0], { pos: heroPos.clone(), target: heroTarget.clone(), fov: src.fov });
   else views.push({ id: 'overview', label: 'Overview', order: 0, pos: heroPos.clone(), target: heroTarget.clone(), fov: src.fov });
+  for (const [id, c] of Object.entries(CLOSE)) {
+    const node = scene.getObjectByName(c.node), from = views.find((v) => v.id === c.from);
+    if (!node || !from || !CASES[id]) continue;
+    const box = new THREE.Box3().setFromObject(node), target = box.getCenter(new THREE.Vector3());
+    const r = box.getBoundingSphere(new THREE.Sphere()).radius, fov = from.fov;
+    const d = r / Math.tan(THREE.MathUtils.degToRad(fov) * c.fill / 2);
+    const pos = target.clone().add(from.pos.clone().sub(target).normalize().multiplyScalar(d));
+    views.push({ id, label: OWN_TAG[id] ?? id, order: from.order + 0.5, pos, target, fov, close: true });
+    CASES[id].in = id;
+    HOT[c.node] = id;
+  }
+  views.sort((a, b) => a.order - b.order);
   for (const v of views) v.shift = v === views[0] ? PORTRAIT_SHIFT : [0, 0];
   // merge 018 step 8 / action 9: where the head is the scan target, the third work view names the offer (its chip, its tag
   // and the Work sheet's kicker); the layout's own label (canal_house.py VIEWS) follows at the next bake. [check]
@@ -452,8 +522,6 @@ async function start() {
   let tween = null;
   let lastMove = null;              // the last animated move: { from, to, ms, metres, swing } (__room.camera().move)
   controls.addEventListener('change', () => { needsRender = true; });
-  // a drag or wheel moves the camera: the first-view glows (layer-hotspots.js pulse) would point at nothing
-  controls.addEventListener('start', () => document.querySelectorAll('.hs-glow').forEach((e) => e.remove()));
   addEventListener('resize', resize);
   resize();
 
@@ -559,13 +627,29 @@ async function start() {
   // where a click leads from here: the window views own no object, so in one of them all of outside is the way back
   // (never the other pane's view: that would be a neighbour, not home)
   const leadOf = (p, obj) => { const to = hotOf(p, obj); return to && !to.node && FAR_VIEWS.includes(current.id) ? null : to; };
-  // the screen box of each hot node, for a touch that just misses a small object (TAP_SLOP px)
+  // the screen box of each hot node, for a touch that just misses a small object. Merge 023 (Ruud: the phone walks): only an
+  // object under TAP_MIN px on a side is padded, to TAP_MIN about its centre; a large one (Plato's plinth on the phone hero)
+  // took every floor tap within 22 px of its box, so walk cells opened its view. small: is this node's box small here
   const hotBoxes = [...hot.keys()].map((o) => [o, new THREE.Box3().setFromObject(o)]);
-  function nearHot(x, y, slop) {
-    const r = canvasBox();
-    let best = null, bestD = slop;
+  // round 023 B (no tags): with the names gone, a case's object must be found by the pointer alone: on a mouse, an object
+  // that opens a case (a work view's, or CASE_OF's) and covers under CASE_REACH of the frame is padded to that share about
+  // its centre, so its glow and cursor come up as the pointer nears it (a game's aim assist); every other object keeps its
+  // own pixels. touch: TAP_MIN for every small hot object, as before, CASE_TAP for a case's
+  const opensCase = (o) => !!caseOf(o) || WORK_ORDER.includes(hot.get(o));
+  function padOf(o, w, h, touch) {
+    if (touch) { const m = opensCase(o) ? CASE_TAP : TAP_MIN; return [Math.max(0, (m - w) / 2), Math.max(0, (m - h) / 2)]; }
+    const A = CASE_REACH * innerWidth * innerHeight;
+    if (!opensCase(o) || w * h >= A) return [0, 0];
+    const p = (Math.sqrt((w + h) ** 2 - 4 * (w * h - A)) - (w + h)) / 4;
+    return [p, p];
+  }
+  // round 023 B: on touch a case's object keeps a TAP_MIN square core about the centre of its visible screen box, whatever
+  // sits in it (a captioned neighbour, the bench): its pad alone came out holed (the 3090: 3200 px², no 44 px square)
+  function caseCore(x, y) {
+    const r = canvasBox(), h = TAP_MIN / 2;
+    let best = null, bestD = Infinity;   // two cores that overlap (the projector over the laptop) split at the middle
     for (const [o, b] of hotBoxes) {
-      if (hot.get(o) === current.id) continue;
+      if (!opensCase(o) || hot.get(o) === current.id) continue;
       let l = Infinity, t = Infinity, rr = -Infinity, bb = -Infinity, behind = false;
       for (let i = 0; i < 8; i++) {
         const c = new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera);
@@ -574,6 +658,30 @@ async function start() {
         l = Math.min(l, sx); rr = Math.max(rr, sx); t = Math.min(t, sy); bb = Math.max(bb, sy);
       }
       if (behind || rr < 0 || l > innerWidth || bb < 0 || t > innerHeight) continue;
+      const cx = Math.min(Math.max((Math.max(l, 0) + Math.min(rr, innerWidth)) / 2, h), innerWidth - h);
+      const cy = Math.min(Math.max((Math.max(t, 0) + Math.min(bb, innerHeight)) / 2, h), innerHeight - h);
+      const d = Math.max(Math.abs(x - cx), Math.abs(y - cy));
+      if (d <= h && d < bestD) { bestD = d; best = { id: hot.get(o), node: o }; }
+    }
+    return best;
+  }
+  function nearHot(x, y, only = null, touch = true) {
+    const r = canvasBox();
+    let best = null, bestD = Infinity;
+    for (const [o, b] of hotBoxes) {
+      if (only ? o !== only : hot.get(o) === current.id) continue;
+      let l = Infinity, t = Infinity, rr = -Infinity, bb = -Infinity, behind = false;
+      for (let i = 0; i < 8; i++) {
+        const c = new THREE.Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z).project(camera);
+        if (c.z > 1) { behind = true; break; }
+        const sx = r.left + (c.x + 1) / 2 * r.width, sy = r.top + (1 - c.y) / 2 * r.height;
+        l = Math.min(l, sx); rr = Math.max(rr, sx); t = Math.min(t, sy); bb = Math.max(bb, sy);
+      }
+      if (behind || rr < 0 || l > innerWidth || bb < 0 || t > innerHeight) continue;
+      const [px, py] = padOf(o, rr - l, bb - t, touch);
+      if (!px && !py) { if (only) return null; continue; }   // big enough: its own pixels are its target
+      if (only) return { id: hot.get(o), node: o };
+      if (x < l - px || x > rr + px || y < t - py || y > bb + py) continue;
       const d = Math.hypot(Math.max(l - x, 0, x - rr), Math.max(t - y, 0, y - bb));
       if (d < bestD) { bestD = d; best = { id: hot.get(o), node: o }; }
     }
@@ -684,13 +792,24 @@ async function start() {
   }
   // Where a click leads, the one rule for the click, the cursor, the tags and the gate (round 18 C, spec rules 1-4):
   // { kind: 'go', id, node } another view; 'stay' (its own object, or a layer's pick); 'back' to the hero; 'none' (scenery
-  // on the hero). x, y, touch: a tap that just misses one of the hero's small objects still counts (TAP_SLOP).
+  // on the hero). x, y, touch: a tap within the TAP_MIN px target of a small hot object counts as on it, also where the
+  // finger lands on what it sits on (the 3090 on the bench), in the room and in a close-up, but never over the object hit
   const captioned = (hit) => { const n = hit && topOf(hit.object)?.name; return !!n && !hot.has(topOf(hit.object)) && !!state.layers?.hotspots?.list?.().includes(n); };
   function intentAt({ hit, pick }, x, y, touch) {
     let to = hit ? leadOf(hit.point, hit.object) : null;
     // merge 021 (panel 021 action 8): a tap on an object with its own card (the notebook before the chamber) is that card's,
     // never the slop of the hot object behind it
-    if (!to && touch && inRoom() && !captioned(hit)) to = nearHot(x, y, TAP_SLOP);
+    if (touch && !captioned(hit) && !(to?.node && nearHot(x, y, to.node))) {
+      const small = nearHot(x, y);
+      if (small && (inRoom() || caseOf(small.node))) to = small;
+    }
+    // (a layer's pick keeps its spot unless it is another case object's, whose own core is farther: caseCore took the nearest)
+    if (touch && inRoom()) { const core = caseCore(x, y); if (core && (!pick || opensCase(topOf(pick.object)))) { to = core; if (pick && topOf(pick.object) !== core.node) pick = null; } }
+    // round 023 B: the mouse's pad (padOf) wins only over scenery, the floor and furniture, never over another object
+    if (!touch && !pick && inRoom() && !captioned(hit) && (!to || FURNITURE.includes(to.id))) {
+      const small = nearHot(x, y, null, false);
+      if (small) to = small;
+    }
     // panel 018 action 2: in a close-up, outside means back, not the neighbour: the furniture's own view (the bench) and
     // the window are no destinations from there; another object's view still is
     if (to && to.id !== current.id && !inRoom() && (FURNITURE.includes(to.id) || !to.node)) to = null;
@@ -864,7 +983,7 @@ async function start() {
   const okTgt = new THREE.Vector3();
   let panned = false;               // this drag moved the gaze's centre (a pan), not only turned round it
   controls.addEventListener('start', () => { dragged = true; panned = false; rise = null; okEye.copy(camera.position); okTgt.copy(controls.target);
-    dispatchEvent(new Event('room:drag')); });   // layer-tags.js: the edge tags go while the camera moves
+    dispatchEvent(new Event('room:drag')); });   // layer-tags.js: the edge light goes while the camera moves
   controls.addEventListener('change', () => {
     if (!walkNav || tween || !dragged || !inRoom()) return;
     const p = camera.position;
@@ -896,7 +1015,7 @@ async function start() {
     // merge 021 (action 2): a pan's release eases the eye back to a standing eye (layer-walk.js EYE) over RISE_MS, camera and
     // gaze together, beside the damping tail; under reduced motion at once
     if (panned && Math.abs(camera.position.y - walkNav.eye) > 0.01) rise = { dy: walkNav.eye - camera.position.y, done: 0, t0: performance.now() };
-    setTimeout(() => dispatchEvent(new Event('room:still')), 900);   // the tail has mostly run out: edge tags again (hero)
+    setTimeout(() => dispatchEvent(new Event('room:still')), 900);   // the tail has mostly run out: the edge light again (hero)
   });
   // the release's ease to eye height (or null)
   let rise = null;
@@ -1000,7 +1119,7 @@ async function start() {
   // "More views" (desktop: a second row above, opened on demand; phone: one sideways strip, everything in it).
   const nav = document.querySelector('.views');
   const buttons = new Map();
-  let more = null, roomRow = null, back = null;
+  let more = null, roomRow = null, back = null, addChip = null;
   function syncNav() {
     for (const [id, b] of buttons) b.setAttribute('aria-pressed', String(id === current.id));
     if (back) back.hidden = current === views[0];
@@ -1033,6 +1152,7 @@ async function start() {
       buttons.set(v.id, b);
       return b;
     };
+    addChip = (v) => { if (!buttons.has(v.id)) roomRow.appendChild(chip(v)); };
     for (const id of WORK_ORDER) { const v = views.find((x) => x.id === id); if (v) workRow.appendChild(chip(v)).classList.add('w'); }
     for (const v of views) if (!WORK_ORDER.includes(v.id)) roomRow.appendChild(chip(v));
     more = document.createElement('button');
@@ -1078,7 +1198,10 @@ async function start() {
     pxPerMetre: () => { const a = innerWidth / innerHeight, t = Math.tan(THREE.MathUtils.degToRad(home.fov) / 2) * (a >= heroAspect ? 1 : Math.min(heroAspect / a, PORTRAIT_MAX));
       return innerHeight / (2 * t); },
     fovOf: lensToFov, heroPos: home.pos.clone(), heroTarget: home.target.clone(), stands: () => stands, nav: () => walkNav, cursors: CURSOR,
-    addStands: (list, step, table) => { stands.push(...list.map((s) => ({ ...s, shift: [0, 0], stand: true }))); stepOf = step; walkNav = table ?? null; } }) : [];
+    addStands: (list, step, table) => { stands.push(...list.map((s) => ({ ...s, shift: [0, 0], stand: true }))); stepOf = step; walkNav = table ?? null;
+      // merge 023 (panel 022 action 11): "At the window" is the one standpoint with a chip of its own (the Views list, Tab)
+      for (const s of stands) if (CHIP_STANDS.includes(s.id)) addChip?.(s);
+      syncNav(); } }) : [];
   syncPan();
   for (const l of layers) l.onView?.(current.id);
   // panel 019 action 10: the hit list and the canal's chunk boxes are built here, at load (the layers' split parts exist
@@ -1150,6 +1273,7 @@ async function start() {
   }
   function showCase(id) {
     shown = CASES[id] ? id : null;
+    dispatchEvent(new CustomEvent('room:case', { detail: shown }));   // round 023 C: an own case's act stops when its card goes
     relabel = () => {};
     const cap = !CASES[id] && CAPTION_OF[id] ? api.hotspots?.caption?.(CAPTION_OF[id]) : null;
     // step 9 (from B): the caption's real link is the card's outbound proof, marked ↗
@@ -1191,10 +1315,17 @@ async function start() {
         if (typeof a.label === 'function') live.push([b, a]);
         if (a.run) b.addEventListener('click', () => { a.run(api); needsRender = true; relabel(); });
         if (a.case) { b.dataset.case = a.case; b.addEventListener('click', () => openCase(a.case)); }
+        if (a.go) { b.dataset.go = a.go; b.addEventListener('click', () => go(a.go)); }   // round 023 C: a place in the room
         row.appendChild(b);
       }
       relabel = () => { for (const [b, a] of live) b.textContent = say(a); };
       if (first) caseEl.insertBefore(row, body); else caseEl.appendChild(row);
+    }
+    // round 023 C: an own case opens with its figure, over the text (on touch under the acts, so the offer stays in reach)
+    if (OWN_FIG[id]) {
+      const fig = el('div', 'fig');
+      caseEl.insertBefore(fig, body);
+      OWN_FIG[id](api, fig, c, GATE || reduceMotion.matches);
     }
   }
   // every arrival is announced, with or without a case card (wave 5); visually hidden
@@ -1217,10 +1348,14 @@ async function start() {
   canvasEl.setAttribute('aria-label', 'The room, in 3D');   // [check]
   canvasEl.setAttribute('aria-describedby', how.id);
   if (walkNav) {
-    addEventListener('room:floor', () => navHint(MOVE_HINT), { once: true });
+    // round 023 B: one hint at a time: while the first visit's "Click/Tap anything that glows" is up, the move hint waits (a
+    // mouse: the next floor hover after it; touch: a later visit), its words still in the canvas's description (aria)
+    const moveHint = () => { if (!document.querySelector('.prompt:not([hidden])')) navHint(MOVE_HINT); };
+    const onFloor = () => { moveHint(); if (hinted) removeEventListener('room:floor', onFloor); };
+    addEventListener('room:floor', onFloor);
     if (coarse.matches) {
-      if (root.dataset.intro === 'playing') addEventListener('room:intro', () => setTimeout(() => navHint(MOVE_HINT), 2600), { once: true });
-      else setTimeout(() => navHint(MOVE_HINT), 2600);
+      if (root.dataset.intro === 'playing') addEventListener('room:intro', () => setTimeout(moveHint, 2600), { once: true });
+      else setTimeout(moveHint, 2600);
     }
   }
   let hinted = false;
@@ -1330,15 +1465,19 @@ async function start() {
   const prompt = document.querySelector('.prompt');
   if (prompt && !GATE && api.hotspots) {
     const btn = prompt.querySelector('button');
-    if (matchMedia('(pointer: coarse)').matches) btn.textContent = 'Tap a tag or anything that glows';   // [check] panel 018 action 4
+    if (matchMedia('(pointer: coarse)').matches) btn.textContent = GLOW_HINT.touch;   // round 023 B: no tags to tap [check]
+    // round 023 B: the hint is a first visit's (GLOW_HINT_KEY); the glow and the edge light it names come every visit
     let shown = false;
-    const reveal = () => { if (shown) return; shown = true; prompt.hidden = false; };
-    const pulse = () => { api.hotspots.pulse(); api.tags?.edges(); api.tags?.gaze(); };   // round 18 C: the tags hang with the glow
-    // round 019: on a phone the first-look tags wait for the end-of-flight note to go (else 4-5 papers and the note share
-    // the first 6.5 s of a small screen); the glow and the edge tags (the only road out of frame) do not wait
+    const reveal = () => { if (shown) return; shown = true;
+      try { if (localStorage.getItem(GLOW_HINT_KEY) === '1') return; localStorage.setItem(GLOW_HINT_KEY, '1'); } catch { /* blocked: show it */ }
+      prompt.hidden = false; };
+    const glowFirst = () => api.tags?.flash(api.hotspots.pulse());   // merge 023 action 6: on the objects' surfaces
+    const pulse = () => { glowFirst(); api.tags?.edges(); api.tags?.gaze(); };   // the first-look glow, the edge light
+    // round 019: on a phone the first-look glow on the work waits for the end-of-flight note to go (the note and the glow
+    // share the first 6.5 s of a small screen); the pulse and the edge light (the only road out of frame) do not wait
     const firstPulse = () => {
       if (!coarse.matches || !document.querySelector('.toast')) return pulse();
-      api.hotspots.pulse(); api.tags?.edges();
+      glowFirst(); api.tags?.edges();
       addEventListener('room:toast-gone', () => api.tags?.gaze(), { once: true });
     };
     if (root.dataset.intro === 'playing') {
@@ -1441,7 +1580,8 @@ async function start() {
   // the click's own code (resolveAt + intentAt; merge 018 step 6, A's targets()): { <view id>: [[x, y], ...],
   // back: [...] (to the hero), stay: [...] (its own object or a pick), none: [...] (hero scenery), 'walk:<standpoint>': [...]
   // (the bare floor, round 019 A) }. touch: a tap's rule.
-  state.hotMap = (step = 32, touch = false) => {
+  // merge 023: touch defaults to the device's own pointer, so a phone's map sorts cells by the rule a tap there runs
+  state.hotMap = (step = 32, touch = coarse.matches) => {
     const out = { none: [] };
     for (let y = step / 2; y < innerHeight; y += step) for (let x = step / 2; x < innerWidth; x += step) {
       // panel 020 action 12: a cell the page covers (a card, a tag, the caption) is no click on the room: dropped
@@ -1453,7 +1593,7 @@ async function start() {
     return out;
   };
   // where a click at (x, y) leads, for the gates: { kind, id, pick: the pick object's name, hit: the baked surface's }
-  state.intent = (x, y, touch = false) => { const r = resolveAt(x, y), it = intentAt(r, x, y, touch);
+  state.intent = (x, y, touch = coarse.matches) => { const r = resolveAt(x, y), it = intentAt(r, x, y, touch);
     return { kind: it.kind, id: it.id ?? null, case: it.case ?? null, pick: it.pick?.object.name ?? null, hit: r.hit?.object.name ?? null,
       top: r.hit ? topOf(r.hit.object)?.name ?? null : null, at: r.hit?.point.toArray().map((c) => +c.toFixed(3)) ?? null,
       to: it.kind === 'walk' ? it.at.toArray().map((c) => +c.toFixed(3)) : null }; };   // round 021 D: where a walk lands (floor)
