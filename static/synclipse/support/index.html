@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Synclipse Support</title>
+<style>
+  :root { --bg: #ffffff; --text: #16181d; --muted: #5b616e; --rule: #e3e5ea; --accent: #b86e00; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #08090d; --text: #eef0f4; --muted: #a2a8b4; --rule: #262a33; --accent: #ffb547; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 36px 0 8px; }
+  h3 { font-size: 17px; margin: 24px 0 6px; }
+  p, li { margin: 0 0 12px; }
+  ol, ul { padding-left: 22px; }
+  .muted { color: var(--muted); font-size: 15px; }
+  a { color: var(--accent); }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 32px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Synclipse Support</h1>
+<p class="muted">Is the sound of your TV in sync with the picture? Synclipse films someone talking on your TV and tells you.</p>
+
+<h2>What you need</h2>
+<ul>
+  <li>An iPhone with iOS 18 or later.</li>
+  <li>A TV showing one person talking towards the camera: the news, a talk show, an interview. Speech without music underneath works best.</li>
+  <li>15 seconds of quiet in the room while you film.</li>
+</ul>
+
+<h2>How to measure</h2>
+<ol>
+  <li>Point your iPhone at someone talking on the TV.</li>
+  <li>Zoom in until the face fills a good part of the picture. Tap the face and Synclipse zooms in for you; the frame around the face turns from amber to cyan when it is big enough.</li>
+  <li>Tap Film and keep the face in view for 15 seconds. Stay quiet: your voice confuses the measurement.</li>
+  <li>Read the result: in sync, slightly off or out of sync, and whether the sound is early or late.</li>
+</ol>
+<p>You can also measure a video you filmed before: Settings &gt; Measure a video &gt; From Photos or From Files.</p>
+
+<h2>Questions</h2>
+
+<h3>What do "sound early" and "sound late" mean?</h3>
+<p>Sound late: you hear a word after you see the lips say it. This is the common case with soundbars, receivers and wireless speakers, because they need time to process the sound. Sound early: you hear the word before the lips move. This usually means the TV is slow with the picture, for example because of picture processing.</p>
+
+<h3>When does Synclipse say "in sync"?</h3>
+<p>That depends on the setting under Settings &gt; When is it in sync?</p>
+<ul>
+  <li>Relaxed: what most people accept (ITU-R BT.1359), sound up to 90 ms early or 185 ms late.</li>
+  <li>Normal: what most people notice (ITU-R BT.1359), sound up to 45 ms early or 125 ms late.</li>
+  <li>Strict: the broadcast standard (EBU R37), sound up to 40 ms early or 60 ms late.</li>
+</ul>
+<p>Between "in sync" and what most people accept, the result is "slightly off". Beyond that it is "out of sync".</p>
+
+<h3>Why does the result come with a band instead of one exact number?</h3>
+<p>Lips and voice never line up exactly, even when the TV is perfect: the mouth starts moving a little before the sound comes out. Synclipse corrects for that on average. The band shows how well the parts of this recording agree with each other: at least ±30 ms, wider when they disagree. When the parts disagree a lot, Synclipse calls the result a rough estimate and asks you to measure again. Two things come on top of the band: every speaker's mouth leads the voice by a slightly different amount, and the show itself may be slightly off before it reaches your TV (broadcasters allow up to 40 ms early and 60 ms late). That is why a second measurement, on another show, helps. If you need a more precise number, use Pro mode.</p>
+
+<h3>The sound is late. Why can't I fix it with the audio delay setting?</h3>
+<p>Most TVs, soundbars and receivers can only delay the sound, to wait for a slow picture. They cannot make sound arrive sooner. If the sound is already late, the only fix in that setting is to lower an audio delay you added earlier; once it is at zero, there is nothing left to take away. What can help is changing the route the sound takes, then measuring again after each change:</p>
+<ul>
+  <li>connect the player or streaming box to the soundbar or receiver instead of to the TV, or the other way round;</li>
+  <li>set the sound output of the player or TV to PCM or stereo, so nothing has to convert the sound to another format;</li>
+  <li>if the picture is fast because of a game mode, the late sound becomes more noticeable; a film mode delays the picture and can bring the two closer.</li>
+</ul>
+<p>The setting has different names per brand: audio delay, AV sync, lip sync or audio sync.</p>
+
+<h3>The sound is early. What do I do?</h3>
+<p>Raise the audio delay (also called AV sync or lip sync) on the TV, soundbar or receiver, and measure again.</p>
+
+<h3>Synclipse says "No clear result"</h3>
+<p>It does this instead of guessing. Usually the face was too small, turned sideways, or out of view for part of the 15 seconds, or there was music or talking in the room. Zoom in on one person who faces the camera, pick speech without music, keep the face in the frame and stay quiet.</p>
+
+<h3>Does it work with headphones?</h3>
+<p>No. Synclipse measures the sound your iPhone's microphone hears in the room, so it cannot hear sound that plays in headphones.</p>
+
+<h3>What is Pro mode and the test video?</h3>
+<p>Pro mode measures with a test video instead of a person talking. Once a second, the video shows a white flash with a click at the same moment. Synclipse films it at a high frame rate and measures the time between each flash and its click, to about ±5 ms within one recording. Two separate plays of the same video can differ by 30–40 ms (the TV's frame timing and the soundbar's buffer), so measure two or three times.</p>
+<ol>
+  <li>Open Settings and turn on Flash measurement under Pro. The camera screen now has a Lips | Pro switch.</li>
+  <li>Switch to Pro and tap Test video, then Save the test video.</li>
+  <li>Play the file on your TV the way you watch films: from a USB stick, a media server or a player app. Don't use YouTube or AirPlay: they send the sound along a different route, and the result would measure that route instead.</li>
+  <li>Aim the frame on the screen at the flash, hold still and tap Measure. It takes 7 seconds.</li>
+</ol>
+<p>The result includes the player you used, so measure with the app or device you normally watch with.</p>
+
+
+
+<h3>Where are my recordings?</h3>
+<p>In the Files app, under On My iPhone &gt; Synclipse. You can delete them there. Nothing leaves your phone; see the <a href="https://www.ruudhendrikx.nl/synclipse/privacy/">privacy policy</a>.</p>
+
+<hr>
+<h2>Contact</h2>
+<p>Something not working, or a result you don't trust? Mail <a href="mailto:synclipse@ruudhendrikx.nl">synclipse@ruudhendrikx.nl</a>. It helps to mention your iPhone model, the iOS version, and what the sound goes through (TV speakers, soundbar, receiver, and how they are connected).</p>
+</main>
+</body>
+</html>
