@@ -10,20 +10,18 @@
 //
 // The program follows the deep-house map of research/facade-light-show-patterns.md, at the track's BPM (122):
 //   intro      kuramoto (a swarm that syncs and lets go) and sweep_cloud, 8 bars each; houses breathing
-//   build      quantised fronts from the bottom; its last 32 beats are choreo.phrase: 2 beats of breakdown, the grid
-//              doubling 1 -> 2 -> 4 per beat as the energy rises, one beat of vacuum, then the drop's hero flash
-//   drop       the hero flash (3 frames), then the core: LAYERS of 6x4-window blocks on the beat (LOW), the strobe
-//              machine at energy 0.45, chaos 0.15 (MID, a spiral wave), hard-core sparkle at the hats' rate (HIGH);
-//              the second drop's second half spreads a pastel rainbow by column
-//   breakdown  a slow front from the top and rare lightning; the houses take over
+//   build      bands rising from the bottom, the swarm joining as the energy rises
+//   drop       6x4-window blocks that swell per bar, a band crossing from a changing origin, the soft cloud turning
+//   breakdown  a slow band from the top; the houses take over
 //   outro      thinning blocks and the swarm
-// Not here (the research's "doesn't"): checker, split, heartbeat, per-cell noise at full density.
+// Not here (the research's "doesn't"): checker, split, heartbeat, per-cell noise at full density. Nor, since Ruud 2026-11-08
+// ("iets meer sereen dus niet hele harde strobes maar iets meer pleasing"): strobe machine, hard-core sparkle, lightning, hero flash.
 // Features (layer-deck.js features(), from the score the synth plays): the kick is the beat phase only, the low end the
-// energy macro (it scales the offices and the strobe machine), the hats the sparkle rate, the long envelope the houses'
+// energy macro (it scales the offices), the long envelope the houses'
 // fade. The mixer: channel 1 the offices' level, channel 2 the houses', the crossfader balances them, a low cut empties
-// the low end (a breakdown; letting go is a hero flash).
-// Colour: ramps that end in white (metal-visuals web/main.js EXTRA_PALETTES): offices ice, sky, aurora (and the pastel
-// rainbow), houses peach and sunset, slower than the offices, alternating with them and partly overlapping.
+// the low end (a breakdown).
+// Colour: the offices' tubes warm white at ~4000 K (Ruud 2026-11-08: too blue); the houses'
+// bulbs 2700-3000 K, slower than the offices, alternating with them and partly overlapping.
 // Flash safety: a port of stats.govern on each bank's output (no more than GOVERN.flashes full-field flashes a second:
 // past that only a fixed GOVERN.keep share of the windows may follow, the rest hold), until Ruud decides the open call;
 // gates.py measures the result with a port of critic.flash_rate. Reduced motion: no clock, a still picture fades in slowly.
@@ -43,28 +41,20 @@ const SIDE = 2.6;                 // m, half the width either side of the window
 const OUTWARD = 0.3;              // the gaze must point out: forward . outward normal above this
 const PROUD = 0.12;               // m off the baked pane along its normal (the panes sit 0.10-0.34 m off the walls)
 const RIM = [0.45, 0.4], EDGE = 0.06;   // m added to a panel's width and height: dark (covers the bleed), lit (the frame)
-const TAU_UP = 0.03, TAU_DOWN = 0.16;    // s, a tube's light: quick on, a short afterglow (one-pole per window)
-const HERO_S = 3 / 30;            // s, the hero flash: 3 frames of 30 fps (choreo.phrase hero_frames)
+const TAU_UP = 0.25, TAU_DOWN = 1.1;     // s, one-pole per window: every change a fade, nothing snaps (Ruud 2026-11-08)
 const BLOCK = [6, 4];             // windows per block (columns, storeys): Bauder blocks at 1815 windows
 const H_PHRASE = 32;              // beats per house hand-over: the houses move in bars, not beats
 const GOVERN = { gain: 1.5, thresh: 0.1, area: 0.25, flashes: 3, keep: 0.2, back: 3 };   // stats.govern, max_flashes 3 (Ruud's open call 1: WCAG 2.3.1, the default); merge 023: compared with the level `back` frames ago (panel 023 action 3)
-const HERO_CAP_TOUCH = 0.8;      // merge 023 (panel 023 action 3): the phone's hero flash at ~0.8 of white (its frame is all facade)
 const VIEWS = new Set(['window', 'canal', 'university']);
 const DARK = [0.008, 0.010, 0.015];
-// ramps (stop, r, g, b), display sRGB; every one ends in white (metal-visuals web/main.js EXTRA_PALETTES; ice is this
-// layer's own, a paler sky for the cool tubes)
-const W = [1, 1, 1];
+// ramps (stop, r, g, b), display sRGB
 const RAMPS = {
-  ice: [[0, [0.05, 0.10, 0.16]], [0.45, [0.70, 0.86, 1.0]], [0.8, [0.88, 0.95, 1.0]], [1, W]],
-  sky: [[0, [0.02, 0.12, 0.25]], [0.45, [0.5, 0.8, 1.0]], [0.8, [0.83, 0.93, 1.0]], [1, W]],
-  aurora: [[0, [0.0, 0.15, 0.2]], [0.4, [0.2, 0.9, 0.7]], [0.75, [0.6, 0.6, 1.0]], [1, W]],
-  peach: [[0, [0.25, 0.1, 0.02]], [0.45, [1.0, 0.7, 0.45]], [0.8, [1.0, 0.88, 0.76]], [1, W]],
-  sunset: [[0, [0.3, 0.0, 0.2]], [0.4, [1.0, 0.4, 0.5]], [0.75, [1.0, 0.75, 0.4]], [1, W]],
+  tube: [[0, [0.06, 0.05, 0.035]], [0.45, [0.62, 0.52, 0.40]], [0.8, [0.92, 0.80, 0.64]], [1, [1.0, 0.91, 0.78]]],   // ~4000 K
   // merge 023 (panel 023 action 4, open call 5's default): the houses opposite stay homes: one domestic warm white, 2700-
   // 3000 K at every level (blackbody sRGB ~(1, .66, .34)-(1, .71, .42)), never a colour and never white
   home: [[0, [0.05, 0.033, 0.017]], [0.45, [0.6, 0.41, 0.22]], [0.8, [0.9, 0.62, 0.34]], [1, [1.0, 0.70, 0.40]]],
 };
-const OFFICE_RAMP = { intro: 'ice', build: 'sky', drop: 'aurora', breakdown: 'ice', outro: 'sky' };
+const OFFICE_RAMP = { intro: 'tube', build: 'tube', drop: 'tube', breakdown: 'tube', outro: 'tube' };
 const HOUSE_RAMP = { intro: 'home', build: 'home', drop: 'home', breakdown: 'home', outro: 'home' };   // merge 023 action 4: colour stays on the University
 // merge 023 action 4: a house's state per 32-beat phrase (Ruud's open call 5, the historian's default): on, dimmed, off, a curtain
 const HOUSE_STATES = [[0.80, 0.4], [0.42, 0.25], [0.04, 0.2], [0.22, 0.15]];   // [level, share]
@@ -78,22 +68,18 @@ const ad = (ph, a, d, curve) => clamp(ph < a ? ph / a : 1 - (ph - a) / d) ** cur
 // a seeded stream per step (numpy's default_rng(step * 7919 + seed) in the source; mulberry32 here)
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const hash = (i, s) => fract(Math.sin(i * 12.9898 + s * 78.233) * 43758.5453);
-const PHI = 0.6180339887;
-// stats.pareto: many at lo, a heavy tail up to hi
-const pareto = (r, shape, lo, hi) => Math.min(lo * (1 - r) ** (-1 / shape), hi);
 
 const VS = `attribute float aLevel; attribute vec4 aTone; attribute vec2 aLit; attribute vec2 aInfo;
-  uniform vec3 uDark; uniform float uK, uHue; uniform vec4 uO[4]; uniform vec4 uH[4]; varying vec3 vC; varying float vA;
+  uniform vec3 uDark; uniform float uK; uniform vec4 uO[4]; uniform vec4 uH[4]; varying vec3 vC; varying float vA;
   vec3 ramp(vec4 s[4], float a) { vec3 c = s[0].yzw; for (int i = 1; i < 4; i++) c = mix(c, s[i].yzw, smoothstep(s[i - 1].x, s[i].x, a)); return c; }
-  vec3 hsv(float h, float s, float v) { vec3 k = clamp(abs(mod(h * 6.0 + vec3(0.0, 4.0, 2.0), 6.0) - 3.0) - 1.0, 0.0, 1.0); return v * mix(vec3(1.0), k, s); }
   void main() {
-    vec3 c = aInfo.x < 0.5 ? (uHue > 0.0 ? mix(hsv(aInfo.y, uHue, 1.0), vec3(1.0), smoothstep(0.8, 1.0, aLevel)) : ramp(uO, aLevel)) : ramp(uH, aLevel);
+    vec3 c = aInfo.x < 0.5 ? ramp(uO, aLevel) : ramp(uH, aLevel);
     c = mix(c, c * aTone.rgb, 0.35);   // a little of each window's own tone (the bake's bulb or tube)
     vC = mix(uDark, c, clamp(aLevel * 2.5, 0.0, 1.0)); vA = uK * max(aTone.a, clamp(aLevel * 6.0, 0.0, 1.0));
     vec2 s = mix(vec2(1.0), aLit, smoothstep(0.04, 0.25, aLevel));
     gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position.xy * s, position.z, 1.0); }`;
 const FS = `varying vec3 vC; varying float vA; void main() { gl_FragColor = vec4(vC, vA); }`;
-const COOL = [0.78, 0.90, 1.0];
+const TUBE = [1.0, 0.90, 0.78];
 const WARM = [[1.0, 0.55, 0.22], [1.0, 0.62, 0.32], [1.0, 0.70, 0.42], [1.0, 0.77, 0.55]];   // 2200 2700 3000 3500 K
 
 const STYLE = `.stage-toggle { font: inherit; font-size: 12px; line-height: 1; color: var(--muted, #b9ab98); background: rgba(20, 17, 15, .55); cursor: pointer;
@@ -132,7 +118,7 @@ export default function mount(live) {
     m.makeBasis(t.clone().multiplyScalar(w + RIM[0]), up.clone().multiplyScalar(h + RIM[1]), n).setPosition(c);
     lit.set([(w + EDGE) / (w + RIM[0]), (h + EDGE) / (h + RIM[1])], 2 * i);
     mesh.setMatrixAt(i, m);
-    tone.set([...(kind === 0 ? COOL : WARM[tn]), kind === 1 || tn === 1 ? 1 : 0], 4 * i);
+    tone.set([...(kind === 0 ? TUBE : WARM[tn]), kind === 1 || tn === 1 ? 1 : 0], 4 * i);
     const d = c.clone().sub(winC);
     panels.push({ pos: c.clone(), kind, az: Math.atan2(d.x, -d.z), el: Math.atan2(d.y, Math.hypot(d.x, d.z)), y: c.y,
       u: 0, v: 0, r: 0, f: 0, c: 0, g: 0, both: false });
@@ -173,10 +159,6 @@ export default function mount(live) {
   const ORIGINS = ['center', 'bottom', 'left', 'right', 'edge', 'top'];
   const dist = {};
   for (const o of ORIGINS) dist[o] = Float32Array.from({ length: NCELL }, (_, k) => ({ center: rN[k], edge: 1 - rN[k], left: colN[k], right: 1 - colN[k], bottom: rowN[k], top: 1 - rowN[k] })[o]);
-  // synth._spiral_rank (turns 3): the order along a spiral out of the middle
-  const rank = new Float32Array(NCELL);
-  { const key = Array.from({ length: NCELL }, (_, k) => [(theta[k] + Math.PI) / (2 * Math.PI) + 3 * rN[k], k]).sort((a, b) => a[0] - b[0]);
-    key.forEach(([, k], j) => { rank[k] = j / Math.max(NCELL - 1, 1); }); }
   const NBX = Math.ceil(NC / BLOCK[0]);
   const blockOf = Int32Array.from({ length: NCELL }, (_, k) => Math.floor((k % NC) / BLOCK[0]) + Math.floor(Math.floor(k / NC) / BLOCK[1]) * NBX);
   const NBLK = NBX * Math.ceil(NF / BLOCK[1]);
@@ -184,11 +166,10 @@ export default function mount(live) {
   // --- the patterns: each adds (max) into the cell field F at beat B -------------------------------------------------
   const F = new Float32Array(NCELL);
   const put = (k, v) => { if (v > F[k]) F[k] = v; };
-  // deck_geometry.front: a band from the origin over `beats`, quantised to `quant` jumps, lit on the beat
-  function front(B, origin, beats, gain, quant = 4, width = 0.12) {
-    let u = fract(B / beats); if (quant) u = Math.floor(u * quant) / quant;
-    const e = ad(fract(B), 0.1, 0.9, 1.5), d = dist[origin];
-    for (let k = 0; k < NCELL; k++) { const band = 1 - Math.abs(d[k] - u) / width; if (band > 0) put(k, gain * band * e); }
+  // deck_geometry.front: a band gliding from the origin over `beats`
+  function front(B, origin, beats, gain, width = 0.14) {
+    const u = fract(B / beats), d = dist[origin];
+    for (let k = 0; k < NCELL; k++) { const band = 1 - Math.abs(d[k] - u) / width; if (band > 0) put(k, gain * band); }
   }
   // deck_geometry.blocks (Bauder): per step a share p of the 6x4 blocks fires, never the same block twice running
   function blocks(B, p, gain, div = 1, seed = 0) {
@@ -197,48 +178,6 @@ export default function mount(live) {
     for (let b = 0; b < NBLK; b++) { const a = r0(), pr = r1(); on[b] = a < p && !(pr < p) ? 1 : 0; }
     const e = gain * ad(frac, 0.05, 0.6, 2);
     for (let k = 0; k < NCELL; k++) if (on[blockOf[k]]) put(k, e);
-  }
-  // synth.strobe_machine: density, spread, chaos and pulse follow energy; chaos low = a wave along the spiral on the grid
-  function strobe(B, energy, gain, { chaos = null, div = 4, origin = 'center', seed = 0, softness = 0.25, density = null, spread = null } = {}) {
-    const e = clamp(energy), dens = density ?? 0.05 + 0.85 * e ** 1.4, spr = spread ?? 0.12 + 0.95 * e;
-    const cha = clamp(chaos ?? 0.1 + 0.5 * e), pul = 0.1 + 0.8 * e, flen = 0.65 - 0.55 * clamp(pul);
-    const x = B * div, st = Math.floor(x), frac = x - st, r = rng(st * 7919 + seed), d = dist[origin];
-    const rhythm = st % div === 0 ? 1 : 0.15 + 0.85 * cha, roll = r();
-    const mode = cha < 0.5 && roll < 1 - 2 * cha ? 0 : cha < 0.5 || roll < 2 * (1 - cha) ? 1 : 2;
-    const burst = e > 0.7 && r() < (0.6 * (e - 0.7)) / 0.3;
-    for (let k = 0; k < NCELL; k++) {
-      const env = clamp((spr - d[k]) / softness + 0.5), p = dens * env * rhythm;
-      const score = mode === 0 ? fract(rank[k] - st * 0.07) : mode === 1 ? fract(rank[k] * NCELL * PHI + st * PHI) : hash(k, st + seed);
-      const fired = burst ? hash(k, st * 3 + seed) < env : score < p;
-      if (!fired) continue;
-      const delay = cha * 0.5 * hash(k + 7, st + seed) * (1 - flen);
-      put(k, gain * ad(clamp((frac - delay) / flen), 0.1, 0.9, 2));
-    }
-  }
-  // stats.hardcore (Matern II): Poisson(rate) candidates a step, none within `radius` cells of a flash this step or the
-  // last `gap` steps: isolated sharp flashes, the next always elsewhere. Stateful, stepped in order (a jump resets it)
-  const HC = { step: -1, last: new Int32Array(NCELL).fill(-1000), lit: [] };
-  function hardcore(B, rate, gain, { div = 4, radius = 2, gap = 2, flash = 0.4, seed = 5 } = {}) {
-    const x = B * div, st = Math.floor(x), frac = x - st;
-    if (st !== HC.step) {
-      if (st < HC.step || st - HC.step > 64) HC.last.fill(-1000);
-      HC.step = st; HC.lit = [];
-      const r = rng(st * 7919 + seed);
-      let k = 0, L = Math.exp(-rate), pp = 1;   // Poisson by Knuth
-      do { k++; pp *= r(); } while (pp > L && k < 40);
-      for (let j = 0; j < k - 1; j++) {
-        const cell = Math.floor(r() * NCELL), cc = cell % NC, cf = Math.floor(cell / NC);
-        let ok = true;
-        for (let df = -radius; df <= radius && ok; df++) for (let dc = -radius; dc <= radius && ok; dc++) {
-          const f2 = cf + df, c2 = cc + dc;
-          if (f2 < 0 || f2 >= NF || c2 < 0 || c2 >= NC) continue;
-          if (st - HC.last[f2 * NC + c2] <= gap) ok = false;
-        }
-        if (ok) { HC.last[cell] = st; HC.lit.push(cell); }
-      }
-    }
-    const e = gain * ad(clamp(frac / flash), 0.1, 0.9, 2);
-    for (const k of HC.lit) put(k, e);
   }
   // a gaussian splat in cells (stats._splat's role)
   function splat(cx, cf, a, sigma) {
@@ -268,69 +207,34 @@ export default function mount(live) {
     const sig = Math.max(1.5, NC / 30), glow = 0.08 + (0.08 * KU.K) / kmax, fl = ad(frac, 0.1, 0.9, 2);
     for (let i = 0; i < KU.n; i++) splat(KU.x[i], KU.f[i], gain * (KU.fired[i] ? Math.max(glow, fl) : glow), sig);
   }
-  // synth.sweep_cloud: a soft cloud of chances turning round the middle, Poisson flashes under it per 16th
-  function sweepCloud(B, t, gain, { turnBars = 4, width = 0.10, rate = 0.55, wobble = 0.35, seed = 3 } = {}) {
-    const st = Math.floor(B * 4), frac = B * 4 - st, turn = (turnBars * 4 * 60) / BPM;
+  // after synth.sweep_cloud: a soft cloud turning round the middle, breathing (a continuous field, no flashes under it)
+  function sweepCloud(t, gain, { turnBars = 8, width = 0.28, wobble = 0.35 } = {}) {
+    const turn = (turnBars * 4 * 60) / BPM;
     const sweep = 2 * Math.PI * (t / turn + wobble * Math.sin((2 * Math.PI * t) / (3.1 * turn)));
     const breathe = 0.55 + 0.45 * Math.sin((2 * Math.PI * t) / ((8 * 4 * 60) / BPM));
     for (let k = 0; k < NCELL; k++) {
       const d = Math.abs(((theta[k] - sweep + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) / Math.PI;
-      const p = rate * breathe * Math.exp(-((d / width) ** 2)) * (0.5 + 0.5 * hash(k, st + seed) * (0.6 + 0.4 * rN[k]));
-      if (hash(k + 3, st * 5 + seed) < p) put(k, gain * ad(clamp(frac / (0.2 + 0.4 * hash(k, st))), 0.1, 0.9, 2));
-    }
-  }
-  // stats.lightning: bolts from the top down as a random walk with branches, Pareto waits (`rate` a beat as scale)
-  const LI = { starts: [0.5], paths: new Map() };
-  function lightning(B, gain, rate = 0.15, shape = 1.2) {
-    const beatS = 60 / BPM, ts = B * beatS;
-    const start = (k) => { while (LI.starts.length <= k) { const r = rng(LI.starts.length * 7919 + 9); LI.starts.push(LI.starts.at(-1) + pareto(r(), shape, 0.35 / rate, 6 / rate) * beatS); } return LI.starts[k]; };
-    let k = 0;
-    while (start(k) < ts - 0.6 && k < 5000) k++;
-    for (; start(k) <= ts && k < 5000; k++) {
-      const dt = ts - start(k);
-      if (!LI.paths.has(k)) {
-        const r = rng(k * 104729 + 9), cells = [], heads = [[Math.floor(r() * NC), NF - 1]];
-        while (heads.length) { let [x, f] = heads.pop(); while (f >= 0) { cells.push(f * NC + x); if (r() < 0.25 && heads.length < 3) heads.push([clamp(x + (r() < 0.5 ? -1 : 1), 0, NC - 1), f - 1]); x = clamp(x + Math.floor(r() * 3) - 1, 0, NC - 1); f--; } }
-        LI.paths.set(k, cells);
-        if (LI.paths.size > 32) LI.paths.delete(LI.paths.keys().next().value);
-      }
-      const a = dt < 0.08 ? 1 : 0.5 * Math.exp((-4 * (dt - 0.08)) / 0.5);
-      for (const cc of LI.paths.get(k)) for (const dc of [-1, 0, 1]) { const c2 = (cc % NC) + dc; if (c2 >= 0 && c2 < NC) put(cc - (cc % NC) + c2, gain * a * (dc ? 0.5 : 1)); }
+      put(k, gain * breathe * Math.exp(-((d / width) ** 2)));
     }
   }
 
   // --- the program: features -> the offices' field, the houses' levels, the ramps ----------------------------------
-  const smoothE = { e: 0, low: 1, heroAt: -1 };
-  function program(B, tSec, f, dt, mix) {
+  const smoothE = { e: 0 };
+  function program(B, tSec, f, mix) {
     F.fill(0);
     const kind = f.kind, sb = f.secBeat, e = smoothE.e;
-    let hero = false;
-    if (kind === 'intro') {
-      if (Math.floor(sb / 32) % 2 === 0) kuramoto(B, 0.85); else sweepCloud(B, tSec, 0.8);
+    if (mix.low < 0.5 && (kind === 'drop' || kind === 'build')) kuramoto(B, 0.5);   // the mixer's low cut: the low end empties
+    else if (kind === 'intro') {
+      if (Math.floor(sb / 32) % 2 === 0) kuramoto(B, 0.85); else sweepCloud(tSec, 0.7);
     } else if (kind === 'build') {
-      const k = f.secLen - sb;   // beats to go
-      if (k > 32) { front(B, 'bottom', 4, 0.55 + 0.4 * e); kuramoto(B, 0.4); }
-      else if (k > 30) strobe(B, 0.06, 0.6, { chaos: 0.9, div: 2, seed: 7 });                       // the phrase's breakdown
-      else if (k > 1) { const u = (30 - k) / 29, grid = u < 0.5 ? 1 : u < 0.75 ? 2 : 4;             // staged doubling
-        strobe(B, 0.08 + 0.92 * u ** 1.3, 1, { div: grid, seed: 10 + grid, chaos: 0.15 }); }
-      // the last beat: the vacuum, dark
+      const k = f.secLen - sb, u = clamp(1 - k / 32);   // beats to go; the last 32 rise
+      front(B, 'bottom', k > 32 ? 16 : 8, 0.5 + 0.4 * e); kuramoto(B, 0.35 + 0.4 * u);
     } else if (kind === 'drop') {
-      if (sb * (60 / BPM) < HERO_S) hero = true;
-      else {
-        const origin = ORIGINS[Math.floor(sb / 64) % 4], ener = 0.45 * (0.6 + 0.4 * e);
-        blocks(B, 0.3, 0.6, 1, 11 + Math.floor(sb / 64));                                            // LOW
-        strobe(B, ener, 0.8, { chaos: 0.15, div: 4, origin, seed: 11, density: 0.3, spread: 1.0 });  // MID
-        hardcore(B, 2 + 8 * f.sparkle, 1.0);                                                          // HIGH
-      }
-    } else if (kind === 'breakdown') { front(B, 'top', 8, 0.45, 0, 0.18); lightning(B, 1, 0.15); }
-    else { blocks(B, 0.3 * (1 - f.u) + 0.05, 0.6, 1, 21); kuramoto(B, 0.5 * (1 - f.u) + 0.15); }
-    // the mixer's low cut: the low end empties, a breakdown at once; letting go is a hero flash
-    if (mix.low < 0.5 && (kind === 'drop' || kind === 'build')) { F.fill(0); lightning(B, 0.9, 0.3); }
-    if (mix.low >= 0.5 && smoothE.low < 0.5) smoothE.heroAt = tSec;
-    smoothE.low = mix.low;
-    if (smoothE.heroAt >= 0 && tSec - smoothE.heroAt >= 0 && tSec - smoothE.heroAt < HERO_S) hero = true;
-    if (hero) F.fill(1);
-    return hero;
+      blocks(B, 0.28, 0.75, 0.25, 11 + Math.floor(sb / 64));
+      front(B, ORIGINS[Math.floor(sb / 64) % 4], 16, 0.6, 0.2);
+      sweepCloud(tSec, 0.5);
+    } else if (kind === 'breakdown') front(B, 'top', 16, 0.45, 0.18);
+    else { blocks(B, 0.3 * (1 - f.u) + 0.05, 0.6, 0.25, 21); kuramoto(B, 0.5 * (1 - f.u) + 0.15); }
   }
   // the houses: three groups take turns per H_PHRASE beats, a third of the windows play in two; they rise in the
   // offices' rests (breakdown, vacuum, the build's first half) and fade with the long envelope
@@ -352,7 +256,7 @@ export default function mount(live) {
   mesh.geometry.setAttribute('aLit', new THREE.InstancedBufferAttribute(lit, 2));
   mesh.geometry.setAttribute('aInfo', new THREE.InstancedBufferAttribute(infoA, 2));
   const stops = (name) => RAMPS[name].map(([s, [r, g, b]]) => new THREE.Vector4(s, r, g, b));
-  const U = { uK: { value: 0 }, uDark: { value: new THREE.Vector3(...DARK) }, uHue: { value: 0 }, uO: { value: stops('ice') }, uH: { value: stops('home') } };
+  const U = { uK: { value: 0 }, uDark: { value: new THREE.Vector3(...DARK) }, uO: { value: stops('tube') }, uH: { value: stops('home') } };
   mesh.material = new THREE.ShaderMaterial({ uniforms: U, vertexShader: VS, fragmentShader: FS, transparent: true, depthWrite: false,
     polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -8 });
   mesh.name = 'stage_windows';
@@ -360,7 +264,7 @@ export default function mount(live) {
   mesh.visible = false;
   mesh.instanceMatrix.needsUpdate = true;
   scene.add(mesh);
-  let rampO = 'ice', rampH = 'home';
+  let rampO = 'tube', rampH = 'home';
   const setRamp = (u, name, cur) => { if (name !== cur) U[u].value = stops(name); return name; };
 
   // stats.govern, per bank, on the output: a full-field step (>= area of the bank moving >= thresh the same way) is an
@@ -383,8 +287,7 @@ export default function mount(live) {
 
   // state: want (the deck, the position rule or the toggle), k the fade, b the own clock (beats)
   const reduce = () => live.reduceMotion.matches;
-  const heroCap = matchMedia('(pointer: coarse)').matches ? HERO_CAP_TOUCH : 1;
-  let near = false, forced = params.has('stage'), k = 0, b = 0, settled = true, cost = 0, frames = 0, seen = false, clock = 0, lastF = null, heroN = 0;
+  let near = false, forced = params.has('stage'), k = 0, b = 0, settled = true, cost = 0, frames = 0, seen = false, clock = 0, lastF = null;
   const fwd = new THREE.Vector3();
   const deck = () => live.show;
   function atWindow() {
@@ -463,19 +366,17 @@ export default function mount(live) {
     const f = features(B, mix.low);
     lastF = f;
     smoothE.e = still ? f.energy : smoothE.e + (f.energy - smoothE.e) * (1 - Math.exp(-dt / 0.4));
-    const hero = program(B, clock, f, dt, mix);
-    if (hero) heroN++;
+    program(B, (B * 60) / BPM, f, mix);   // the score's own time: a still picture under reduced motion, and a scrub lands the same
     rampO = setRamp('uO', OFFICE_RAMP[f.kind], rampO);
     rampH = setRamp('uH', HOUSE_RAMP[f.kind], rampH);
-    U.uHue.value = f.kind === 'drop' && f.sec === 5 && f.u > 0.5 ? 0.45 : 0;   // the peak: the pastel rainbow by column
     const gO = mix.ch[0] * Math.min(1, 2 * (1 - mix.xf)), gH = uniOnly ? 0 : mix.ch[1] * Math.min(1, 2 * mix.xf);
-    const scaleO = hero ? 1 : 0.35 + 0.65 * smoothE.e;
+    const scaleO = 0.35 + 0.65 * smoothE.e;
     const arr = level.array, ka = still ? 1 : 1 - Math.exp(-dt / TAU_UP), kd = still ? 1 : 1 - Math.exp(-dt / TAU_DOWN);
     prev.set(arr);
     for (const i of offices) {
-      const target = gO * (0.03 + 0.97 * Math.min(1, F[cellOf[i]] * (hero ? 1 : scaleO))) * (hero ? heroCap : 1);
+      const target = gO * (0.03 + 0.97 * Math.min(1, F[cellOf[i]] * scaleO));
       const cur = arr[i];
-      arr[i] = hero ? target : cur + (target - cur) * (target > cur ? ka : kd);
+      arr[i] = cur + (target - cur) * (target > cur ? ka : kd);
     }
     for (const i of houses) {
       const target = gH * (still ? 0.6 : houseLevel(panels[i], B, f));
@@ -496,7 +397,8 @@ export default function mount(live) {
       // ?gate: advance the show (and a playing deck in lockstep) by sec in frames of h
       advance(sec, h = 1 / 60) { let s = Math.round(sec / h); while (s-- > 0) { live.deckStep?.(h); timed(h); } live.render(); return k; },
       // jump the own clock to `beat` (it plays the last beat to get there, so the tubes' afterglow is real), k kept
-      at(beat, h = 1 / 60) { b = Math.max(0, beat - 1); let s = Math.round(60 / BPM / h); while (s-- > 0) timed(h); live.render(); return +b.toFixed(3); },
+      at(beat, h = 1 / 60) { b = Math.max(0, beat - 16); let s = Math.round((16 * 60) / BPM / h);   // 16 beats: the fades have settled
+        while (s-- > 0) timed(h); live.render(); return +b.toFixed(3); },
       screen(i) {
         const q = panels[i].pos.clone().project(camera);
         if (q.z > 1) return null;
@@ -513,7 +415,7 @@ export default function mount(live) {
       cost() { const r = { ms: frames ? +(cost / frames).toFixed(4) : 0, frames }; cost = 0; frames = 0; return r; },
       info: () => ({ on: forced || !!deck()?.playing, near, forced, uniOnly, deck: !!deck()?.playing, k: +k.toFixed(3), beat: +(deck()?.playing ? deck().beat : b).toFixed(2),
         visible: mesh.visible, settled, seen, panels: N, university: offices.length, houses: houses.length, cols: NC, floors: NF,
-        pattern: lastF ? `${lastF.kind} ${lastF.secBeat.toFixed(1)}/${lastF.secLen}` : 'none', ramps: [rampO, rampH], heroes: heroN,
+        pattern: lastF ? `${lastF.kind} ${lastF.secBeat.toFixed(1)}/${lastF.secLen}` : 'none', ramps: [rampO, rampH],
         held: [gov[0].held, gov[1].held] }),
     },
   };

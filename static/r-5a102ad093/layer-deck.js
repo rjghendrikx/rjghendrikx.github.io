@@ -13,7 +13,7 @@
 //
 // The mixer (the room's wiring, said on the card): channel 1's fader is the offices' level and the sound's, channel 2's
 // the canal houses', the crossfader balances the offices (left) against the houses (right), a low cut on either low knob
-// empties the low end: the facade falls into a breakdown, and the release is a hero flash.
+// empties the low end: the facade falls into a breakdown.
 // Click: a deck plays or stops the track; on the mixer, a fader slot sets that fader where you click, a low knob toggles
 // the cut. Keys in the Decks view: Space play/stop, [ ] the crossfader, L the low cut. The card's act does play/stop.
 // ?gate: nothing starts, api.play / api.advance drive it. Reduced motion: the deck plays, the overlay draws no

@@ -2804,6 +2804,13 @@
    "t": "2026-10-23T16:22:19Z",
    "commit": "438a4be",
    "message": "Window light show (university offices + canal houses, patterns from metal-visuals), own cases one click (3090, Metal), share image with the canal, unnamed sleeves, arrival tilts the gaze down, window zone with manuscript and lanterns"
+  },
+  {
+   "tag": "room-iter-023-dj-notags-cases-window",
+   "ts": 1792954229,
+   "t": "2026-10-25T18:50:29Z",
+   "commit": "0ab4cb5",
+   "message": "round 023 merged: DJ decks drive the facade, no tags, own cases act, window radiator+lantern; publish blockers 1-4; gates green run #4"
   }
  ]
 }
