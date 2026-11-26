@@ -1,0 +1,67 @@
+{
+ "_how": "The University's light show (web/facade-life.js). 'active' is what the room plays; ?facade=<name> tries another. Edit, then restage: uv run --project room python room/tools/restage.py --to <NAME> (about 2 s, no Blender, no bake). Try them side by side: facade-choose.html next to the page. A knob left out takes its default (facade-life.js DEFAULTS, which are v34).",
+ "_knobs": {
+  "mode": "'life' (v34's system), 'sparks' (firecrackers), or a field from the LED panel (layer-ledmatrix.js): 'breathe', 'wave', 'bloom'",
+  "speed": "fields: the field's clock, 0.25-1.5 (1 = lume-machine's own rate)",
+  "mapping": "fields: which coordinate of the index the field reads: 'grid' (the index order), 'cartesian' (x + y), 'polar' (the radius)",
+  "density": "fewer or more lit windows: life scales the reveal, sparks scales every rate (1 = as designed)",
+  "attack": "s, how fast a window lights",
+  "decay": "s, how fast it goes dark again (decay_late: at the build's top)",
+  "afterglow": "life: the ghost trail (v34 1); sparks: an ember after each pop (0 none)",
+  "warmth": "0 the offices' ~4000 K tubes, 1 the homes' 2700-3000 K",
+  "rate": "sparks: clusters a second over the wall per section; [start, end] across the section (a drop: across its 8-bar groove; drop1 the first drop)",
+  "cluster": "sparks: pops per cluster (mean)",
+  "crackle": "sparks: s between a cluster's pops",
+  "spread": "sparks: cells from the focus where clusters land, [early, at the build's top]",
+  "pulse": "sparks: 30 Hz steps a pop is held at full",
+  "front": "sparks: share of windows that pop as the drop's front passes, [drop 1, drop 2]",
+  "hum": "sparks: the stored charge's faint glow round the focus in a build",
+  "hold_glow": "sparks: the core's glow in the held breath (0: dark and still)",
+  "interior": "0 a flat lit pane (v34), 1 the full room behind each lit office: its ceiling light, walls, a desk or a shelf; render only, an office that is off stays dark"
+ },
+ "active": "vonken",
+ "presets": {
+  "v34": {
+   "label": "v34, zoals nu",
+   "note": "Slinger en lading zoals gepubliceerd: banden, wolken, de ingehouden adem.",
+   "mode": "life"
+  },
+  "v34-kalm": {
+   "label": "v34 rustiger",
+   "note": "Hetzelfde systeem, minder ramen tegelijk aan, kortere staart.",
+   "mode": "life", "density": 0.6, "decay": 0.3, "decay_late": 0.18, "afterglow": 0.4
+  },
+  "vonken": {
+   "label": "Vonken (voorstel)",
+   "note": "Losse knallen in kleine trossen, donker ertussen; de opbouw trekt ze naar het midden, de adem gloeit zacht, de drop knettert eruit.",
+   "mode": "sparks", "interior": 0.7, "attack": 0.03, "decay": 0.13, "decay_late": 0.1, "afterglow": 0, "warmth": 0.15,
+   "rate": { "intro": [2, 6], "build": [6, 70], "drop1": [260, 110], "drop": [330, 140], "breakdown": 4, "outro": [35, 2] },
+   "cluster": 3, "crackle": 0.09, "spread": [8, 2.5], "pulse": 2, "peak": 0.95, "front": [0.22, 0.35],
+   "hum": 0.12, "hold_glow": 0.3
+  },
+  "vonken-ijl": {
+   "label": "Vonken, ijl",
+   "note": "Nog minder: enkele knallen, geen gloed; de ingehouden adem is gewoon stil en donker.",
+   "mode": "sparks", "interior": 0.7, "attack": 0.03, "decay": 0.11, "decay_late": 0.09, "afterglow": 0, "warmth": 0.15, "density": 0.55,
+   "cluster": 2, "crackle": 0.1, "hum": 0, "hold_glow": 0
+  },
+  "vonken-adem": {
+   "label": "Vonken + adem",
+   "note": "Vonken, met de lading die zichtbaar zoemt in de opbouw en een heldere kern in de ingehouden adem.",
+   "mode": "sparks", "interior": 0.7, "attack": 0.03, "decay": 0.13, "decay_late": 0.1, "afterglow": 0, "warmth": 0.15,
+   "hum": 0.25, "hold_glow": 0.5
+  },
+  "knetter": {
+   "label": "Rotje-snoer",
+   "note": "Eigen idee: minder trossen, maar elk een snoer van snelle knalletjes langs de gevel.",
+   "mode": "sparks", "interior": 0.7, "attack": 0.02, "decay": 0.09, "decay_late": 0.08, "afterglow": 0, "warmth": 0.1, "density": 0.6,
+   "cluster": 7, "crackle": 0.05, "hum": 0.1, "hold_glow": 0.3
+  },
+  "sintels": {
+   "label": "Sintels",
+   "note": "Eigen idee: warmere, zachtere vonken die heel even nagloeien, als sintels uit een vuur.",
+   "mode": "sparks", "interior": 0.7, "attack": 0.05, "decay": 0.22, "decay_late": 0.16, "afterglow": 0.8, "warmth": 0.7, "density": 0.7,
+   "cluster": 3, "crackle": 0.12, "peak": 0.8, "hum": 0.15, "hold_glow": 0.35
+  }
+ }
+}

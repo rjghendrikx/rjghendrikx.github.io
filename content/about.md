@@ -1,5 +1,5 @@
 ---
-title: "Ruud Hendrikx"
+title: "About"
 description: "AI Solution Engineer & Technical Leader based in Haarlem area, Netherlands."
 ---
 

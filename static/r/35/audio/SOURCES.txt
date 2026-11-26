@@ -1,0 +1,52 @@
+Field recordings in this folder (the room's sound, layer-audio.js). Each file is a cut, filtered and
+re-encoded excerpt of the source named. All sources are CC0 or public domain; credited anyway.
+
+rain-window.mp3 - the bed: rain on a pane close by, warm
+  Rain against the window, by cori. Licence: Public domain (PDSounds).
+  https://upload.wikimedia.org/wikipedia/commons/4/41/Rain_against_the_window.ogg (origin http://www.pdsounds.org/sounds/rain_against_the_window)
+  excerpt 0.5-81.0 s, mono, high-pass 90 Hz, low-pass 6500 Hz
+
+rain-outside.mp3 - the bed: soft rain and drips outside, through the open window
+  Light Rain Distant Thunder July 5th 2016, by kvgarlic. Licence: CC0 1.0.
+  https://upload.wikimedia.org/wikipedia/commons/b/b6/Light_Rain_Distant_Thunder_July_5th_2016.wav (origin https://freesound.org/people/kvgarlic/sounds/349454/)
+  excerpt 36.0-110.0 s, mono, high-pass 140 Hz, low-pass 5000 Hz
+
+thunder.mp3 - a voice: far thunder, very rare
+  Light Rain Distant Thunder July 5th 2016, by kvgarlic. Licence: CC0 1.0.
+  https://upload.wikimedia.org/wikipedia/commons/b/b6/Light_Rain_Distant_Thunder_July_5th_2016.wav (origin https://freesound.org/people/kvgarlic/sounds/349454/)
+  excerpt 15.0-31.0 s, mono, high-pass 30 Hz, low-pass 700 Hz
+
+gutter.mp3 - a voice: the gutter running over for a while
+  Gutter, by aldor. Licence: Public domain (PDSounds).
+  https://upload.wikimedia.org/wikipedia/commons/0/03/Gutter.ogg (origin http://www.pdsounds.org/sounds/gutter)
+  excerpt 8.0-38.0 s, mono, high-pass 180 Hz, low-pass 3200 Hz
+
+gull.mp3 - a voice: a herring gull, far off
+  Gull 1, by avphillips. Licence: Public domain (PDSounds).
+  https://upload.wikimedia.org/wikipedia/commons/4/43/Gull_1.ogg (origin http://www.pdsounds.org/sounds/gull_1)
+  excerpt 5.0-14.0 s, mono, high-pass 450 Hz, low-pass 4500 Hz
+
+coot.mp3 - a voice: a coot on the water
+  EurasianCoot, by Zarni02. Licence: Public domain (released by the author).
+  https://upload.wikimedia.org/wikipedia/commons/2/26/EurasianCoot.ogg (origin https://commons.wikimedia.org/wiki/File:EurasianCoot.ogg)
+  excerpt 0.0-3.95 s, mono, high-pass 300 Hz, low-pass 5000 Hz
+
+blackbird.mp3 - a voice: one blackbird phrase, late in the cycle
+  Common blackbird singing denoised, by tinga. Licence: CC0 1.0.
+  https://upload.wikimedia.org/wikipedia/commons/6/6b/Common_blackbird_singing_denoised.flac (origin https://freesound.org/people/tinga/sounds/189522/)
+  excerpt 0.0-4.2 s, mono, high-pass 900 Hz, low-pass 7500 Hz
+
+bell.mp3 - a voice: the last strokes of a far church bell
+  Cloche de l'Eglise de Sainte-Marie-des-Batignolles, by milo. Licence: CC0 1.0.
+  https://upload.wikimedia.org/wikipedia/commons/6/61/Cloche_de_l%27Eglise_de_Sainte-Marie-des-Batignolles.ogg (origin https://freesound.org/people/milo/sounds/164776/)
+  excerpt 80.0-94.9 s, mono, high-pass 150 Hz, low-pass 2400 Hz
+
+creak.mp3 - a voice: wood settling, slowed down
+  Creaky wooden casket, by stephan. Licence: Public domain (PDSounds).
+  https://upload.wikimedia.org/wikipedia/commons/e/ec/Creaky_wooden_casket.ogg (origin http://www.pdsounds.org/sounds/creaky_wooden_casket)
+  excerpt 0.0-1.38 s, mono, high-pass 120 Hz, low-pass 3500 Hz
+
+deck-a.mp3, deck-b.mp3 - the decks' two records (layer-deck.js), no recordings
+  Synthesised offline from the records' own score (tools/render_records.py): oscillators, filtered noise, and a
+  reverb whose impulse response is generated there too (decaying noise and early reflections). No samples, no
+  third-party audio. 0.5 s of pre-roll with one tone burst (the page's alignment mark), never played.

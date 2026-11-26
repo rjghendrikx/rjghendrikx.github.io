@@ -2,6 +2,8 @@ baseURL = "https://www.ruudhendrikx.nl/"
 languageCode = "en-us"
 title = "Ruud Hendrikx"
 enableRobotsTXT = true
+# the homepage is the room (static/index.html, its files in static/r/35/); Hugo renders every other page
+disableKinds = ["home"]
 
 [params]
   description = "AI Solution Engineer & Technical Leader"
@@ -11,9 +13,6 @@ enableRobotsTXT = true
   [markup.goldmark]
     [markup.goldmark.renderer]
       unsafe = true
-
-[outputs]
-  home = ["HTML", "RSS"]
 
 [sitemap]
   changefreq = "monthly"

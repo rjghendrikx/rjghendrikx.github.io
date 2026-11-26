@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Gevel kiezen</title>
+<style>
+:root { --bg: #0d0b0a; --panel: #17130f; --ink: #efe6da; --muted: #b9ab98; --line: rgba(239, 230, 218, .14); --accent: #e3a35b; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1400px; margin: 0 auto; padding: 16px; }
+h1 { font-size: 20px; margin: 4px 0 2px; font-weight: 650; }
+p.lede { color: var(--muted); margin: 0 0 12px; max-width: 70ch; }
+code { font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--ink); background: rgba(255, 255, 255, .06); padding: 1px 4px; border-radius: 4px; }
+.transport { position: sticky; top: 0; z-index: 2; background: var(--bg); padding: 8px 0; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; border-bottom: 1px solid var(--line); }
+button { font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 999px; padding: 6px 11px; cursor: pointer; }
+button:hover { border-color: var(--muted); }
+button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.now { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 13px; min-width: 15ch; }
+input[type=range] { accent-color: var(--accent); }
+#seek { flex: 1 1 200px; min-width: 160px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; margin-top: 14px; }
+.tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.tile[aria-current="true"] { border-color: var(--accent); }
+.tile canvas, .big canvas { display: block; width: 100%; height: auto; border-radius: 4px; background: #000; }
+.tile h2 { font-size: 15px; margin: 8px 0 2px; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.tile h2 small { color: var(--muted); font-weight: 400; font-size: 12px; }
+.tile p { margin: 0 0 8px; color: var(--muted); font-size: 13px; }
+.edit { margin-top: 18px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
+.edit h2 { font-size: 16px; margin: 0 0 8px; }
+.knobs { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 6px 18px; margin: 12px 0; }
+.knobs label { display: grid; grid-template-columns: 9ch 1fr 5ch; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+.knobs output { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); }
+.knobs label[hidden] { display: none; }
+pre { white-space: pre-wrap; word-break: break-word; background: #0a0908; border: 1px solid var(--line); border-radius: 8px; padding: 10px; font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; max-height: 50vh; overflow: auto; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.ok { color: var(--accent); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Gevel: kies een lichtshow</h1>
+  <p class="lede">Elke tegel speelt hetzelfde moment van de track op de 65 × 11 kantoorramen van de Universiteit, in de kleuren van de kamer.
+    Kies er een, schuif aan de knoppen, kopieer de instellingen. <strong>Geen bake</strong>: plak in <code>room/web/facade.json</code>
+    en restage (<code>uv run --project room python room/tools/restage.py --to NAAM</code>, ~2 s). In de kamer probeer je er een met <code>?facade=naam</code>.</p>
+  <div class="transport" role="group" aria-label="Afspelen">
+    <button id="play" aria-pressed="true">❚❚ pauze</button>
+    <span id="jumps" class="row"></span>
+    <input id="seek" type="range" min="0" max="576" step="0.25" value="0" aria-label="Positie in de track (tellen)">
+    <span class="now" id="now" aria-live="off">intro 0</span>
+  </div>
+  <div class="grid" id="grid"></div>
+  <section class="edit" aria-labelledby="edit-h">
+    <h2 id="edit-h">Gekozen: <span id="chosen"></span></h2>
+    <div class="big"><canvas id="bigc" width="1300" height="240" aria-label="De gekozen lichtshow, groot"></canvas></div>
+    <div class="knobs" id="knobs"></div>
+    <div class="row">
+      <button id="copy">Kopieer instellingen</button>
+      <button id="reset">Terug naar het bestand</button>
+      <span class="ok" id="copied" role="status"></span>
+    </div>
+    <pre id="out" hidden></pre>
+  </section>
+</main>
+<script type="module">
+import { makeFacade, resolve, DEFAULTS } from './facade-life.js';
+let BPM = 122, SECTIONS = [['intro', 16], ['build', 16], ['drop', 32], ['breakdown', 16], ['build', 16], ['drop', 32], ['outro', 16]];
+try { ({ BPM, SECTIONS } = await import('./layer-deck.js')); } catch {   }
+const FILE = await fetch('./facade.json').then((r) => r.json()).catch(() => ({ active: 'v34', presets: { v34: { label: 'v34', mode: 'life' } } }));
+const W = 65, H = 11, SEED = 7, TOTAL = SECTIONS.reduce((a, s) => a + s[1] * 4, 0), SPB = 60 / BPM;
+const params = new URLSearchParams(location.search);
+const TUBE_R = [[0, [0.06, 0.05, 0.035]], [0.45, [0.62, 0.52, 0.40]], [0.8, [0.92, 0.80, 0.64]], [1, [1.0, 0.91, 0.78]]];
+const HOME_R = [[0, [0.05, 0.033, 0.017]], [0.45, [0.6, 0.41, 0.22]], [0.8, [0.9, 0.62, 0.34]], [1, [1.0, 0.70, 0.40]]];
+const TONE = [1.0, 0.90, 0.78], PANE = [0.026, 0.025, 0.028], WALL = [0.031, 0.024, 0.024];
+const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
+function palette(warmth) {
+  const R = TUBE_R.map(([s, c], j) => [s, c.map((v, q) => v + (HOME_R[j][1][q] - v) * warmth)]), out = [];
+  for (let n = 0; n < 256; n++) {
+    const a = n / 255; let c = R[0][1].slice();
+    for (let i = 1; i < 4; i++) { const t = sstep(R[i - 1][0], R[i][0], a); c = c.map((v, q) => v + (R[i][1][q] - v) * t); }
+    c = c.map((v, q) => v + (v * TONE[q] - v) * 0.35);
+    const k = Math.min(1, a * 2.5); c = c.map((v, q) => PANE[q] + (v - PANE[q]) * k);
+    out.push(`rgb(${c.map((v) => Math.round(255 * v)).join(',')})`);
+  }
+  return out;
+}
+const KNOBS = [
+  ['density', 'dichtheid', 0.2, 2, 0.05], ['attack', 'aan (s)', 0.01, 0.3, 0.01], ['decay', 'uit (s)', 0.05, 0.8, 0.01],
+  ['afterglow', 'nagloed', 0, 1.5, 0.05], ['warmth', 'warmte', 0, 1, 0.05],
+  ['interior', 'interieur', 0, 1, 0.05],
+  ['cluster', 'tros', 1, 8, 1, true], ['crackle', 'knetter (s)', 0.03, 0.2, 0.01, true],
+  ['hum', 'zoem', 0, 0.4, 0.01, true], ['hold_glow', 'adem-gloed', 0, 0.7, 0.01, true],
+];
+const keys = Object.keys(FILE.presets);
+const edits = {};
+const tiles = keys.map((key) => {
+  const el = document.createElement('article'); el.className = 'tile';
+  const p = FILE.presets[key];
+  el.innerHTML = `<canvas width="650" height="120" role="img"></canvas><h2><span></span><small></small></h2><p></p><button>Kies deze</button>`;
+  el.querySelector('canvas').setAttribute('aria-label', `Lichtshow ${p.label || key}`);
+  el.querySelector('h2 span').textContent = p.label || key;
+  el.querySelector('h2 small').textContent = `${key}${key === FILE.active ? ' · nu actief' : ''}`;
+  el.querySelector('p').textContent = p.note || '';
+  el.querySelector('button').addEventListener('click', () => choose(key));
+  document.getElementById('grid').appendChild(el);
+  const t = { key, el, cv: el.querySelector('canvas') };
+  build(t);
+  return t;
+});
+function current(key) { const base = FILE.presets[key]; return { ...base, ...(edits[key] || {}) }; }
+function build(t) {
+  const p = resolve({ presets: { [t.key]: current(t.key) } }, t.key);
+  t.p = p; t.dirty = true; t.f = makeFacade({ W, H, seed: SEED, bpm: BPM, sections: SECTIONS, preset: p }); t.pal = palette(p.warmth || 0);
+}
+let B = 0, shownB = -1, playing = true, last = performance.now();
+const seek = document.getElementById('seek'), now = document.getElementById('now'), playB = document.getElementById('play');
+seek.max = TOTAL;
+const NL = { intro: 'intro', build: 'opbouw', drop: 'drop', breakdown: 'breakdown', outro: 'outro' };
+const jumps = [['intro', 0], ['opbouw', 64], ['adem', 124], ['drop 1', 127.5], ['breakdown', 256], ['opbouw 2', 340], ['drop 2', 383.5], ['outro', 512]];
+for (const [label, beat] of jumps) { const b = document.createElement('button'); b.textContent = label; b.addEventListener('click', () => { B = beat; }); document.getElementById('jumps').appendChild(b); }
+playB.addEventListener('click', () => { playing = !playing; playB.textContent = playing ? '❚❚ pauze' : '▶ speel'; playB.setAttribute('aria-pressed', String(playing)); });
+seek.addEventListener('input', () => { B = +seek.value; });
+if (params.has('beat')) B = +params.get('beat');
+function draw(t, cv) {
+  const ctx = cv.getContext('2d'), w = cv.width, h = cv.height, cw = w / W, ch = h / H, L = t.f.L, pal = t.pal;
+  ctx.fillStyle = `rgb(${WALL.map((v) => Math.round(255 * v)).join(',')})`; ctx.fillRect(0, 0, w, h);
+  const ww = cw * 3.4 / 3.8, wh = ch * 1.7 / 3.8, ox = (cw - ww) / 2, oy = (ch - wh) / 2;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const v = 0.03 + 0.97 * Math.min(1, L[(H - 1 - y) * W + x] * 0.9);
+    ctx.fillStyle = pal[Math.round(v * 255)];
+    ctx.fillRect(x * cw + ox, y * ch + oy, ww, wh);
+    const k = (t.p.interior || 0) * Math.min(1, Math.max(0, (v - 0.05) / 0.25));
+    if (k <= 0) continue;
+    const X = x * cw + ox, Y = y * ch + oy, kind = Math.floor((Math.sin((y * W + x) * 12.9898) * 43758.5453 % 1 + 1) % 1 * 6);
+    ctx.globalAlpha = 0.45 * k; ctx.fillStyle = ['#23362a', '#3a2c22', '#3a3530', '#5b5a58', '#4a4c4c', '#3b3026'][kind];
+    ctx.fillRect(X + ww * (kind === 0 ? 0.15 : 0.35), Y + wh * 0.5, ww * 0.45, wh * 0.5);
+    ctx.fillStyle = '#2a241f'; ctx.fillRect(X, Y + wh * 0.82, ww, wh * 0.18);
+    ctx.globalAlpha = 0.6 * k; ctx.fillStyle = '#fff6e6'; ctx.fillRect(X + ww * 0.1, Y + wh * 0.06, ww * 0.8, Math.max(1, wh * 0.06));
+    ctx.globalAlpha = 0.35 * k; ctx.fillStyle = '#2a241f';
+    for (const f of [1 / 3, 2 / 3]) ctx.fillRect(X + ww * f - 0.5, Y, 1, wh);
+    ctx.globalAlpha = 1;
+  }
+}
+let chosen = params.get('facade') && FILE.presets[params.get('facade')] ? params.get('facade') : FILE.active;
+const big = document.getElementById('bigc');
+function frame(t0) {
+  const dt = Math.min(0.1, (t0 - last) / 1000); last = t0;
+  if (playing) B = (B + dt / SPB) % TOTAL;
+  const step = playing || B !== shownB; shownB = B;
+  for (const t of tiles) { if (step || t.dirty) t.f.frame(playing ? dt : 1 / 60, B); t.dirty = false; draw(t, t.cv); if (t.key === chosen) draw(t, big); }
+  const k = tiles[0].f.score.knobs(B);
+  now.textContent = `${k.hold ? 'adem' : NL[k.kind]} · tel ${Math.floor(B)}`;
+  if (document.activeElement !== seek) seek.value = B;
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+const knobs = document.getElementById('knobs');
+for (const [key, label, min, max, step, sparksOnly] of KNOBS) {
+  const l = document.createElement('label'); l.dataset.key = key; l.dataset.sparks = sparksOnly ? '1' : '';
+  l.innerHTML = `<span></span><input type="range" min="${min}" max="${max}" step="${step}"><output></output>`;
+  l.querySelector('span').textContent = label;
+  const inp = l.querySelector('input'), out = l.querySelector('output');
+  inp.addEventListener('input', () => { (edits[chosen] ||= {})[key] = +inp.value; out.textContent = inp.value; const t = tiles.find((x) => x.key === chosen); build(t); });
+  knobs.appendChild(l);
+}
+function choose(key) {
+  chosen = key;
+  for (const t of tiles) t.el.setAttribute('aria-current', String(t.key === key));
+  const p = resolve({ presets: { [key]: current(key) } }, key);
+  document.getElementById('chosen').textContent = `${FILE.presets[key].label || key} (${key})`;
+  for (const l of knobs.children) {
+    l.hidden = !!l.dataset.sparks && p.mode !== 'sparks';
+    const v = p[l.dataset.key] ?? DEFAULTS[l.dataset.key];
+    l.querySelector('input').value = v; l.querySelector('output').textContent = v;
+  }
+  document.getElementById('out').hidden = true; document.getElementById('copied').textContent = '';
+}
+choose(chosen);
+document.getElementById('reset').addEventListener('click', () => { delete edits[chosen]; build(tiles.find((t) => t.key === chosen)); choose(chosen); });
+document.getElementById('copy').addEventListener('click', async () => {
+  const presets = {};
+  for (const k of keys) presets[k] = current(k);
+  const json = JSON.stringify({ ...FILE, active: chosen, presets }, null, 1) + '\n';
+  const pre = document.getElementById('out'); pre.textContent = json; pre.hidden = false;
+  let ok = false;
+  try { await navigator.clipboard.writeText(json); ok = true; } catch {   }
+  document.getElementById('copied').textContent = ok
+    ? `Gekopieerd: heel facade.json met "${chosen}" actief. Plakken in room/web/facade.json, dan restage.`
+    : 'Kopiëren mocht niet: selecteer de tekst hieronder.';
+});
+</script>
+</body>
+</html>
