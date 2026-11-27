@@ -5,6 +5,7 @@
 <title>{{ if .IsHome }}{{ .Site.Title }} — {{ .Site.Params.description }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
 <meta name="description" content="{{ with .Description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
 <meta name="author" content="{{ .Site.Params.author }}">
+{{ if .Params.noindex }}<meta name="robots" content="noindex">{{ end }}
 
 <!-- Open Graph -->
 <meta property="og:type" content="{{ if .IsHome }}website{{ else }}article{{ end }}">

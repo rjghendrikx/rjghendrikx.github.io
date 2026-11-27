@@ -1,6 +1,9 @@
 ---
 title: "Font Test"
 description: "Pick your terminal font."
+noindex: true
+sitemap:
+  disable: true
 ---
 
 Compare monospace fonts. Each section renders in a different font family.
