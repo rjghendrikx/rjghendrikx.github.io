@@ -44,8 +44,8 @@ jobs:
         run: |
           hugo \
             --gc \
-            --minify \
-            --baseURL "${{ steps.pages.outputs.base_url }}/"
+            --minify
+          # baseURL from hugo.toml (https); the Pages base_url is http behind Cloudflare and leaked into sitemap.xml
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
