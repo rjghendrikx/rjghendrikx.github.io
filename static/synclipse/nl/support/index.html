@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Synclipse ondersteuning</title>
+<style>
+  :root { --bg: #ffffff; --text: #16181d; --muted: #5b616e; --rule: #e3e5ea; --accent: #b86e00; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #08090d; --text: #eef0f4; --muted: #a2a8b4; --rule: #262a33; --accent: #ffb547; }
+  }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 17px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  main { max-width: 680px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 28px; line-height: 1.2; margin: 0 0 4px; }
+  h2 { font-size: 21px; margin: 36px 0 8px; }
+  h3 { font-size: 17px; margin: 24px 0 6px; }
+  p, li { margin: 0 0 12px; }
+  ol, ul { padding-left: 22px; }
+  .muted { color: var(--muted); font-size: 15px; }
+  a { color: var(--accent); }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 32px 0; }
+</style>
+</head>
+<body>
+<main>
+<h1>Synclipse ondersteuning</h1>
+<p class="muted">Loopt het geluid van je tv gelijk met het beeld? Synclipse filmt iemand die praat op je tv en vertelt het je. Gratis, zonder account en zonder advertenties.</p>
+
+<h2>Wat je nodig hebt</h2>
+<ul>
+  <li>Een iPhone met iOS 18 of nieuwer.</li>
+  <li>Een tv met één persoon in beeld die naar de camera praat: het nieuws, een talkshow, een interview. Spraak zonder muziek eronder werkt het best.</li>
+  <li>Stilte in de kamer terwijl je filmt: vaak een halve minuut, hooguit een minuut.</li>
+</ul>
+
+<h2>Zo meet je (Snelle check)</h2>
+<p>Tik de eerste keer op Doorgaan en geef toegang tot de camera en de microfoon. Daarna:</p>
+<ol>
+  <li>Zoek iemand die praat op de tv: nieuws of een talkshow, geen muziek.</li>
+  <li>Richt je iPhone op de tv en tik op het gezicht om in te zoomen. Het kader om het gezicht verandert van amber naar cyaan als het groot genoeg is, en de app zegt "Klaar. Tik op Film".</li>
+  <li>Tik op Film en houd het gezicht in beeld tot Synclipse vanzelf stopt: zodra de uitslag zeker is, hooguit een minuut. Wees stil: je stem brengt de meting in de war.</li>
+  <li>Lees de uitslag: Gelijk, Licht verschoven of Niet gelijk, of het geluid voor- of achterloopt en ongeveer hoeveel, en wat je kunt veranderen.</li>
+  <li>Heb je een instelling veranderd? Tik op Opnieuw meten en film nog een keer. Synclipse zet de nieuwe uitslag naast de vorige: dichterbij, verder uit elkaar of hetzelfde.</li>
+</ol>
+<p>Je kunt ook een filmpje meten dat je eerder hebt gefilmd: Instellingen &gt; Een filmpje meten &gt; Uit Foto's of Uit Bestanden. Je eerdere uitslagen vind je onder het klokje.</p>
+
+<h2>Vragen</h2>
+
+<h3>Wat betekenen "het geluid loopt voor" en "het geluid loopt achter"?</h3>
+<p>Het geluid loopt achter: je hoort een woord nadat je de lippen het ziet zeggen. Dit komt het meest voor bij soundbars, receivers en draadloze speakers, omdat die tijd nodig hebben om het geluid te verwerken. Het geluid loopt voor: je hoort het woord voordat de lippen bewegen. Meestal betekent dit dat de tv traag is met het beeld, bijvoorbeeld door beeldverwerking.</p>
+
+<h3>Wanneer zegt Synclipse "Gelijk"?</h3>
+<p>Dat hangt af van de instelling onder Instellingen &gt; Wanneer is het gelijk?</p>
+<ul>
+  <li>Ruim: de meeste mensen storen zich niet aan geluid tot 90 ms te vroeg of 185 ms te laat (ITU-R BT.1359).</li>
+  <li>Normaal: de meeste mensen merken niets tot 45 ms te vroeg of 125 ms te laat (ITU-R BT.1359).</li>
+  <li>Streng: zo streng als tv-zenders, geluid tot 40 ms te vroeg of 60 ms te laat (EBU R37).</li>
+</ul>
+<p>Voorbij je instelling, maar binnen wat de meeste mensen accepteren, is de uitslag Licht verschoven. Daar voorbij is het Niet gelijk.</p>
+
+<h3>Waarom geeft een Snelle check een bereik en niet één exact getal?</h3>
+<p>Lippen en stem vallen nooit precies samen, ook niet als de tv perfect is: de mond begint iets eerder te bewegen dan het geluid komt. Synclipse rekent dat gemiddeld mee. Het bereik laat zien hoe goed de stukken van deze opname met elkaar overeenkomen: minstens 30 ms naar beide kanten, breder als ze van elkaar verschillen. Daar komen twee dingen bovenop: bij elke spreker loopt de mond net een andere tijd voor op de stem, en het programma zelf kan al licht verschoven zijn voordat het je tv bereikt (zenders staan tot 40 ms te vroeg en 60 ms te laat toe). Daarom helpt een tweede meting, bij een ander programma. Wil je een preciezer getal? Gebruik dan Afstellen.</p>
+
+<h3>Het geluid loopt achter. Wat doe ik?</h3>
+<p>Zet de audiovertraging op de tv, soundbar of tv-app zoveel lager als de uitslag aangeeft, en tik op Opnieuw meten.</p>
+<p>Staat de vertraging al op 0? Dan helpt geen enkele instelling. De meeste tv's en soundbars kunnen geluid alleen vertragen, niet versnellen. Verander dan de route die het geluid neemt, en meet opnieuw na elke verandering:</p>
+<ul>
+  <li>zet de geluidsmodi van de soundbar uit (surround, nachtmodus, dialoog);</li>
+  <li>sluit de soundbar aan via HDMI in plaats van optisch of bluetooth;</li>
+  <li>gebruik de audiovertraging in de app die de film afspeelt, als die er een heeft (Infuse, VLC).</li>
+</ul>
+<p>De instelling heet bij elk merk anders: audiovertraging, AV-synchronisatie of lipsync. Kijk in de geluidsinstellingen van je tv, soundbar of tv-app.</p>
+
+<h3>Het geluid loopt voor. Wat doe ik?</h3>
+<p>Zet de audiovertraging (ook wel AV-synchronisatie of lipsync genoemd) op de tv, soundbar of tv-app zoveel hoger als de uitslag aangeeft, en tik op Opnieuw meten.</p>
+
+<h3>Synclipse zegt "Nog niet zeker"</h3>
+<p>Stukken van de opname gaven verschillende uitkomsten. Je ziet welke kant het geluid op lijkt te lopen, maar geen getal. Meet nog een keer voordat je iets verandert, als het kan bij een ander programma.</p>
+
+<h3>Synclipse zegt "Geen duidelijke uitslag"</h3>
+<p>Dat doet de app in plaats van te gokken, en het zegt nog niets over je tv. Meestal was het gezicht te klein, opzij gedraaid of een deel van de opname uit beeld, of er was muziek of er werd gepraat in de kamer. Zoom in op één persoon die naar de camera kijkt, kies spraak zonder muziek, houd het gezicht in het kader en wees stil. Kijk je met een koptelefoon? Een Snelle check kan die niet horen. Gebeurt het twee keer achter elkaar, dan biedt Synclipse Afstellen met het testfilmpje aan.</p>
+
+<h3>Werkt het met een koptelefoon?</h3>
+<p>Nee. Synclipse meet het geluid dat de microfoon van je iPhone in de kamer hoort. Geluid dat in een koptelefoon speelt, kan de app dus niet horen.</p>
+
+<h3>Wat is Afstellen?</h3>
+<p>Afstellen meet met een testfilmpje in plaats van iemand die praat. Eén keer per seconde laat het filmpje een witte flits zien, met op hetzelfde moment een klik. Synclipse filmt dat met veel beelden per seconde en meet bij elke flits het tijdsverschil met de klik, tot op een paar milliseconden precies, voor die manier van afspelen. Twee keer los afspelen van hetzelfde filmpje kan 30 tot 40 ms verschillen (de beeldtiming van de tv en de buffer van de soundbar). Meet daarom twee of drie keer.</p>
+<ol>
+  <li>Doe een Snelle check. Tik onder de uitslag op "Nog preciezer? Afstellen met het testfilmpje". De eerste keer opent een paneel met het testfilmpje. Daarna heeft de camera een schakelaar Snelle check | Afstellen. Synclipse begint altijd in Snelle check.</li>
+  <li>Tik op Bewaar het testfilmpje en zet het bestand op een plek waar je tv het kan afspelen. (Je komt er weer bij met Testfilmpje, naast de schakelaar.)</li>
+  <li>Speel het bestand op je tv af zoals je films kijkt: vanaf een usb-stick, met Plex of met een afspeel-app zoals Infuse. Gebruik geen YouTube of AirPlay: die sturen het geluid langs een andere route, en dan meet je die route.</li>
+  <li>Richt het kader op je scherm op de flits, houd je telefoon stil en tik op Meten. Het duurt 7 seconden.</li>
+</ol>
+<p>De uitslag krijgt het label AFSTELLEN en geeft de vertraging in milliseconden. De uitslag is inclusief de app die het filmpje afspeelt. Meet dus met de app of het apparaat waarmee je normaal kijkt.</p>
+
+<h3>Waar staan mijn opnames?</h3>
+<p>In de Bestanden-app, onder Op mijn iPhone &gt; Synclipse. Daar kun je ze verwijderen. Niets verlaat je telefoon; zie het <a href="https://www.ruudhendrikx.nl/synclipse/nl/privacy/">privacybeleid</a>.</p>
+
+<hr>
+<h2>Contact</h2>
+<p>Werkt er iets niet, of vertrouw je een uitslag niet? Mail naar <a href="mailto:synclipse@ruudhendrikx.nl">synclipse@ruudhendrikx.nl</a>. Het helpt als je je iPhone-model en de iOS-versie noemt, en waar het geluid doorheen gaat (tv-speakers, soundbar, receiver, en hoe ze zijn aangesloten).</p>
+<p class="muted"><a href="https://www.ruudhendrikx.nl/synclipse/nl/support/">Ondersteuning</a> · <a href="https://www.ruudhendrikx.nl/synclipse/nl/privacy/">Privacybeleid</a></p>
+<p class="muted"><a href="https://www.ruudhendrikx.nl/synclipse/support/" lang="en" hreflang="en">English</a></p>
+</main>
+</body>
+</html>
