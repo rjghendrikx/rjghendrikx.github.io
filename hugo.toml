@@ -8,6 +8,8 @@ disableKinds = ["home"]
 [params]
   description = "AI Solution Engineer & Technical Leader"
   author = "Ruud Hendrikx"
+  # hand-written pages in static/ that Hugo does not know about; layouts/sitemap.xml lists them
+  staticPages = ["synclipse/", "synclipse/nl/", "synclipse/guide/", "synclipse/nl/gids/", "synclipse/support/", "synclipse/nl/support/", "synclipse/privacy/", "synclipse/nl/privacy/"]
 
 [markup]
   [markup.goldmark]
