@@ -1,0 +1,1412 @@
+{
+ "page": {
+  "title": "Ruud Hendrikx, creative technologist and physicist",
+  "description": "Ruud Hendrikx, creative technologist and physicist, builds AI agents, machine learning and simulations, at the meeting point of science, philosophy and art. Walk into his workroom, live in the browser.",
+  "share": "Simulations, machine learning and AI agents, made visible. Walk into his workroom, live in the browser. Available for projects.",
+  "name": "Ruud Hendrikx",
+  "tagline": "Creative technologist and physicist. Builds AI agents, machine learning and simulations, at the meeting point of science, philosophy and art",
+  "available": "available for projects",
+  "offer": "Creative technologist and physicist. He builds AI agents, machine learning models and simulations, and makes them something you can see and use. The agents go in close and fast; he keeps the whole in view and decides where they go.",
+  "ask": "Available for freelance projects, hands-on or as technical lead.",
+  "work": [
+   {
+    "view": "simulations",
+    "kicker": "Simulations",
+    "title": "Passenger flow at Schiphol",
+    "text": "For Schiphol he architected and led the simulation of the airport’s operations: passengers through the terminal, the queues, the runways. Before that, a live digital twin of a steel plant for Danieli Corus. He models a system until the people who run it can ask it “what if”."
+   },
+   {
+    "view": "terminal",
+    "kicker": "Agents",
+    "title": "LLM assistants in production",
+    "text": "For Schiphol he designed customer assistants on large language models, and is building them into one multi-tenant stack for the airport. At Eneco, the first fully automated pipeline from recorded customer calls to the topics in them. What he builds for is the day after the demo: something an organisation runs every day."
+   },
+   {
+    "view": "ml",
+    "kicker": "Machine learning",
+    "title": "Models that act early",
+    "text": "At ING he led a data science chapter in Collections and delivered the likelihood-to-pay and early-intervention models. Before that, at Wärtsilä, he turned a market-prediction proof of concept into a client-ready Python package with a production pipeline, and at PGGM he led the early build-out of one of its first data science teams."
+   }
+  ],
+  "own": [
+   {
+    "case": "atlas",
+    "in": "terminal",
+    "kicker": "His own work",
+    "title": "Agentic SWE Atlas",
+    "text": "One run of 46 agents turned the writing of 102 people on building software with agents into one clickable atlas, in 28 minutes: 157 cards, 651 claims. He set the questions and checked the answer: of 2,144 citations, 8 are unresolved."
+   },
+   {
+    "case": "inference",
+    "in": "pc",
+    "kicker": "His own work",
+    "title": "Local inference on the 3090",
+    "text": "A coding agent that runs on his own desk. A 27-billion-parameter model on one 24 GB card, driving an agent harness, measured before it was trusted: 43 tokens a second at 55K context, fast enough to work with. Speculative decoding bought the last 44% (30.0 to 43.2). Without it the card holds 144K tokens of context, at 23.2 GiB."
+   },
+   {
+    "case": "metal",
+    "in": "vitrine",
+    "kicker": "His own work",
+    "title": "Metal visuals",
+    "text": "His live visuals engine: Python computes, Swift and Metal draw, values over UDP in between, never pixels. The successor to his Quartz Composer work, for a screen or an LED wall: 256 squares at about 120 fps."
+   }
+  ],
+  "nojs": [
+   {
+    "title": "Commodore 64",
+    "text": "His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object."
+   },
+   {
+    "room": "ti83",
+    "title": "TI-83",
+    "text": "The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time."
+   },
+   {
+    "room": "bench",
+    "title": "Quantum eraser, classical version",
+    "text": "Crossed polarizers on the two slits mark the path, so no fringes. Drop the polarizer into the beam at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics. <a href=\"https://doi.org/10.1038/srep20834\">His 2D spectroscopy paper</a>"
+   },
+   {
+    "room": "bench",
+    "title": "Cloud chamber",
+    "text": "Dry ice, isopropanol, a cold black plate. At sea level a cosmic-ray muon crosses each square centimetre about once a minute, several a second through this plate. The vapour shows the ones it catches: steep ones as short stubs, shallow ones as long lines, the odd fat alpha and a curling beta. The flux is real, the tracks are simulated."
+   },
+   {
+    "room": "bench",
+    "title": "Geiger counter",
+    "text": "An SBM-20 tube at background: about 20 counts a minute, Poisson-timed. The rate is real, the counts are simulated. Flip the toggle to hear it."
+   },
+   {
+    "room": "bench",
+    "title": "Oscilloscope",
+    "text": "Its probe is hooked onto the Geiger counter’s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other."
+   },
+   {
+    "room": "notebook",
+    "title": "Lab notebook",
+    "text": "Every line ends in one of three labels: tested, preference, hypothesis. Two 12 V adapters on a handheld scope, on battery, no load: 8 to 13 mV peak to peak, the stock one a little lower. Tested. A fault that felt intermittent happened on every cold open after an album ran out; the gap was in what he had watched."
+   },
+   {
+    "room": "projector",
+    "title": "Structured light, then projection mapping",
+    "text": "Gray-code stripes label every point on a plaster head of Plato with a projector column and row; a camera beside the lens triangulates the depth. The head becomes its own point cloud, then a canvas for light."
+   },
+   {
+    "title": "Luxman L-308",
+    "text": "His own amplifier, the last box in a chain he can name from library to cone: Roon holds the files, HQPlayer upsamples them to DSD256, a streamer hands them to the NEO iDSD 2, the Luxman drives the B&Ws. The real one has no meters, so neither does this one."
+   },
+   {
+    "title": "The records",
+    "text": "The library end of the chain. Know a chain well enough and you stop hearing it; then there is only the music."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk drive and the disk box",
+    "text": "His working life on twelve disks, oldest at the back: physics first, then data science, then agents. The C64 reads the disks through the drive's slot. Type LOAD\"$\",8 and then LIST."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 1 of 12, UVA.PHYS+PHIL",
+    "text": "University of Amsterdam ’07-’11; BSc Bèta-gamma; Major physics, minor philosophy / Aristotle Award ’08: best interdisciplinary research"
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 2 of 12, UVA.MSC.PHYSICS",
+    "text": "University of Amsterdam ’12-’14; MSc Physics; Track: Advanced Matter and Energy Physics"
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 3 of 12, AMOLF.OPTOMECH",
+    "text": "AMOLF ’13-’14; Physics researcher, optomechanics / Built the software for real-time signal acquisition and analysis in light-matter experiments. Automated a nanophotonic optomechanical setup for quantum-state control. / Phys. Rev. Lett. 115, 203904 (’15); editorial highlight <a href=\"https://doi.org/10.1103/PhysRevLett.115.203904\">Phys. Rev. Lett. 115, 203904</a>"
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 4 of 12, VU.2DES",
+    "text": "Vrije Universiteit / Laserlab; Amsterdam ’14-’16; Physics researcher, 2D electronic spectroscopy / Designed the software platform of a 2D electronic spectroscopy setup: calibration, signal optimisation, global analysis. Quantum effects in photosynthetic systems. / Sci. Rep. 6 (’16) - JACS (’16); University Research Fellow ’15-’16 <a href=\"https://doi.org/10.1038/srep20834\">Scientific Reports 6</a> <a href=\"https://doi.org/10.1021/jacs.6b11017\">JACS</a>"
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 5 of 12, PGGM.DATASCI",
+    "text": "PGGM ’16-’17; Data science consultant / Early build-out of one of PGGM’s first data-science teams. Prototypes: call-centre forecasting, fraud and bankruptcy risk, client profiling, micro-targeted marketing."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 6 of 12, WARTSILA.ML",
+    "text": "Wärtsilä ’18; Machine learning engineer / A reusable market-prediction ML solution: from proof of concept to a client-ready Python package with a production-ready ML pipeline."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 7 of 12, TELE2.VOICE",
+    "text": "Tele2 ’18-’19; Lead data scientist / End-to-end 4G voice-quality analytics on call detail records: performance monitoring, root-cause analysis, degradation modelling."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 8 of 12, ING.COLLECTIONS",
+    "text": "ING ’19-’21; Chapter lead data science / Machine learning to scale collections operations, leading a data science / analytics chapter. Likelihood-to-pay and early-intervention prevention models."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 9 of 12, SCHIPHOL.SIM",
+    "text": "Royal Schiphol Group ’21-’23; Senior data scientist / Airport operational simulation and forecasting: passenger departure flow, queue lengths, waiting time, demand and capacity prediction, runway capacity modelling. / The case: LOAD\"SIMULATIONS\",8"
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 10 of 12, STEEL.TWIN",
+    "text": "Danieli Corus ’23; Technical lead, steel plant simulation / A modular, real-time digital twin of a steel plant for what-if simulations: capacity planning and scheduling. A digital-shadow tool for bottleneck detection."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 11 of 12, ENECO.SQUAD",
+    "text": "Eneco ’23-’25; Lead data scientist / Built the company’s first data science squad. The first fully automated topic-modelling pipeline for CX: voice transcription at scale, embedding, clustering, summarisation."
+   },
+   {
+    "only": "cabinet",
+    "title": "Disk 12 of 12, SCHIPHOL.LLM",
+    "text": "Schiphol ’25; AI solution engineer / LLM-powered CX assistants on Azure OpenAI Service. A modular framework on LangChain, LangGraph, Redis memory and FastAPI: intent classification, hybrid RAG, agentic tool use. Multi-tenant. / The case: LOAD\"AGENTS\",8"
+   },
+   {
+    "only": "cabinet",
+    "title": "The small PC",
+    "text": "His own build: a small case with the graphics card standing behind its open side. The local models run here."
+   },
+   {
+    "only": "cabinet",
+    "title": "Pads and faders",
+    "text": "What his hands are on when the visuals run."
+   },
+   {
+    "only": "cabinet",
+    "title": "Mapping kit",
+    "text": "A small projector and a card model of a house front: where a show for a building starts."
+   },
+   {
+    "only": "cabinet",
+    "title": "The cabinet",
+    "text": "A cabinet of curiosities: things he keeps for what they make him think about."
+   },
+   {
+    "only": "specimens",
+    "title": "Planarian, two heads",
+    "text": "Michael Levin’s lab briefly disturbed a cut flatworm’s bioelectric signalling, and it regrew with two heads. Cut again, untreated, it grew two heads again."
+   },
+   {
+    "only": "cabinet",
+    "title": "Möbius band",
+    "text": "One side, one edge: inside and outside are one surface."
+   },
+   {
+    "only": "specimens",
+    "title": "Light-harvesting complex",
+    "text": "Photosynthesis under glass. At the Vrije Universiteit he built the software for a 2D electronic spectroscopy setup that revealed quantum effects in photosynthetic systems: dark states in the light-harvesting complex LH2 (Scientific Reports, 2016)."
+   },
+   {
+    "only": "tape",
+    "title": "LED matrix",
+    "text": "A grid of squares, each with a live alpha: the core of his Metal visuals engine, the successor to an old Quartz Composer workflow for TVs and LED walls."
+   },
+   {
+    "only": "tape",
+    "title": "Rule 30, row by row",
+    "text": "Rule 30, drawn as it is computed: each row from the row above, nothing else. One black cell to start, one row a step since you came in. No formula skips ahead: to see row n, the rows before it have to be drawn. The red lines mark the only past the newest middle cell can depend on."
+   },
+   {
+    "only": "cabinet",
+    "title": "The books",
+    "text": "The books on the cabinet under the window, and one open on the desk: McGilchrist, Abram, Koch, Kastrup, Schopenhauer, Faggin, Hoffman, Bohm, Lane, Feynman, Hawking, Wolfram, Hertog. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory."
+   },
+   {
+    "room": "shelf",
+    "title": "The shelf",
+    "text": "McGilchrist, Abram, Koch, Kastrup, Schopenhauer, Faggin, Hoffman, Bohm, Lane, Feynman, Hawking, Wolfram, Hertog. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory."
+   },
+   {
+    "title": "The principle of least action",
+    "text": "Give every path one number, the action S = ∫(T − V) dt. Nature takes the path where small detours don't change it: δS = 0. That single condition gives the Euler–Lagrange equation, and from it F = ma. A Legendre transform, H = pq̇ − L, trades velocity for momentum, and Hamilton's equations follow. Feynman's reason: every path counts, but only near δS = 0 do they add up instead of cancelling. The camera that flew you in rode such a path, like a bead on a wire. After Erik Verlinde's classical mechanics lectures (UvA, c. 2009). A year later he asked where F = ma itself comes from."
+   },
+   {
+    "title": "A drop on the glass",
+    "text": "Watch a drop run down the glass. No one can predict which way it turns next. Science calls that chaos, as if it were out of control. David Abram puts it better: not out of control, only out of ours. Wild."
+   }
+  ]
+ },
+ "contact": {
+  "email": "info@ruudhendrikx.nl",
+  "heading": "Work with him",
+  "text": "Available for freelance projects: AI agents, simulations, or something people can see and use, hands-on or as technical lead.",
+  "linkedin": "https://linkedin.com/in/rjghx/",
+  "linkedin_label": "Full history on LinkedIn"
+ },
+ "status": {
+  "loading": "Loading the room…",
+  "no_webgl": "This browser cannot draw the 3D room (no WebGL), so this is a still of it.",
+  "failed": "The 3D room did not load, so this is a still of it."
+ },
+ "hints": {
+  "first_touch": "Tap anything",
+  "back": {
+   "touch": "Tap anywhere outside it to go back to the room",
+   "mouse": "Click anywhere outside it, or press Esc, to go back to the room"
+  },
+  "move": {
+   "touch": "Tap the floor to walk · two fingers to slide",
+   "mouse": "Click the floor to walk · right-drag to slide · arrows/WASD · Esc for the room"
+  }
+ },
+ "work_room": {
+  "simulations": "Its disk stands on the desk, beside the C64 where he wrote his first programs.",
+  "terminal": "Servant for the chores, sparring partner for the design, mirror for whether it is worth building: the agents go fast, he does the steering.",
+  "ml": "Its disk stands on the desk, beside the other two."
+ },
+ "place_cards": {
+  "table": "From here: the C64, Agents on the laptop, the hi-fi.",
+  "desk": "From here: the C64 and its disks, the calculator, the PC, the laptop.",
+  "wall": "From here: the poster by the window."
+ },
+ "deck": {
+  "title": "Night Shift (room loop)",
+  "artist": "Ruud Hendrikx",
+  "tag": "SYNTH"
+ },
+ "deck_b": {
+  "title": "Tidewater (room loop)",
+  "artist": "Ruud Hendrikx",
+  "tag": "SYNTH"
+ },
+ "cards": [
+  [
+   "c64",
+   {
+    "kicker": "Where it started",
+    "title": "Commodore 64",
+    "body": "His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object."
+   }
+  ],
+  [
+   "c64_disks",
+   {
+    "kicker": "Where it started",
+    "title": "Commodore 64",
+    "body": "His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object. Its disks are in the box beside it."
+   }
+  ],
+  [
+   "ti83",
+   {
+    "kicker": "Then",
+    "title": "TI-83",
+    "body": "The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time."
+   }
+  ],
+  [
+   "optics",
+   {
+    "kicker": "The lab years",
+    "title": "Quantum eraser, classical version",
+    "body": "Crossed polarizers on the two slits mark the path, so no fringes. Drop the polarizer into the beam at 45° and they come back. The quantum version needs entangled photons; this one is plain polarization optics.",
+    "more": {
+     "href": "https://doi.org/10.1038/srep20834",
+     "label": "His 2D spectroscopy paper"
+    }
+   }
+  ],
+  [
+   "cloud_chamber",
+   {
+    "kicker": "Cosmic rays · live",
+    "title": "Cloud chamber",
+    "body": "Dry ice, isopropanol, a cold black plate. At sea level a cosmic-ray muon crosses each square centimetre about once a minute: several a second through this plate. The vapour shows the ones it catches: steep ones as short stubs, shallow ones as long lines, the odd fat alpha and a curling beta. The flux is real, the tracks are simulated."
+   }
+  ],
+  [
+   "geiger",
+   {
+    "kicker": "Background · live",
+    "title": "Geiger counter",
+    "body": "An SBM-20 tube at background: about 20 counts a minute, Poisson-timed. The rate is real, the counts are simulated. Flip the toggle to hear it."
+   }
+  ],
+  [
+   "scope",
+   {
+    "kicker": "Pulses · live",
+    "title": "Oscilloscope",
+    "body": "Its probe is hooked onto the Geiger counter’s test point. Each count is one 0.5 ms sweep at 50 µs/div: a negative spike that recovers in ~50 µs, a P31 glow gone in ~50 ms. One instrument reads the other."
+   }
+  ],
+  [
+   "pr_notebook",
+   {
+    "kicker": "How sure",
+    "title": "Lab notebook",
+    "body": "Every line ends in one of three labels: tested, preference, hypothesis. Two 12 V adapters on a handheld scope, on battery, no load: 8 to 13 mV peak to peak, the stock one a little lower. Tested. A fault that felt intermittent happened on every cold open after an album ran out; the gap was in what he had watched."
+   }
+  ],
+  [
+   "projector",
+   {
+    "kicker": "An object shows its own measurement",
+    "title": "Structured light",
+    "body": "Gray-code stripes label every point with a projector column and row; the camera beside the lens reads each label and triangulates the depth. Then the scanned object becomes its own point cloud."
+   }
+  ],
+  [
+   "amp",
+   {
+    "kicker": "Listening corner",
+    "title": "Luxman L-308",
+    "body": "His own amplifier, the last box in a chain he can name from library to cone: Roon holds the files, HQPlayer upsamples them to DSD256, a streamer hands them to the NEO iDSD 2, the Luxman drives the B&Ws. The real one has no meters, so neither does this one."
+   }
+  ],
+  [
+   "pr_records",
+   {
+    "kicker": "Listening corner",
+    "title": "The records",
+    "body": "The library end of the chain. Know a chain well enough and you stop hearing it; then there is only the music."
+   }
+  ],
+  [
+   "pr_records_sleeves",
+   "pr_records"
+  ],
+  [
+   "pr_xdj",
+   {
+    "kicker": "Listening corner",
+    "title": "The decks",
+    "body": "Two decks and a two-channel mixer, a record of his own on each: warm deep house on the left, minimal techno-house on the right. Start either and the facades across the water play along. Start the other while one plays and it mixes in the way he DJs, on the channel faders and the three-band EQ: its melody first over the playing beat, then the mids and highs swap, then the low ends on a downbeat. A low cut drops the facade into a breakdown. Both records are synthesised at 122 BPM, rendered offline and fetched at a deck’s first play. Until a record arrives, the browser plays it live."
+   }
+  ],
+  [
+   "pr_djm450",
+   "pr_xdj"
+  ],
+  [
+   "pr_dm603",
+   {
+    "kicker": "Listening corner",
+    "title": "B&W DM603",
+    "body": "Three-way floorstanders with the yellow Kevlar midrange B&W is known for. Around 90 dB sensitive: an easy load for the Luxman."
+   }
+  ],
+  [
+   "pr_ifi",
+   {
+    "kicker": "Listening corner",
+    "title": "iFi NEO iDSD 2",
+    "body": "The DAC. Music reaches it upsampled to DSD256, and the display reads 11M when it locks."
+   }
+  ],
+  [
+   "pr_hd660",
+   {
+    "kicker": "Listening corner",
+    "title": "Sennheiser HD 660S2",
+    "body": "Open-back, 300 Ω, driven straight from the NEO iDSD 2. The quiet half of the chain."
+   }
+  ],
+  [
+   "bookshelf",
+   {
+    "kicker": "Reading",
+    "title": "The shelf",
+    "body": "McGilchrist, Abram, Koch, Kastrup, Schopenhauer, Faggin, Hoffman, Bohm, Lane, Feynman, Hawking, Wolfram, Hertog. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory."
+   }
+  ],
+  [
+   "cz_bookcase",
+   "bookshelf"
+  ],
+  [
+   "pr_brain",
+   {
+    "kicker": "Reading",
+    "title": "Two hemispheres",
+    "body": "McGilchrist’s claim is not left-logic, right-creativity: both halves do everything, and what differs is the attention. The narrow look takes a thing apart, and it only means something once it is back in the whole; that is how this room moves. Agents are the emissary, brilliant and fast on the most compressed layer. The human stays the master and holds the strategy."
+   }
+  ],
+  [
+   "pr_ledmatrix",
+   {
+    "kicker": "Light",
+    "title": "LED matrix",
+    "body": "A grid of 256 squares, each with a live alpha: the core of his Metal visuals engine, which sends values, not pixels. Its parameters open beside it, and the facade opposite can follow them."
+   }
+  ],
+  [
+   "pr_tape",
+   {
+    "kicker": "Running",
+    "title": "Rule 30, row by row",
+    "body": "Rule 30, drawn as it is computed: each row from the row above, nothing else. One black cell to start, one row a step since you came in. No formula skips ahead: to see row n, the rows before it have to be drawn. The red lines mark the only past the newest middle cell can depend on."
+   }
+  ],
+  [
+   "pr_midi",
+   {
+    "kicker": "Creative corner",
+    "title": "Pads and faders",
+    "body": "What his hands are on when the visuals run."
+   }
+  ],
+  [
+   "pr_mapkit",
+   {
+    "kicker": "Creative corner",
+    "title": "Mapping kit",
+    "body": "A small projector and a card model of a house front: where a show for a building starts."
+   }
+  ],
+  [
+   "shelf_titles",
+   {
+    "kicker": "Reading",
+    "title": "The books",
+    "body": "The books on the cabinet under the window, and one open on the desk: McGilchrist, Abram, Koch, Kastrup, Schopenhauer, Faggin, Hoffman, Bohm, Lane, Feynman, Hawking, Wolfram, Hertog. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory."
+   }
+  ],
+  [
+   "pr_books",
+   "shelf_titles"
+  ],
+  [
+   "pr_planaria",
+   {
+    "kicker": "Specimen",
+    "title": "Planarian, two heads",
+    "body": "Michael Levin’s lab briefly disturbed a cut flatworm’s bioelectric signalling, and it regrew with two heads. Cut again, untreated, it grew two heads again."
+   }
+  ],
+  [
+   "pr_flask",
+   {
+    "kicker": "Specimen",
+    "title": "Light-harvesting complex",
+    "body": "Photosynthesis under glass. At the Vrije Universiteit he built the software for a 2D electronic spectroscopy setup that revealed quantum effects in photosynthetic systems: dark states in the light-harvesting complex LH2 (Scientific Reports, 2016)."
+   }
+  ],
+  [
+   "pr_1541",
+   {
+    "kicker": "On the desk",
+    "title": "Disk drive",
+    "body": "The C64 reads the disks through this slot. Type LOAD\"$\",8 and then LIST."
+   }
+  ],
+  [
+   "pr_floppybox",
+   {
+    "kicker": "The archive",
+    "title": "Twelve disks",
+    "body": "His working life on twelve disks, oldest at the back: physics first, then data science, then agents. The C64 lists them: LOAD\"$\",8."
+   }
+  ],
+  [
+   "pr_nr200",
+   {
+    "kicker": "On the desk",
+    "title": "The small PC",
+    "body": "His own build: a small case with the graphics card standing behind its open side. The local models run here."
+   }
+  ],
+  [
+   "pr_globe",
+   {
+    "kicker": "His own · the Atlas",
+    "title": "The globe",
+    "body": "An old world in sepia: coastlines, no borders. It opens his Agentic SWE Atlas, where one run of 46 agents mapped the writing of 102 people on building software with agents."
+   }
+  ],
+  [
+   "pr_3090",
+   {
+    "kicker": "His own · local inference",
+    "title": "RTX 3090",
+    "body": "A coding agent that runs on his own desk: a 27-billion-parameter model on one 24 GB card, measured before it was trusted. 43 tokens a second at 55K context; speculative decoding bought the last 44%."
+   }
+  ],
+  [
+   "pr_terminal",
+   {
+    "kicker": "Agents · the human still pedals",
+    "title": "The laptop",
+    "body": "Measured on his own setup over 16 weeks: the model was at work for 29 of the 89 hours a session was live. The rest of the time was his."
+   }
+  ],
+  [
+   "pr_poster_action",
+   {
+    "kicker": "How the intro flew",
+    "title": "The principle of least action",
+    "body": "Give every path one number, the action S = ∫(T − V) dt. Nature takes the path where small detours don't change it: δS = 0. That single condition gives the Euler–Lagrange equation, and from it F = ma. A Legendre transform, H = pq̇ − L, trades velocity for momentum, and Hamilton's equations follow. Feynman's reason: every path counts, but only near δS = 0 do they add up instead of cancelling. The camera that flew you in rode such a path, like a bead on a wire. After Erik Verlinde's classical mechanics lectures (UvA, c. 2009). A year later he asked where F = ma itself comes from.",
+    "more": {
+     "href": "https://arxiv.org/abs/1001.0785",
+     "label": "Verlinde: F = ma from entropy (2010)"
+    }
+   }
+  ],
+  [
+   "raindrop",
+   {
+    "kicker": "At the window",
+    "title": "A drop on the glass",
+    "body": "Watch a drop run down the glass. No one can predict which way it turns next. Science calls that chaos, as if it were out of control. David Abram puts it better: not out of control, only out of ours. Wild."
+   }
+  ],
+  [
+   "pr_manuscript",
+   "raindrop"
+  ]
+ ],
+ "disks": [
+  {
+   "slug": "uva-bsc",
+   "name": "UVA.PHYS+PHIL",
+   "label": "UvA · BSc '07-'11",
+   "detail": "bèta-gamma · physics · philosophy",
+   "stripe": "#4a3fd0",
+   "page": [
+    [
+     "University of Amsterdam  '07-'11",
+     "BSc Beta-gamma",
+     "Major physics, minor philosophy"
+    ],
+    [
+     "Aristotle Award '08:",
+     "best interdisciplinary research"
+    ]
+   ]
+  },
+  {
+   "slug": "uva-msc",
+   "name": "UVA.MSC.PHYSICS",
+   "label": "UvA · MSc '12-'14",
+   "detail": "physics · advanced matter and energy",
+   "stripe": "#d77a7a",
+   "page": [
+    [
+     "University of Amsterdam  '12-'14",
+     "MSc Physics",
+     "Track: Advanced Matter and",
+     "Energy Physics"
+    ]
+   ]
+  },
+  {
+   "slug": "amolf",
+   "name": "AMOLF.OPTOMECH",
+   "label": "AMOLF '13-'14",
+   "detail": "optomechanics · PRL 115, 203904",
+   "stripe": "#d8d050",
+   "page": [
+    [
+     "AMOLF  '13-'14",
+     "Physics researcher, optomechanics"
+    ],
+    [
+     "Built the software for real-time",
+     "signal acquisition and analysis in",
+     "light-matter experiments. Automated",
+     "a nanophotonic optomechanical setup",
+     "for quantum-state control."
+    ],
+    [
+     "Phys. Rev. Lett. 115, 203904 ('15)",
+     "editorial highlight"
+    ]
+   ],
+   "links": [
+    {
+     "href": "https://doi.org/10.1103/PhysRevLett.115.203904",
+     "label": "Phys. Rev. Lett. 115, 203904"
+    }
+   ]
+  },
+  {
+   "slug": "vu",
+   "name": "VU.2DES",
+   "label": "VU · LASERLAB '14-'16",
+   "detail": "2D electronic spectroscopy · Sci. Rep. 6 · JACS",
+   "stripe": "#b0372c",
+   "page": [
+    [
+     "Vrije Universiteit / Laserlab",
+     "Amsterdam  '14-'16",
+     "Physics researcher,",
+     "2D electronic spectroscopy"
+    ],
+    [
+     "Designed the software platform of a",
+     "2D electronic spectroscopy setup:",
+     "calibration, signal optimisation,",
+     "global analysis. Quantum effects in",
+     "photosynthetic systems."
+    ],
+    [
+     "Sci. Rep. 6 ('16) - JACS ('16)",
+     "University Research Fellow '15-'16"
+    ]
+   ],
+   "links": [
+    {
+     "href": "https://doi.org/10.1038/srep20834",
+     "label": "Scientific Reports 6"
+    },
+    {
+     "href": "https://doi.org/10.1021/jacs.6b11017",
+     "label": "JACS"
+    }
+   ]
+  },
+  {
+   "slug": "pggm",
+   "name": "PGGM.DATASCI",
+   "label": "PGGM '16-'17",
+   "detail": "one of its first data-science teams",
+   "stripe": "#7a4f22",
+   "page": [
+    [
+     "PGGM  '16-'17",
+     "Data science consultant"
+    ],
+    [
+     "Early build-out of one of PGGM's",
+     "first data-science teams.",
+     "Prototypes: call-centre forecasting,",
+     "fraud and bankruptcy risk, client",
+     "profiling, micro-targeted marketing."
+    ]
+   ]
+  },
+  {
+   "slug": "wartsila",
+   "name": "WARTSILA.ML",
+   "label": "WÄRTSILÄ '18",
+   "detail": "market prediction · PoC to package",
+   "stripe": "#4a3fd0",
+   "page": [
+    [
+     "Wartsila  '18",
+     "Machine learning engineer"
+    ],
+    [
+     "A reusable market-prediction ML",
+     "solution: from proof of concept to a",
+     "client-ready Python package with a",
+     "production-ready ML pipeline."
+    ]
+   ]
+  },
+  {
+   "slug": "tele2",
+   "name": "TELE2.VOICE",
+   "label": "TELE2 '18-'19",
+   "detail": "4G voice quality",
+   "stripe": "#9a3fb0",
+   "page": [
+    [
+     "Tele2  '18-'19",
+     "Lead data scientist"
+    ],
+    [
+     "End-to-end 4G voice-quality",
+     "analytics on call detail records:",
+     "performance monitoring, root-cause",
+     "analysis, degradation modelling."
+    ]
+   ]
+  },
+  {
+   "slug": "ing",
+   "name": "ING.COLLECTIONS",
+   "label": "ING '19-'21",
+   "detail": "chapter lead data science · collections",
+   "stripe": "#e07a1f",
+   "page": [
+    [
+     "ING  '19-'21",
+     "Chapter lead data science"
+    ],
+    [
+     "Machine learning to scale",
+     "collections operations, leading a",
+     "data science / analytics chapter.",
+     "Likelihood-to-pay and early-",
+     "intervention prevention models."
+    ]
+   ]
+  },
+  {
+   "slug": "schiphol-sim",
+   "name": "SCHIPHOL.SIM",
+   "label": "SCHIPHOL '21-'23",
+   "detail": "passenger flow · runway capacity",
+   "stripe": "#6fa8dc",
+   "page": [
+    [
+     "Royal Schiphol Group  '21-'23",
+     "Senior data scientist"
+    ],
+    [
+     "Airport operational simulation and",
+     "forecasting: passenger departure",
+     "flow, queue lengths, waiting time,",
+     "demand and capacity prediction,",
+     "runway capacity modelling."
+    ],
+    [
+     "The case: LOAD\"SIMULATIONS\",8"
+    ]
+   ]
+  },
+  {
+   "slug": "steel",
+   "name": "STEEL.TWIN",
+   "label": "DANIELI CORUS '23",
+   "detail": "steel-plant digital twin",
+   "stripe": "#8a8a8a",
+   "page": [
+    [
+     "Danieli Corus  '23",
+     "Technical lead,",
+     "steel plant simulation"
+    ],
+    [
+     "A modular, real-time digital twin of",
+     "a steel plant for what-if",
+     "simulations: capacity planning and",
+     "scheduling. A digital-shadow tool",
+     "for bottleneck detection."
+    ]
+   ]
+  },
+  {
+   "slug": "eneco",
+   "name": "ENECO.SQUAD",
+   "label": "ENECO '23-'25",
+   "detail": "first data-science squad · topic modelling",
+   "stripe": "#3c9a3c",
+   "page": [
+    [
+     "Eneco  '23-'25",
+     "Lead data scientist"
+    ],
+    [
+     "Built the company's first data",
+     "science squad. The first fully",
+     "automated topic-modelling pipeline",
+     "for CX: voice transcription at",
+     "scale, embedding, clustering,",
+     "summarisation."
+    ]
+   ]
+  },
+  {
+   "slug": "schiphol-llm",
+   "name": "SCHIPHOL.LLM",
+   "label": "SCHIPHOL '25",
+   "detail": "CX assistants · hybrid RAG · agentic tool use",
+   "stripe": "#3fc0c8",
+   "page": [
+    [
+     "Schiphol  '25",
+     "AI solution engineer"
+    ],
+    [
+     "LLM-powered CX assistants on Azure",
+     "OpenAI Service. A modular framework",
+     "on LangChain, LangGraph, Redis",
+     "memory and FastAPI: intent",
+     "classification, hybrid RAG, agentic",
+     "tool use. Multi-tenant."
+    ],
+    [
+     "The case: LOAD\"AGENTS\",8"
+    ]
+   ]
+  }
+ ],
+ "case_disks": [
+  {
+   "slug": "simulations",
+   "shell": "#2f4f86",
+   "accent": "#c8553d",
+   "name": "SIMULATIONS",
+   "line": "physics-based models of real systems"
+  },
+  {
+   "slug": "agents",
+   "shell": "#26272b",
+   "accent": "#3f8f8a",
+   "name": "AGENTS",
+   "line": "tool-using LLM systems"
+  },
+  {
+   "slug": "ml",
+   "shell": "#a9a7a0",
+   "accent": "#7a5aa6",
+   "name": "MACHINE LEARNING",
+   "line": "models that learn from data"
+  }
+ ],
+ "books": [
+  {
+   "key": "becoming",
+   "kind": "spine",
+   "title": [
+    "BECOMING ANIMAL"
+   ],
+   "author": "ABRAM",
+   "size_m": [
+    0.022,
+    0.206,
+    0.132
+   ],
+   "ground": "#3a6cac",
+   "ink": "#f6f8f6",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "myself",
+   "kind": "spine",
+   "title": [
+    "THEN I AM MYSELF",
+    "THE WORLD"
+   ],
+   "author": "KOCH",
+   "size_m": [
+    0.03,
+    0.214,
+    0.148
+   ],
+   "ground": "#3a2a1e",
+   "ink": "#f8f0de",
+   "style": {
+    "face": "narrow"
+   }
+  },
+  {
+   "key": "feeling",
+   "kind": "spine",
+   "title": [
+    "THE FEELING OF",
+    "LIFE ITSELF"
+   ],
+   "author": "KOCH",
+   "size_m": [
+    0.03,
+    0.228,
+    0.152
+   ],
+   "ground": "#252021",
+   "ink": "#f4f0ee",
+   "style": {
+    "face": "sans",
+    "author_ink": "#e0484f"
+   }
+  },
+  {
+   "key": "matter1",
+   "kind": "spine",
+   "title": [
+    "THE MATTER",
+    "WITH THINGS"
+   ],
+   "author": "McGILCHRIST · I",
+   "size_m": [
+    0.046,
+    0.25,
+    0.169
+   ],
+   "ground": "#4a0e0c",
+   "ink": "#faeed6",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "matter2",
+   "kind": "spine",
+   "title": [
+    "THE MATTER",
+    "WITH THINGS"
+   ],
+   "author": "McGILCHRIST · II",
+   "size_m": [
+    0.046,
+    0.25,
+    0.169
+   ],
+   "ground": "#4a0e0c",
+   "ink": "#faeed6",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "case",
+   "kind": "spine",
+   "title": [
+    "THE CASE AGAINST",
+    "REALITY"
+   ],
+   "author": "HOFFMAN",
+   "size_m": [
+    0.03,
+    0.197,
+    0.129
+   ],
+   "ground": "#e4913a",
+   "ink": "#120a0c",
+   "style": {
+    "face": "black"
+   }
+  },
+  {
+   "key": "irreducible",
+   "kind": "spine",
+   "title": [
+    "IRREDUCIBLE"
+   ],
+   "author": "FAGGIN",
+   "size_m": [
+    0.022,
+    0.216,
+    0.14
+   ],
+   "ground": "#1e2024",
+   "ink": "#faf4e6",
+   "style": {
+    "face": "gothic"
+   }
+  },
+  {
+   "key": "idea",
+   "kind": "spine",
+   "title": [
+    "THE IDEA OF",
+    "THE WORLD"
+   ],
+   "author": "KASTRUP",
+   "size_m": [
+    0.03,
+    0.216,
+    0.14
+   ],
+   "ground": "#e4ded3",
+   "ink": "#33261b",
+   "style": {
+    "face": "serif",
+    "author_ink": "#5a4532"
+   }
+  },
+  {
+   "key": "will",
+   "kind": "spine",
+   "title": [
+    "THE WORLD AS WILL",
+    "AND REPRESENTATION"
+   ],
+   "author": "SCHOPENHAUER · I",
+   "size_m": [
+    0.034,
+    0.224,
+    0.14
+   ],
+   "ground": "#161e2b",
+   "ink": "#fbf8ef",
+   "style": {
+    "face": "narrow"
+   }
+  },
+  {
+   "key": "vital",
+   "kind": "spine",
+   "title": [
+    "THE VITAL QUESTION"
+   ],
+   "author": "NICK LANE",
+   "size_m": [
+    0.024,
+    0.196,
+    0.128
+   ],
+   "ground": "#0e150d",
+   "ink": "#e4ecd2",
+   "style": {
+    "face": "narrow",
+    "author_ink": "#b8cf96"
+   }
+  },
+  {
+   "key": "transformer",
+   "kind": "spine",
+   "title": [
+    "TRANSFORMER"
+   ],
+   "author": "NICK LANE",
+   "size_m": [
+    0.028,
+    0.198,
+    0.128
+   ],
+   "ground": "#f3eff8",
+   "ink": "#1e0f2a",
+   "style": {
+    "face": "narrow",
+    "author_ink": "#1a0f1c"
+   }
+  },
+  {
+   "key": "feynman1",
+   "kind": "spine",
+   "title": [
+    "THE FEYNMAN LECTURES",
+    "ON PHYSICS"
+   ],
+   "author": "FEYNMAN · I",
+   "size_m": [
+    0.03,
+    0.285,
+    0.226
+   ],
+   "ground": "#a0a2a1",
+   "ink": "#050606",
+   "style": {
+    "face": "black"
+   }
+  },
+  {
+   "key": "feynman2",
+   "kind": "spine",
+   "title": [
+    "THE FEYNMAN LECTURES",
+    "ON PHYSICS"
+   ],
+   "author": "FEYNMAN · II",
+   "size_m": [
+    0.03,
+    0.285,
+    0.226
+   ],
+   "ground": "#a0a2a1",
+   "ink": "#050606",
+   "style": {
+    "face": "black"
+   }
+  },
+  {
+   "key": "gap",
+   "kind": "gap",
+   "title": [],
+   "author": "",
+   "size_m": [
+    0.03,
+    0.0,
+    0.0
+   ]
+  },
+  {
+   "key": "surely",
+   "kind": "spine",
+   "title": [
+    "SURELY YOU'RE JOKING,",
+    "MR. FEYNMAN!"
+   ],
+   "author": "FEYNMAN",
+   "size_m": [
+    0.03,
+    0.197,
+    0.129
+   ],
+   "ground": "#0c125e",
+   "ink": "#fbf8e2",
+   "style": {
+    "face": "narrow",
+    "author_ink": "#9c9bd0"
+   }
+  },
+  {
+   "key": "qed",
+   "kind": "spine",
+   "title": [
+    "QED"
+   ],
+   "author": "FEYNMAN",
+   "size_m": [
+    0.018,
+    0.228,
+    0.125
+   ],
+   "ground": "#1d1c19",
+   "ink": "#fbfbfa",
+   "style": {
+    "face": "sans"
+   }
+  },
+  {
+   "key": "bohm",
+   "kind": "spine",
+   "title": [
+    "WHOLENESS AND THE",
+    "IMPLICATE ORDER"
+   ],
+   "author": "BOHM",
+   "size_m": [
+    0.03,
+    0.198,
+    0.129
+   ],
+   "ground": "#fbfaf8",
+   "ink": "#210908",
+   "style": {
+    "face": "narrow",
+    "author_ink": "#c8303f"
+   }
+  },
+  {
+   "key": "dreams",
+   "kind": "spine",
+   "title": [
+    "THE DREAMS",
+    "THAT STUFF",
+    "IS MADE OF"
+   ],
+   "author": "HAWKING",
+   "size_m": [
+    0.055,
+    0.237,
+    0.16
+   ],
+   "ground": "#4f3a4c",
+   "ink": "#f4eaf2",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "master",
+   "kind": "cover",
+   "title": [
+    "The Master",
+    "and His",
+    "Emissary"
+   ],
+   "author": "Iain McGilchrist",
+   "size_m": [
+    0.14,
+    0.216,
+    0.04
+   ],
+   "ground": "#7ec69e",
+   "ink": "#1a3853",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "spell",
+   "kind": "cover",
+   "title": [
+    "The Spell",
+    "of the",
+    "Sensuous"
+   ],
+   "author": "David Abram",
+   "size_m": [
+    0.145,
+    0.198,
+    0.023
+   ],
+   "ground": "#0f241f",
+   "ink": "#e2e6d4",
+   "style": {
+    "face": "serif"
+   }
+  },
+  {
+   "key": "nks",
+   "kind": "cover",
+   "title": [
+    "A New Kind",
+    "of Science"
+   ],
+   "author": "Stephen Wolfram",
+   "size_m": [
+    0.207,
+    0.246,
+    0.063
+   ],
+   "ground": "#f6f6f4",
+   "ink": "#0e0e0e",
+   "style": {
+    "face": "sans"
+   }
+  },
+  {
+   "key": "origin",
+   "kind": "cover",
+   "title": [
+    "On the Origin",
+    "of Time"
+   ],
+   "author": "Thomas Hertog",
+   "size_m": [
+    0.162,
+    0.24,
+    0.033
+   ],
+   "ground": "#f1eede",
+   "ink": "#2e3129",
+   "style": {
+    "face": "serif"
+   }
+  }
+ ],
+ "book_inscriptions": {
+  "becoming": {
+   "title": "Becoming Animal",
+   "author": "David Abram",
+   "year": "",
+   "line": "Best read twenty minutes into a walk."
+  },
+  "myself": {
+   "title": "Then I Am Myself the World",
+   "author": "Christof Koch",
+   "year": "",
+   "line": "Very clever, and nobody home. He drew the graph."
+  },
+  "feeling": {
+   "title": "The Feeling of Life Itself",
+   "author": "Christof Koch",
+   "year": "",
+   "line": "More than the sum. For once, with a number attached."
+  },
+  "matter1": {
+   "title": "The Matter with Things",
+   "author": "Iain McGilchrist",
+   "volume": "Volume I",
+   "year": "",
+   "line": "Attention first. Things later, if at all."
+  },
+  "matter2": {
+   "title": "The Matter with Things",
+   "author": "Iain McGilchrist",
+   "volume": "Volume II",
+   "year": "",
+   "line": "Attention first. Things later, if at all."
+  },
+  "case": {
+   "title": "The Case Against Reality",
+   "author": "Donald Hoffman",
+   "year": "",
+   "line": "Take the headset seriously. Not literally."
+  },
+  "irreducible": {
+   "title": "Irreducible",
+   "author": "Federico Faggin",
+   "year": "",
+   "line": "He built the chip, then filed the objection. I use both."
+  },
+  "idea": {
+   "title": "The Idea of the World",
+   "author": "Bernardo Kastrup",
+   "year": "",
+   "line": "I trust my instruments. He asks what they are instruments of."
+  },
+  "will": {
+   "title": "The World as Will and Representation",
+   "author": "Arthur Schopenhauer",
+   "volume": "Volume I",
+   "year": "",
+   "line": "Upstream of two books on this shelf."
+  },
+  "vital": {
+   "title": "The Vital Question",
+   "author": "Nick Lane",
+   "year": "",
+   "line": "Schrödinger asked. He answers in protons."
+  },
+  "transformer": {
+   "title": "Transformer",
+   "author": "Nick Lane",
+   "year": "",
+   "line": "Attention is not all you need. You also need a gradient."
+  },
+  "feynman1": {
+   "title": "The Feynman Lectures on Physics",
+   "author": "Richard P. Feynman, Robert B. Leighton, Matthew Sands",
+   "volume": "Volume I",
+   "year": "",
+   "line": "Volume II, chapter 19. The way in follows it."
+  },
+  "feynman2": {
+   "title": "The Feynman Lectures on Physics",
+   "author": "Richard P. Feynman, Robert B. Leighton, Matthew Sands",
+   "volume": "Volume II",
+   "year": "",
+   "line": "Volume II, chapter 19. The way in follows it."
+  },
+  "surely": {
+   "title": "Surely You’re Joking, Mr. Feynman!",
+   "author": "Richard P. Feynman",
+   "year": "",
+   "line": "He picked the locks to see if they held."
+  },
+  "qed": {
+   "title": "QED",
+   "author": "Richard P. Feynman",
+   "year": "",
+   "line": "Every route is taken. Most of them cancel. Reassuring."
+  },
+  "bohm": {
+   "title": "Wholeness and the Implicate Order",
+   "author": "David Bohm",
+   "year": "",
+   "line": "Stir it backwards and the drop returns. Try that with a day."
+  },
+  "dreams": {
+   "title": "The Dreams That Stuff Is Made Of",
+   "author": "Edited by Stephen Hawking",
+   "year": "",
+   "line": "The original papers. Nobody in here knew how it ends."
+  },
+  "master": {
+   "title": "The Master and His Emissary",
+   "author": "Iain McGilchrist",
+   "year": "",
+   "line": "I build for the emissary. I report to the master."
+  },
+  "spell": {
+   "title": "The Spell of the Sensuous",
+   "author": "David Abram",
+   "year": "",
+   "line": "Third compression of the real thing. Lossy. Worth it."
+  },
+  "nks": {
+   "title": "A New Kind of Science",
+   "author": "Stephen Wolfram",
+   "year": "",
+   "line": "The thick one. On its own terms, it could not be shorter."
+  },
+  "origin": {
+   "title": "On the Origin of Time",
+   "author": "Thomas Hertog",
+   "year": "",
+   "line": "He changed his mind. The rarest result in physics."
+  }
+ },
+ "book_titlepage": {
+  "sign": "R.H.",
+  "showYear": false
+ },
+ "book_ui": {
+  "open": "Open",
+  "close": "Close",
+  "back": "Put back",
+  "prev": "Previous book",
+  "next": "Next book"
+ }
+}

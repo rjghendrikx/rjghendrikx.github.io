@@ -1,0 +1,361 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link rel="preload" href="still.jpg" as="image" fetchpriority="high">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preload" href="scene.glb" as="fetch" crossorigin>
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/basis_transcoder.js" as="fetch" crossorigin>
+<link rel="preload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/basis/basis_transcoder.wasm" as="fetch" crossorigin>
+<link rel="preload" href="content.json" as="fetch" crossorigin>
+<link rel="preload" href="facade.json" as="fetch" crossorigin>
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/+esm">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js/+esm">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js/+esm">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/meshoptimizer@1.3.0/meshopt_decoder.mjs">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/KTX2Loader.js/+esm">
+<link rel="modulepreload" href="content.js">
+<link rel="modulepreload" href="layer-terminal.js">
+<link rel="modulepreload" href="layer-projector.js">
+<link rel="modulepreload" href="layer-chamber.js">
+<link rel="modulepreload" href="layer-geiger.js">
+<link rel="modulepreload" href="layer-eraser.js">
+<link rel="modulepreload" href="layer-rain.js">
+<link rel="modulepreload" href="layer-water.js">
+<link rel="modulepreload" href="layer-audio.js">
+<link rel="modulepreload" href="layer-hotspots.js">
+<link rel="modulepreload" href="layer-tags.js">
+<link rel="modulepreload" href="layer-guide.js">
+<link rel="modulepreload" href="layer-walk.js">
+<link rel="modulepreload" href="layer-lidar.js">
+<link rel="modulepreload" href="layer-deck.js">
+<link rel="modulepreload" href="layer-books.js">
+<link rel="modulepreload" href="layer-takebook.js">
+<link rel="modulepreload" href="layer-stage.js">
+<link rel="modulepreload" href="layer-ledmatrix.js">
+<link rel="modulepreload" href="layer-c64.js">
+<link rel="modulepreload" href="layer-hypercard.js">
+<link rel="modulepreload" href="layer-tape.js">
+<link rel="modulepreload" href="layer-intro.js">
+<link rel="modulepreload" href="layer-gpu.js">
+<link rel="modulepreload" href="layer-common.js">
+<link rel="modulepreload" href="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/objects/Reflector.js/+esm">
+<link rel="modulepreload" href="facade-life.js">
+<link rel="modulepreload" href="c64-disks.js">
+<link rel="modulepreload" href="intro-path.js">
+<title>Ruud Hendrikx, creative technologist and physicist</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%2314110f'/%3E%3Ccircle cx='8' cy='8' r='3.5' fill='%23e3a35b'/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Ruud Hendrikx, creative technologist and physicist, builds AI agents, machine learning and simulations, at the meeting point of science, philosophy and art. Walk into his workroom, live in the browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Ruud Hendrikx, creative technologist and physicist">
+<meta property="og:description" content="Simulations, machine learning and AI agents, made visible. Walk into his workroom, live in the browser. Available for projects.">
+<meta property="og:image" content="https://www.ruudhendrikx.nl/og.jpg">
+<meta property="og:url" content="https://www.ruudhendrikx.nl/">
+<meta name="twitter:image" content="https://www.ruudhendrikx.nl/og.jpg">
+<link rel="canonical" href="https://www.ruudhendrikx.nl/">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A workroom at night: an oak desk with a beige home computer, a disk drive, a small PC, a laptop and three disks under a desk lamp; books on a low cabinet under two tall windows, lit facades across the water.">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root { --bg: #14110f; --ink: #efe6da; --muted: #c4b7a5; --accent: #e3a35b; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); }
+  body {
+    font: 15px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    overflow: hidden;
+  }
+  .stage, .stage img, .stage canvas { position: fixed; inset: 0; width: 100%; height: 100%; }
+  .stage img { object-fit: cover; }
+  .stage canvas { opacity: 0; transition: opacity .6s ease; touch-action: none; display: block; }
+  .ready .stage canvas { opacity: 1; }
+  [data-intro="playing"] .stage canvas { transition: none; }
+  .caption { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: max(16px, env(safe-area-inset-bottom, 0px)); margin: 0;
+    margin-left: -10px; padding: 7px 10px; border-radius: 10px; background: rgba(20, 17, 15, .8);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .caption h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: .02em; }
+  .caption { max-width: min(440px, calc(100vw - 32px)); }
+  .caption p { margin: 0; color: var(--muted); font-size: 13px; }
+  .caption .offer { color: var(--ink); font-size: 13.5px; margin-top: 2px; text-wrap: pretty; }
+  .caption .tagline { display: none; }
+  .caption .links { margin-top: 4px; }
+  .caption .links a { white-space: nowrap; }
+  .caption .links { display: flex; flex-wrap: wrap; column-gap: 9px; row-gap: 2px; }
+  .caption .links > span[aria-hidden] { display: none; }
+  .caption .tagline .sep { display: none; }
+  .caption .tagline .avail { display: block; }
+  .caption .links .colophon { color: var(--muted); }
+  .prompt, .toast { position: fixed; left: calc(max(16px, env(safe-area-inset-left, 0px)) - 10px); margin: 0; z-index: 3;
+    --stack: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--cap-h, 120px) + var(--nav-h, 32px) + 16px);
+    bottom: var(--stack); }
+  .prompt button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); cursor: pointer; padding: 8px 13px; border-radius: 999px;
+    background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .prompt button::before { content: ""; display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; vertical-align: 1px;
+    background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .prompt button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .toast { bottom: calc(var(--stack) + 40px); max-width: min(440px, calc(100vw - 32px)); box-sizing: border-box; padding: 8px 13px; border-radius: 10px;
+    font-size: 12.5px; line-height: 1.35; color: var(--ink); background: rgba(20, 17, 15, .8); border: 1px solid rgba(239, 230, 218, .16);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); opacity: 0; transition: opacity .4s ease; }
+  .toast.on { opacity: 1; }
+  body:has(.views:focus-within) :is(.prompt, .toast), body:has(.views.open) :is(.prompt, .toast), body:has(.views.more-open) :is(.prompt, .toast) { visibility: hidden; }
+  .toast button { font: inherit; color: var(--accent); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .toast button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .case { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(max(16px, env(safe-area-inset-top, 0px)) + 44px); z-index: 3;
+    box-sizing: border-box; width: min(340px, calc(100vw - 32px)); padding: 12px 15px 13px; border-radius: 10px; color: var(--ink);
+    background: rgba(20, 17, 15, .84); border: 1px solid rgba(239, 230, 218, .14); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .35); transition: opacity .25s ease, transform .25s ease; }
+  .case:empty { display: none; }
+  .case:not(:empty) { animation: case-in .28s ease-out backwards; }
+  @keyframes case-in { from { opacity: 0; translate: 0 4px; } }
+  @media (prefers-reduced-motion: reduce) { .case:not(:empty) { animation: none; } }
+  .case .grip { display: none; }
+  .case .k, .work .k { margin: 0 0 3px; font-size: 10.5px; line-height: 1.2; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  .case h2, .work h3 { margin: 0; font: 600 16px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .case p.b { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--muted); text-wrap: pretty; }
+  .case .acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+  .case .acts a, .case .acts button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink); text-decoration: none; cursor: pointer;
+    padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
+  .case .acts a::after { content: " \2197"; color: var(--accent); }
+  .case .fig { margin: 8px 0 2px; font-variant-numeric: tabular-nums; }
+  .case .fig p { margin: 0; }
+  .case .readout .big { font: 600 26px/1.1 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
+  .case .readout .u { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .case .readout .s { font-size: 12px; color: var(--ink); margin-top: 2px; }
+  .case .readout .note, .case .count { font-size: 11.5px; color: var(--muted); }
+  .case .count { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+  .case .count b { font: 600 17px/1.2 ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); }
+  @media (max-width: 640px) { .case .readout .big { font-size: 22px; } .case .readout .note { font-size: 11px; } }
+  .case .acts a.mail { background: rgba(227, 163, 91, .2); border-color: var(--accent); }
+  .case .acts a.mail::after { content: none; }
+  .work .ask-row { margin-top: 8px; }
+  .case .acts :is(a, button) { display: inline-flex; align-items: center; box-sizing: border-box; min-height: 32px; }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; margin: -1px; }
+  body:has(.term-panel.open) .case { z-index: 21; }
+  @media (max-width: 640px) {
+    .case { background: rgba(20, 17, 15, .97); }
+    .has-case .views, .has-case .views-btn, body:has(.work.open) .views-btn { display: none; }
+  }
+  .case .acts :is(a, button):hover { border-color: var(--accent); }
+  .case .acts :is(a, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .work { display: none; position: fixed; inset: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) auto max(16px, env(safe-area-inset-left, 0px));
+    max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; box-sizing: border-box; z-index: 6; padding: 14px 18px 16px; border-radius: 10px;
+    background: rgba(20, 17, 15, .94); border: 1px solid rgba(239, 230, 218, .14); }
+  .work:target, .work:has(:target) { display: block; }
+  .work h2 { margin: 0 0 6px; font-size: 15px; }
+  .work article { margin-top: 12px; }
+  .work .own-title { margin: 18px 0 0; padding-top: 12px; border-top: 1px solid rgba(239, 230, 218, .14); }
+  .work article p:not(.k), .work .more { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
+  .work a { color: var(--ink); }
+  .work .work-close { position: absolute; right: 8px; top: 6px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+    font-size: 20px; text-decoration: none; }   
+  .work.open { display: block; background: rgba(20, 17, 15, .98); box-shadow: 0 0 0 100vmax rgba(10, 8, 7, .6), 0 18px 60px rgba(0, 0, 0, .55); }
+  .js .work:target:not(.open) { display: none; }   
+  .work h2:focus { outline: none; }
+  .work h2:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .work .show:not([hidden]) { display: inline-flex; align-items: center; margin-top: 8px; font: inherit; font-size: 12.5px; line-height: 1; color: var(--ink);
+    cursor: pointer; padding: 7px 11px; border-radius: 999px; background: rgba(239, 230, 218, .06); border: 1px solid rgba(227, 163, 91, .5); }
+  .work .show:hover { border-color: var(--accent); }
+  .work :is(.show, a):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .work .contact { margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(239, 230, 218, .14); }
+  .work .contact h3 { margin: 0; font: 600 16px/1.25 "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif; }
+  .work .contact p { margin: 5px 0 0; font-size: 13px; color: var(--muted); }
+  .work .contact .links a { color: var(--ink); }
+  .cap-head { display: flex; align-items: baseline; gap: 8px; }
+  .cap-more { display: none; }
+  .js .cap-more { display: inline-flex; align-items: center; font: inherit; font-size: 12px; line-height: 1; color: var(--muted); cursor: pointer;
+    padding: 4px 8px; border-radius: 999px; background: none; border: 1px solid rgba(239, 230, 218, .22); }
+  .js .cap-more::after { content: ""; width: 5px; height: 5px; margin-left: 6px; border: solid currentColor; border-width: 0 1.5px 1.5px 0;
+    transform: translateY(-2px) rotate(45deg); }
+  .js .caption.open .cap-more::after { transform: translateY(1px) rotate(-135deg); }
+  .js .cap-more:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .js .caption:not(.open) .offer { display: none; }
+  .js .caption:not(.open) .tagline { display: block; color: var(--ink); font-size: 12.5px; margin-top: 2px; text-wrap: pretty; }
+  @media (min-width: 641px) { .js .caption:not(.open) { max-width: 188px; } }
+  .caption a { color: var(--ink); text-underline-offset: 2px; text-decoration-color: rgba(239, 230, 218, .4); }
+  .caption a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .views { position: fixed; left: calc(max(16px, env(safe-area-inset-left, 0px)) - 10px);
+    bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--cap-h, 120px) + 8px);
+    display: flex; flex-direction: column-reverse; align-items: flex-start; gap: 6px; margin: 0; padding: 0; max-width: min(600px, calc(100vw - 32px));
+    opacity: 0; transition: opacity .6s ease; z-index: 3; }   
+  .views .work-row, .views .room-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .views:not(.more-open) .room-row { display: none; }
+  .views button.w { color: var(--ink); border-color: rgba(227, 163, 91, .6); }
+  .views button.w::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 6px; border-radius: 50%; vertical-align: 2px; background: var(--accent); }
+  .views .more::after { content: ""; display: inline-block; width: 5px; height: 5px; margin-left: 7px; border: solid currentColor; border-width: 1.5px 1.5px 0 0;
+    transform: translateY(1px) rotate(-45deg); }
+  .views .more[aria-expanded="true"]::after { transform: translateY(-2px) rotate(135deg); }
+  .ready .views { opacity: 1; }
+  .views button { font: inherit; font-size: 12.5px; line-height: 1; color: var(--muted);
+    border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 7px 11px; cursor: pointer; background: rgba(20, 17, 15, .8);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: color .2s, border-color .2s, background .2s; }
+  .views button:hover { color: var(--ink); border-color: rgba(239, 230, 218, .4); }
+  .views .back[hidden] { display: none; }
+  .views button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); background: rgba(20, 17, 15, .75); }
+  .views button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  @media (max-width: 640px) {
+    .views { left: 0; right: 0; bottom: max(16px, env(safe-area-inset-bottom, 0px)); max-width: none; flex-direction: row; align-items: center;
+      justify-content: flex-start; flex-wrap: nowrap; overflow-x: auto;
+      scroll-snap-type: x proximity; scroll-padding-inline: max(16px, env(safe-area-inset-left, 0px));
+      padding: 4px calc(max(16px, env(safe-area-inset-right, 0px)) + 24px) 4px max(16px, env(safe-area-inset-left, 0px));
+      scrollbar-width: none; -webkit-overflow-scrolling: touch;
+      -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+    .views .work-row, .views .room-row, .views:not(.more-open) .room-row { display: contents; }
+    .views .more { display: none; }
+    .views::-webkit-scrollbar { display: none; }
+    .views button { flex: none; scroll-snap-align: start; white-space: nowrap; }
+    .caption { top: max(16px, env(safe-area-inset-top, 0px)); bottom: auto;
+      right: calc(max(16px, env(safe-area-inset-right, 0px)) + var(--controls-w, 96px)); max-width: none; }
+    .caption .offer { font-size: 12.5px; }
+    .case { top: auto; left: 0; right: 0; width: auto; bottom: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--nav-h, 52px)); max-height: 25vh; overflow: hidden;
+      padding: 0 max(16px, env(safe-area-inset-right, 0px)) 11px max(16px, env(safe-area-inset-left, 0px)); border-radius: 14px 14px 0 0;
+      border-width: 1px 0 0; transition: max-height .25s ease; }
+    .case.open { max-height: 62vh; overflow-y: auto; overscroll-behavior: contain; }
+    .case .grip { display: block; width: 100%; height: 24px; margin: 0 0 2px; padding: 0; border: 0; background: none; cursor: pointer; }
+    .case .grip::before { content: ""; display: block; width: 36px; height: 4px; margin: 0 auto; border-radius: 2px; background: rgba(239, 230, 218, .35); }
+    .case .grip:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+    .case p.b { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; cursor: pointer; }
+    .case.open p.b { -webkit-line-clamp: unset; display: block; }
+    .case h2 { font-size: 15px; }
+    .prompt, .toast { left: 50%; transform: translateX(-50%); --stack: calc(max(16px, env(safe-area-inset-bottom, 0px)) + var(--nav-h, 52px) + 10px); }
+    .prompt button { white-space: nowrap; }
+    .toast { bottom: calc(var(--stack) + 52px); width: max-content; text-align: center; }
+    .case:not(:empty) ~ .prompt, .has-case .prompt { display: none; }
+    .has-case .toast { visibility: hidden; }
+    .controls { flex-direction: column; align-items: flex-end; }
+  }
+  @media (pointer: coarse) {
+    .toast button { min-height: 44px; }
+    .views button, .controls > button, .sound, .views-btn, .prompt button, .case .acts :is(a, button), .work .show:not([hidden]) { min-height: 44px; padding-top: 0; padding-bottom: 0; padding-inline: 14px; }
+    .caption .links a, .work .links a { display: inline-flex; align-items: center; min-height: 24px; vertical-align: middle; }
+    .js .cap-more { min-height: 24px; }
+    .work .work-close { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; right: 4px; top: 2px; }
+  }
+  .controls { position: fixed; top: max(16px, env(safe-area-inset-top, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; gap: 6px; align-items: center; z-index: 5; }
+  .controls > button { position: static; margin: 0; }
+  .sound, .views-btn {
+    font: inherit; font-size: 12px; line-height: 1; color: var(--muted); background: rgba(20, 17, 15, .8); cursor: pointer;
+    border: 1px solid rgba(239, 230, 218, .16); border-radius: 999px; padding: 6px 10px; opacity: 0; transition: opacity .6s ease, color .2s, border-color .2s; }
+  .ready .sound, .ready .views-btn { opacity: 1; }
+  .sound:hover, .views-btn:hover { color: var(--ink); opacity: 1; }
+  .sound[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+  .views-btn[aria-expanded="true"] { color: var(--ink); border-color: var(--accent); }
+  .sound:focus-visible, .views-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .sound[hidden] { display: none; }
+  .js .views:not(:focus-within):not(.open) { width: 1px; height: 1px; max-width: none; overflow: hidden; clip-path: inset(50%); padding: 0;
+    -webkit-mask-image: none; mask-image: none; }
+  .back { position: fixed; left: 50%; bottom: max(18px, env(safe-area-inset-bottom, 0px)); z-index: 4; transform: translateX(-50%);
+    font: 500 13.5px/1 ui-sans-serif, system-ui, sans-serif; color: var(--ink); cursor: pointer; white-space: nowrap; min-height: 44px; box-sizing: border-box;
+    padding: 9px 16px; border-radius: 999px; background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 12px rgba(0, 0, 0, .35); }
+  .back::before { content: "\2190"; margin-right: 7px; color: var(--accent); }
+  .back .esc { font: 600 10.5px/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; color: var(--muted); }
+  .back:hover { background: rgba(38, 31, 26, .88); }
+  .back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .back[hidden] { display: none; }
+  .book-scrim { position: fixed; inset: 0; z-index: 30; touch-action: none; cursor: grab; -webkit-user-select: none; user-select: none;
+    display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 8px; box-sizing: border-box;
+    padding: 0 12px max(14px, env(safe-area-inset-bottom, 0px)); }
+  .book-scrim[hidden] { display: none; }
+  .book-scrim:active { cursor: grabbing; }
+  .book-cap { margin: 0; max-width: 100%; text-align: center; font: 400 12.5px/1.3 ui-sans-serif, system-ui, sans-serif; color: var(--muted);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, .8); pointer-events: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .book-cap b { font-weight: 600; color: var(--ink); }
+  .book-acts { display: flex; gap: 8px; align-items: center; }
+  .book-acts button { font: 500 13.5px/1 ui-sans-serif, system-ui, sans-serif; color: var(--ink); cursor: pointer; white-space: nowrap; min-height: 44px; min-width: 44px;
+    box-sizing: border-box; padding: 9px 16px; border-radius: 999px; background: rgba(20, 17, 15, .8); border: 1px solid rgba(227, 163, 91, .55);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); box-shadow: 0 4px 12px rgba(0, 0, 0, .35); }
+  .book-acts button:hover { background: rgba(38, 31, 26, .88); }
+  .book-acts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .book-acts .prev, .book-acts .next { padding: 9px 0; font-size: 18px; }
+  .box-quiet { opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; transition: opacity .18s ease, visibility 0s linear .18s !important; }
+  body.book-out > :not(.stage, .book-scrim, script, style) { opacity: 0 !important; pointer-events: none !important; transition: opacity .2s ease; }
+  .away .prompt { display: none; }   
+  .nav-hint { position: fixed; left: 50%; bottom: calc(max(18px, env(safe-area-inset-bottom, 0px)) + 52px); z-index: 4; margin: 0; transform: translateX(-50%);
+    max-width: calc(100vw - 32px); box-sizing: border-box; padding: 8px 13px; border-radius: 999px; font-size: 12.5px; line-height: 1.3; text-align: center;
+    color: var(--ink); background: rgba(20, 17, 15, .84); border: 1px solid rgba(227, 163, 91, .45); opacity: 0; pointer-events: none; transition: opacity .4s ease; }
+  .nav-hint.on { opacity: 1; }
+  .nav-hint:empty { display: none; }
+  @media (max-width: 640px) { .nav-hint { bottom: auto; top: calc(max(10px, env(safe-area-inset-top, 0px)) + 4px); left: 12px; right: 12px; transform: none; border-radius: 12px; text-align: center; } }   
+  @media (pointer: coarse) { .back { min-height: 44px; } .back .esc { display: none; } }
+  @media (max-width: 640px) { .away .case { bottom: calc(max(18px, env(safe-area-inset-bottom, 0px)) + 56px); } }
+  .gate .back, .gate .nav-hint, .gate .caption, .gate .views, .gate .sound, .gate .views-btn, .gate .prompt, .gate .case, .gate .work { display: none; }
+  .gate .stage canvas { transition: none; }
+  @media (prefers-reduced-motion: reduce) { .stage canvas, .views, .views button { transition: none; } }
+  .status { position: fixed; z-index: 3; margin: 0; left: max(16px, env(safe-area-inset-left, 0px)); top: max(16px, env(safe-area-inset-top, 0px));
+    max-width: min(360px, calc(100vw - 32px)); padding: 6px 11px; border-radius: 999px; font-size: 12.5px; line-height: 1.3; color: var(--muted);
+    background: rgba(20, 17, 15, .8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  @media (max-width: 640px) { .status { top: auto; bottom: max(16px, env(safe-area-inset-bottom, 0px)); border-radius: 12px; } }
+  .ready .status, .status[hidden] { display: none; }
+</style>
+</head>
+<body>
+<!--email_off-->
+<div class="stage" aria-hidden="false">
+  <img src="still.jpg" alt="A canal-house room at night, lit by a warm desk lamp, a floor lamp and its screens: a Commodore 64 at the centre of a desk with a box of floppy disks, a calculator, a small black PC and a laptop; between two tall rainy windows a paper on which a simple rule draws itself row by row; below it a low cabinet of books; on the right a tall plant and a physics poster; on the left DJ decks and a hi-fi.">
+</div>
+<div class="caption">
+  <div class="cap-head"><h1>Ruud Hendrikx</h1><button type="button" class="cap-more" aria-expanded="false" aria-controls="offer">About</button></div>
+  <div class="tagline">Creative technologist and physicist. Builds AI agents, machine learning and simulations, at the meeting point of science, philosophy and art<span class="sep" aria-hidden="true"> &middot; </span><span class="avail">available for projects</span></div>
+  <p class="offer" id="offer">Creative technologist and physicist. He builds AI agents, machine learning models and simulations, and makes them something you can see and use. The agents go in close and fast; he keeps the whole in view and decides where they go. <span class="ask">Available for freelance projects, hands-on or as technical lead.</span></p>
+  <p class="links"><a href="#work" data-work>Work</a> <span aria-hidden="true">&middot;</span> <a href="#work-own" data-work data-own>His own</a> <span aria-hidden="true">&middot;</span> <a href="mailto:info@ruudhendrikx.nl?subject=Project%20inquiry">info@ruudhendrikx.nl</a> <span aria-hidden="true">&middot;</span> <a href="/cv/">CV</a> <span aria-hidden="true">&middot;</span> <a href="https://linkedin.com/in/rjghx/" rel="me noopener">LinkedIn</a> <span aria-hidden="true" class="colophon-sep">&middot;</span> <a href="colophon.html" class="colophon">How this was made</a></p>
+</div>
+<p class="prompt" hidden><button type="button">Click anything</button></p>
+<p class="status" role="status" data-failed="The 3D room did not load, so this is a still of it." hidden>Loading the room…</p>
+<aside class="case" aria-live="polite" aria-atomic="true" aria-label="Case"></aside>
+<section id="work" class="work" aria-labelledby="work-title">
+  <a class="work-close" href="#" aria-label="Close">&times;</a>
+  <h2 id="work-title" tabindex="-1">Work</h2>
+  <article data-view="simulations"><p class="k">Simulations</p><h3>Passenger flow at Schiphol</h3><p class="text">For Schiphol he architected and led the simulation of the airport’s operations: passengers through the terminal, the queues, the runways. Before that, a live digital twin of a steel plant for Danieli Corus. He models a system until the people who run it can ask it “what if”.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Simulations%3A%20Passenger%20flow%20at%20Schiphol">Ask him about this<span class="vh">: Passenger flow at Schiphol</span></a></p><button type="button" class="show" aria-label="Show me in the room: Passenger flow at Schiphol" hidden>Show me in the room</button></article>
+  <article data-view="terminal"><p class="k">Agents</p><h3>LLM assistants in production</h3><p class="text">For Schiphol he designed customer assistants on large language models, and is building them into one multi-tenant stack for the airport. At Eneco, the first fully automated pipeline from recorded customer calls to the topics in them. What he builds for is the day after the demo: something an organisation runs every day.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Agents%3A%20LLM%20assistants%20in%20production">Ask him about this<span class="vh">: LLM assistants in production</span></a></p><button type="button" class="show" aria-label="Show me in the room: LLM assistants in production" hidden>Show me in the room</button></article>
+  <article data-view="ml"><p class="k">Machine learning</p><h3>Models that act early</h3><p class="text">At ING he led a data science chapter in Collections and delivered the likelihood-to-pay and early-intervention models. Before that, at Wärtsilä, he turned a market-prediction proof of concept into a client-ready Python package with a production pipeline, and at PGGM he led the early build-out of one of its first data science teams.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=Machine%20learning%3A%20Models%20that%20act%20early">Ask him about this<span class="vh">: Models that act early</span></a></p><button type="button" class="show" aria-label="Show me in the room: Models that act early" hidden>Show me in the room</button></article>
+  <h2 class="own-title" id="work-own" tabindex="-1">His own</h2>
+  <article data-case="atlas" data-in="terminal"><p class="k">His own work</p><h3>Agentic SWE Atlas</h3><p class="text">One run of 46 agents turned the writing of 102 people on building software with agents into one clickable atlas, in 28 minutes: 157 cards, 651 claims. He set the questions and checked the answer: of 2,144 citations, 8 are unresolved.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=His%20own%20work%3A%20Agentic%20SWE%20Atlas">Ask him about this<span class="vh">: Agentic SWE Atlas</span></a></p><button type="button" class="show" aria-label="Show me in the room: Agentic SWE Atlas" hidden>Show me in the room</button></article>
+  <article data-case="inference" data-in="pc"><p class="k">His own work</p><h3>Local inference on the 3090</h3><p class="text">A coding agent that runs on his own desk. A 27-billion-parameter model on one 24 GB card, driving an agent harness, measured before it was trusted: 43 tokens a second at 55K context, fast enough to work with. Speculative decoding bought the last 44% (30.0 to 43.2). Without it the card holds 144K tokens of context, at 23.2 GiB.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=His%20own%20work%3A%20Local%20inference%20on%20the%203090">Ask him about this<span class="vh">: Local inference on the 3090</span></a></p><button type="button" class="show" aria-label="Show me in the room: Local inference on the 3090" hidden>Show me in the room</button></article>
+  <article data-case="metal" data-in="vitrine"><p class="k">His own work</p><h3>Metal visuals</h3><p class="text">His live visuals engine: Python computes, Swift and Metal draw, values over UDP in between, never pixels. The successor to his Quartz Composer work, for a screen or an LED wall: 256 squares at about 120 fps.</p><p class="ask-row"><a class="ask" href="mailto:info@ruudhendrikx.nl?subject=His%20own%20work%3A%20Metal%20visuals">Ask him about this<span class="vh">: Metal visuals</span></a></p><button type="button" class="show" aria-label="Show me in the room: Metal visuals" hidden>Show me in the room</button></article>
+  <div class="contact"><h3>Work with him</h3><p>Available for freelance projects: AI agents, simulations, or something people can see and use, hands-on or as technical lead.</p>
+    <p class="links"><a href="mailto:info@ruudhendrikx.nl?subject=Project%20inquiry">Mail info@ruudhendrikx.nl</a> <span aria-hidden="true">&middot;</span> <a href="/cv/">CV</a> <span aria-hidden="true">&middot;</span> <a href="https://linkedin.com/in/rjghx/" rel="noopener">Full history on LinkedIn</a></p></div>
+</section>
+<ul class="hs-static" aria-label="Objects in the room" style="position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap">
+  <li><strong>Commodore 64</strong>: His first programs, in BASIC. The room you are looking at is a program too: Python driving Blender, one module per object.</li>
+  <li data-room="ti83"><strong>TI-83</strong>: The graphing calculator he learned to program on, one 96 × 64 pixel screen at a time.</li>
+  <li><strong>Luxman L-308</strong>: His own amplifier, the last box in a chain he can name from library to cone: Roon holds the files, HQPlayer upsamples them to DSD256, a streamer hands them to the NEO iDSD 2, the Luxman drives the B&amp;Ws. The real one has no meters, so neither does this one.</li>
+  <li><strong>The records</strong>: The library end of the chain. Know a chain well enough and you stop hearing it; then there is only the music.</li>
+  <li data-only="cabinet"><strong>Disk drive and the disk box</strong>: His working life on twelve disks, oldest at the back: physics first, then data science, then agents. The C64 reads the disks through the drive's slot. Type LOAD"$",8 and then LIST.</li>
+  <li data-only="cabinet"><strong>Disk 1 of 12, UVA.PHYS+PHIL</strong>: University of Amsterdam ’07-’11; BSc Bèta-gamma; Major physics, minor philosophy / Aristotle Award ’08: best interdisciplinary research</li>
+  <li data-only="cabinet"><strong>Disk 2 of 12, UVA.MSC.PHYSICS</strong>: University of Amsterdam ’12-’14; MSc Physics; Track: Advanced Matter and Energy Physics</li>
+  <li data-only="cabinet"><strong>Disk 3 of 12, AMOLF.OPTOMECH</strong>: AMOLF ’13-’14; Physics researcher, optomechanics / Built the software for real-time signal acquisition and analysis in light-matter experiments. Automated a nanophotonic optomechanical setup for quantum-state control. / Phys. Rev. Lett. 115, 203904 (’15); editorial highlight <a href="https://doi.org/10.1103/PhysRevLett.115.203904">Phys. Rev. Lett. 115, 203904</a></li>
+  <li data-only="cabinet"><strong>Disk 4 of 12, VU.2DES</strong>: Vrije Universiteit / Laserlab; Amsterdam ’14-’16; Physics researcher, 2D electronic spectroscopy / Designed the software platform of a 2D electronic spectroscopy setup: calibration, signal optimisation, global analysis. Quantum effects in photosynthetic systems. / Sci. Rep. 6 (’16) - JACS (’16); University Research Fellow ’15-’16 <a href="https://doi.org/10.1038/srep20834">Scientific Reports 6</a> <a href="https://doi.org/10.1021/jacs.6b11017">JACS</a></li>
+  <li data-only="cabinet"><strong>Disk 5 of 12, PGGM.DATASCI</strong>: PGGM ’16-’17; Data science consultant / Early build-out of one of PGGM’s first data-science teams. Prototypes: call-centre forecasting, fraud and bankruptcy risk, client profiling, micro-targeted marketing.</li>
+  <li data-only="cabinet"><strong>Disk 6 of 12, WARTSILA.ML</strong>: Wärtsilä ’18; Machine learning engineer / A reusable market-prediction ML solution: from proof of concept to a client-ready Python package with a production-ready ML pipeline.</li>
+  <li data-only="cabinet"><strong>Disk 7 of 12, TELE2.VOICE</strong>: Tele2 ’18-’19; Lead data scientist / End-to-end 4G voice-quality analytics on call detail records: performance monitoring, root-cause analysis, degradation modelling.</li>
+  <li data-only="cabinet"><strong>Disk 8 of 12, ING.COLLECTIONS</strong>: ING ’19-’21; Chapter lead data science / Machine learning to scale collections operations, leading a data science / analytics chapter. Likelihood-to-pay and early-intervention prevention models.</li>
+  <li data-only="cabinet"><strong>Disk 9 of 12, SCHIPHOL.SIM</strong>: Royal Schiphol Group ’21-’23; Senior data scientist / Airport operational simulation and forecasting: passenger departure flow, queue lengths, waiting time, demand and capacity prediction, runway capacity modelling. / The case: LOAD"SIMULATIONS",8</li>
+  <li data-only="cabinet"><strong>Disk 10 of 12, STEEL.TWIN</strong>: Danieli Corus ’23; Technical lead, steel plant simulation / A modular, real-time digital twin of a steel plant for what-if simulations: capacity planning and scheduling. A digital-shadow tool for bottleneck detection.</li>
+  <li data-only="cabinet"><strong>Disk 11 of 12, ENECO.SQUAD</strong>: Eneco ’23-’25; Lead data scientist / Built the company’s first data science squad. The first fully automated topic-modelling pipeline for CX: voice transcription at scale, embedding, clustering, summarisation.</li>
+  <li data-only="cabinet"><strong>Disk 12 of 12, SCHIPHOL.LLM</strong>: Schiphol ’25; AI solution engineer / LLM-powered CX assistants on Azure OpenAI Service. A modular framework on LangChain, LangGraph, Redis memory and FastAPI: intent classification, hybrid RAG, agentic tool use. Multi-tenant. / The case: LOAD"AGENTS",8</li>
+  <li data-only="cabinet"><strong>The small PC</strong>: His own build: a small case with the graphics card standing behind its open side. The local models run here.</li>
+  <li data-only="cabinet"><strong>Pads and faders</strong>: What his hands are on when the visuals run.</li>
+  <li data-only="cabinet"><strong>Mapping kit</strong>: A small projector and a card model of a house front: where a show for a building starts.</li>
+  <li data-only="cabinet"><strong>The cabinet</strong>: A cabinet of curiosities: things he keeps for what they make him think about.</li>
+  <li data-only="cabinet"><strong>Möbius band</strong>: One side, one edge: inside and outside are one surface.</li>
+  <li data-only="tape"><strong>LED matrix</strong>: A grid of squares, each with a live alpha: the core of his Metal visuals engine, the successor to an old Quartz Composer workflow for TVs and LED walls.</li>
+  <li data-only="tape"><strong>Rule 30, row by row</strong>: Rule 30, drawn as it is computed: each row from the row above, nothing else. One black cell to start, one row a step since you came in. No formula skips ahead: to see row n, the rows before it have to be drawn. The red lines mark the only past the newest middle cell can depend on.</li>
+  <li data-only="cabinet"><strong>The books</strong>: The books on the cabinet under the window, and one open on the desk: McGilchrist, Abram, Koch, Kastrup, Schopenhauer, Faggin, Hoffman, Bohm, Lane, Feynman, Hawking, Wolfram, Hertog. His definition: consciousness turns raw information into felt, meaningful experience, not reducible to syntax. AI trains on the last, most compressed layer. The map is not the territory.</li>
+  <li><strong>The principle of least action</strong>: Give every path one number, the action S = ∫(T − V) dt. Nature takes the path where small detours don't change it: δS = 0. That single condition gives the Euler–Lagrange equation, and from it F = ma. A Legendre transform, H = pq̇ − L, trades velocity for momentum, and Hamilton's equations follow. Feynman's reason: every path counts, but only near δS = 0 do they add up instead of cancelling. The camera that flew you in rode such a path, like a bead on a wire. After Erik Verlinde's classical mechanics lectures (UvA, c. 2009). A year later he asked where F = ma itself comes from.</li>
+  <li><strong>A drop on the glass</strong>: Watch a drop run down the glass. No one can predict which way it turns next. Science calls that chaos, as if it were out of control. David Abram puts it better: not out of control, only out of ours. Wild.</li>
+</ul>
+<nav class="views" id="views" aria-label="Viewpoints"></nav>
+<div class="controls">
+  <button class="sound" type="button" aria-pressed="false" aria-label="Room sound" hidden>Sound</button>
+</div>
+<script type="module" src="main.js"></script>
+<script>
+  (() => {
+    const s = document.querySelector('.status'), m = document.querySelector('script[type="module"][src="main.js"]');
+    if (s) s.hidden = false;
+    if (s && m) m.addEventListener('error', () => { s.textContent = s.dataset.failed; });
+  })();
+  setTimeout(() => { if (!window.__room && location.hash === '#debug') document.querySelector('.caption p').textContent = 'viewer: module did not run'; }, 8000);
+</script>
+<!--/email_off-->
+</body></html>
