@@ -10,7 +10,7 @@ disableKinds = ["home", "taxonomy", "term"]
   description = "AI Solution Engineer & Technical Leader"
   author = "Ruud Hendrikx"
   # hand-written pages in static/ that Hugo does not know about; layouts/sitemap.xml lists them
-  staticPages = ["", "atlas/", "synclipse/", "synclipse/nl/", "synclipse/guide/", "synclipse/nl/gids/", "synclipse/support/", "synclipse/nl/support/", "synclipse/privacy/", "synclipse/nl/privacy/"]
+  staticPages = ["", "atlas/", "synclipse/", "synclipse/nl/", "synclipse/guide/", "synclipse/nl/gids/", "synclipse/support/", "synclipse/nl/support/", "synclipse/privacy/", "synclipse/nl/privacy/", "synclipse/articles/sound-out-of-sync-tv/", "synclipse/articles/make-tv-picture-faster/", "synclipse/nl/artikelen/geluid-loopt-niet-gelijk-tv/", "synclipse/nl/artikelen/beeld-tv-sneller-maken/"]
 
 [markup]
   [markup.goldmark]
