@@ -50,6 +50,7 @@
   summary { cursor: pointer; font-weight: 600; }
   .path { font-weight: 600; margin: 10px 0 2px; }
   .note { color: var(--muted); font-size: 15px; margin: 0 0 8px; }
+  .model { font-size: 15px; margin: 16px 0 0; }
   ul.plain { padding-left: 20px; }
   .toc a { margin-right: 14px; white-space: nowrap; }
 </style>
@@ -66,181 +67,261 @@
 <p>De meeste tv's, soundbars en receivers kunnen geluid alleen <em>vertragen</em>. Dat helpt als het geluid voorloopt. Loopt het achter, dan maakt meer vertraging het erger, en geen schuif maakt het eerder.</p>
 <p>Op het oog zijn mensen het vaak zelfs over de richting oneens. <a href="../">Synclipse</a> zegt het je: film met je iPhone iemand die praat op je tv, en je weet of het geluid voor- of achterloopt, hoeveel, en wat je verandert. Gratis, zonder account, er verlaat niets je telefoon.</p>
 <a class="badge" href="https://apps.apple.com/app/id6818855875">Download Synclipse in de App Store</a>
-<h2>Welk apparaat?</h2>
-<p>Corrigeer het op één plek: je soundbar of receiver als je die hebt, anders de tv, anders de app.</p>
-<p class="muted">Dat is het apparaat dat het geluid afspeelt. Stapel geen vertragingen: de andere blijven op 0.</p>
+<h2>Waar komt het geluid uit?</h2>
+<p>Stel het op één plek in: op het apparaat dat het geluid maakt.</p>
 <h2>Per soort apparaat</h2>
-<p class="toc"><a href="#tv">Tv</a> <a href="#soundbar">Soundbar</a> <a href="#receiver">AV-receiver</a> <a href="#box">Streamingkastje</a> <a href="#app">Afspeel-app</a> <a href="#console">Spelcomputer</a> <a href="#headphones">Bluetooth-koptelefoon</a> <a href="#late">Geluid loopt achter en de vertraging staat al op 0?</a> <a href="#picture">Geluid loopt voor? Maak het beeld sneller</a></p>
+<p class="toc"><a href="#tv">Tv</a> <a href="#soundbar">Soundbar</a> <a href="#receiver">AV-receiver</a> <a href="#headphones">Bluetooth-koptelefoon</a> <a href="#player">App of kastje</a> <a href="#late">Geluid loopt achter en de vertraging staat al op 0?</a> <a href="#picture">Geluid loopt voor? Maak het beeld sneller</a></p>
 <h2 id="tv">Tv</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>Kijk in de geluidsinstellingen van de tv, vaak onder Geavanceerd of Expert.</li><li>Het heet Audiovertraging, AV-synchronisatie, Lipsync of Vertraging digitale uitvoer. Soms staat het er in het Engels: Audio delay, AV sync, Lip sync.</li><li>De meeste tv&#x27;s kunnen geluid alleen vertragen. Dat helpt als het geluid voorloopt, niet als het achterloopt.</li><li>Vaak werkt het alleen voor geluid dat naar een soundbar of receiver gaat, niet voor de speakers van de tv zelf.</li><li>Sommige tv&#x27;s tellen in milliseconden, andere in gewone stappen. Bij stappen: verander een beetje en meet opnieuw.</li></ul>
 <h3>Jouw merk</h3>
-<details><summary>Samsung</summary>
-<p class="path">Settings › All Settings › Sound › Expert Settings › Digital Output Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Alleen voor geluid dat via HDMI-eARC of optisch naar een soundbar of receiver gaat. Schuif naar rechts: hoger getal, meer geluidsvertraging. De stappen kunnen per model verschillen.</p>
-<p class="note">Volgens Samsung lost geen enkele instelling de vertraging van bluetooth- of draadloze speakers op.</p>
-</details>
-<details><summary>LG</summary>
-<p class="path">Instellingen › Alle instellingen › Geluid › Geavanceerde instellingen › Scherm en Geluid matchen › Bypass</p><p class="note">2021 en later (webOS 6.0 en later). Met Bypass speelt het geluid zonder de eigen vertraging van de tv. Probeer dit eerst als het geluid achterloopt.</p>
-<p class="path">Instellingen › Alle instellingen › Geluid › Geavanceerde instellingen › Scherm en Geluid matchen › TV Speaker Delay</p><p class="note">2021 en later. Met Bypass uit. Voor de tv-speakers of een Sound Share-apparaat op HDMI (eARC/ARC). Hogere waarde: geluid later, tot 60.</p>
-<p class="path">Instellingen › Alle instellingen › Geluid › Aanvullende instellingen › AV-synchronisatie</p><p class="note">2020 en eerder (webOS 5.0 en eerder). Bypass aan, of Bypass uit en een waarde van 0 tot 15.</p>
-</details>
-<details><summary>Sony</summary>
-<p class="path">Instellingen › Weergave en geluid › Audio-uitgang › A/V-synchronisatie</p><p class="note">Google TV-modellen (handleidingen uit 2022). Auto, Aan of Uit; geen getal. Het houdt het beeld vast tot het past bij laat geluid via bluetooth, en bij sommige modellen via een geluidssysteem op HDMI. Geluid dat voorloopt lost het niet op. In de beeldmodus Game, Graphics of Photo: kies Aan.</p>
-</details>
-<details><summary>Philips</summary>
-<p class="path">Instellingen › Weergave en Geluid › Audio-uitgang › Vertraging digitale uitvoer</p><p class="note">Google TV-modellen, 2023–2025. Voor geluid dat naar een soundbar of homecinema gaat (HDMI of optisch), niet voor de tv-speakers. Kies Uit als er op het geluidssysteem al een vertraging is ingesteld.</p>
-<p class="path">Instellingen › Weergave en Geluid › Audio-uitgang › Verschuiving digitale uitvoer</p><p class="note">Google TV-modellen. Alleen zichtbaar als Vertraging digitale uitvoer op Aan staat. Stappen van 5 ms, tot 60 ms.</p>
-<p class="path">Hoofdmenu › Instellingen › Geluid › Geavanceerd › Vertraging digitale uitvoer</p><p class="note">Titan OS-modellen, 2024–2026. Aan of Uit. Kies Uit als er op het geluidssysteem al een vertraging is ingesteld.</p>
-<p class="path">Hoofdmenu › Instellingen › Geluid › Geavanceerd › Verschuiving digitale uitvoer</p><p class="note">Titan OS-modellen. Alleen zichtbaar als Vertraging digitale uitvoer op Aan staat. Van 0 tot 60 ms.</p>
-</details>
-<details><summary>TCL</summary>
-<p class="path">Settings › Display &amp; Sound › Audio › Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Google TV-modellen. Een schuifregelaar, voor de speakers van de tv zelf.</p>
-<p class="path">Settings › Display &amp; Sound › Audio Output Settings › Digital Audio Out Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Google TV-modellen. Voor geluid via optisch of HDMI ARC. Het menu ertussen kan op jouw model anders heten.</p>
-<p class="path">Sound › Advanced settings › Digital audio out delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Oudere Android TV-modellen. Alleen als Digital audio out op PCM staat.</p>
-<p class="note">TCL beschrijft geen vertragingsinstelling voor zijn Roku-tv&#x27;s.</p>
+<details><summary>Grundig</summary>
+<p class="model"><strong>65 GGU 7960B (Android TV)</strong></p>
+<p class="path">Settings › Device Preferences › Sound › Speaker Delay</p><p class="note">Kies de waarde met de pijltjes links en rechts. In hetzelfde menu staan SPDIF Delay en Digital Output Delay. Grundig geeft geen bereik en zegt niet voor welke uitgang elk van de drie is.</p>
+<p class="model"><strong>55 GFU 7800B (Android TV)</strong></p>
+<p class="path">Settings › Device Preferences › Sound › SPDIF Delay</p><p class="note">Kies de waarde met de pijltjes links en rechts. Grundig geeft geen bereik.</p>
 </details>
 <details><summary>Hisense</summary>
-<p class="path">Settings › Sound › Audio Output Settings › Digital Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">VIDAA-modellen (Amerikaanse handleiding, 2023). Voor een soundbar of receiver: alleen als Audio Output op ARC of SPDIF staat.</p>
-<p class="path">Settings › Sound › Audio Output Settings › Lip Sync (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">VIDAA-modellen (Amerikaanse handleiding, 2023). Voor de speakers van de tv zelf: alleen als Audio Output op TV Speaker staat.</p>
+<p class="model"><strong>VIDAA-modellen (Amerikaanse handleiding, 2023)</strong></p>
+<p class="path">Settings › Sound › Audio Output Settings › Digital Audio Delay</p><p class="note">Voor een soundbar of receiver: alleen als Audio Output op ARC of SPDIF staat.</p>
+<p class="path">Settings › Sound › Audio Output Settings › Lip Sync</p><p class="note">Voor de speakers van de tv zelf: alleen als Audio Output op TV Speaker staat.</p>
 </details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
-<h2 id="soundbar">Soundbar</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>Meestal een knop op de afstandsbediening van de soundbar: Sync, AV Sync of Audio Sync. Soms in de app van de maker.</li><li>De meeste soundbars kunnen geluid alleen vertragen. Dat helpt als het geluid voorloopt, niet als het achterloopt.</li><li>Meestal in milliseconden, vanaf 0.</li></ul>
-<h3>Jouw merk</h3>
-<details><summary>Sonos</summary>
-<p class="path">Sonos-app › Instellingen › je soundbar (onder Over je systeem) › Home-cinema › TV Dialog Sync</p><p class="note">Schuif naar rechts: geluid later. Het kan geluid alleen vertragen.</p>
-<p class="note">Loopt het geluid achter? Daar heeft Sonos geen schuifregelaar voor. Het raadt aan het geluidsformaat van de tv of het kastje op Stereo of PCM te zetten; je verliest dan surround.</p>
+<details><summary>LG</summary>
+<p class="model"><strong>2021 en later (webOS 6.0 en later)</strong></p>
+<p class="path">Instellingen › Alle instellingen › Geluid › Geavanceerde instellingen › Scherm en Geluid matchen › Bypass</p><p class="note">Met Bypass speelt het geluid zonder de eigen vertraging van de tv. Probeer dit eerst als het geluid achterloopt.</p>
+<p class="path">Instellingen › Alle instellingen › Geluid › Geavanceerde instellingen › Scherm en Geluid matchen › TV Speaker Delay</p><p class="note">Met Bypass uit. Voor de tv-speakers of een Sound Share-apparaat op HDMI (eARC/ARC). Hogere waarde: geluid later, tot 60.</p>
+<p class="model"><strong>2020 en eerder (webOS 5.0 en eerder)</strong></p>
+<p class="path">Instellingen › Alle instellingen › Geluid › Aanvullende instellingen › AV-synchronisatie</p><p class="note">Bypass aan, of Bypass uit en een waarde van 0 tot 15.</p>
+</details>
+<details><summary>Loewe</summary>
+<p class="model"><strong>Loewe Art 40 tot en met 55</strong></p>
+<p class="path">Home › System settings › Sound › Sound picture synchronisation</p><p class="note">Alleen voor tv-zenders (DVB), niet voor HDMI of apps. Werkt twee kanten op, in stappen van 10 ms. Markering omlaag: geluid later. Markering omhoog: geluid eerder.</p>
+</details>
+<details><summary>Philips</summary>
+<p class="model"><strong>Google TV-modellen, 2023–2025</strong></p>
+<p class="path">Instellingen › Weergave en Geluid › Audio-uitgang › Vertraging digitale uitvoer</p><p class="note">Voor geluid dat naar een soundbar of homecinema gaat (HDMI of optisch), niet voor de tv-speakers. Kies Uit als er op het geluidssysteem al een vertraging is ingesteld.</p>
+<p class="path">Instellingen › Weergave en Geluid › Audio-uitgang › Verschuiving digitale uitvoer</p><p class="note">Alleen zichtbaar als Vertraging digitale uitvoer op Aan staat. Stappen van 5 ms, tot 60 ms.</p>
+<p class="model"><strong>Titan OS-modellen, 2024–2026</strong></p>
+<p class="path">Hoofdmenu › Instellingen › Geluid › Geavanceerd › Vertraging digitale uitvoer</p><p class="note">Aan of Uit. Kies Uit als er op het geluidssysteem al een vertraging is ingesteld.</p>
+<p class="path">Hoofdmenu › Instellingen › Geluid › Geavanceerd › Verschuiving digitale uitvoer</p><p class="note">Alleen zichtbaar als Vertraging digitale uitvoer op Aan staat. Van 0 tot 60 ms.</p>
+<p class="model"><strong>55OLED806, 65OLED806 en 77OLED806</strong></p>
+<p class="path">Settings › Sound › Advanced › Digital out offset</p><p class="note">Voor geluid naar een homecinema, niet de speakers van de tv. Alleen zichtbaar als Digital out delay op On staat. Stappen van 5 ms, tot 60 ms.</p>
 </details>
 <details><summary>Samsung</summary>
-<p class="path">Afstandsbediening soundbar: knop (Geluidsregeling) › Sync › Omhoog/Omlaag</p><p class="note">Q-serie (handleiding 2026). Audiovertraging van 0 tot 300 milliseconden. Niet bij elke ingang.</p>
-<p class="path">Afstandsbediening soundbar: knop Audio Sync › Skip Forward/Backward (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Sommige andere modellen. Samsung zegt niet welke.</p>
-<p class="path">Afstandsbediening soundbar: Audio Sync + / - (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Modellen met deze toetsen op de afstandsbediening.</p>
-<p class="note">Volgens Samsung werkt Sync niet met bluetooth of usb als bron.</p>
+<p class="path">Settings › All Settings › Sound › Expert Settings › Digital Output Audio Delay</p><p class="note">Alleen voor geluid dat via HDMI-eARC of optisch naar een soundbar of receiver gaat. Schuif naar rechts: hoger getal, meer geluidsvertraging. De stappen kunnen per model verschillen.</p>
+<p class="note">Volgens Samsung lost geen enkele instelling de vertraging van bluetooth- of draadloze speakers op.</p>
+</details>
+<details><summary>Sony</summary>
+<p class="model"><strong>Google TV-modellen (handleidingen uit 2022)</strong></p>
+<p class="path">Instellingen › Weergave en geluid › Audio-uitgang › A/V-synchronisatie</p><p class="note">Auto, Aan of Uit; geen getal. Het houdt het beeld vast tot het past bij laat geluid via bluetooth, en bij sommige modellen via een geluidssysteem op HDMI. Geluid dat voorloopt lost het niet op. In de beeldmodus Game, Graphics of Photo: kies Aan.</p>
+<p class="model"><strong>Oudere modellen die met een bluetooth-koptelefoon werken</strong></p>
+<p class="path">Settings › Sound › A/V sync</p><p class="note">De gids van Sony noemt hier de opties niet.</p>
+</details>
+<details><summary>TCL</summary>
+<p class="model"><strong>Google TV-modellen</strong></p>
+<p class="path">Settings › Display &amp; Sound › Audio › Audio Delay</p><p class="note">Een schuifregelaar, voor de speakers van de tv zelf.</p>
+<p class="path">Settings › Display &amp; Sound › Audio Output Settings › Digital Audio Out Delay</p><p class="note">Voor geluid via optisch of HDMI ARC. Het menu ertussen kan op jouw model anders heten.</p>
+<p class="model"><strong>Oudere Android TV-modellen</strong></p>
+<p class="path">Sound › Advanced settings › Digital audio out delay</p><p class="note">Alleen als Digital audio out op PCM staat.</p>
+<p class="note">TCL beschrijft geen vertragingsinstelling voor zijn Roku-tv&#x27;s.</p>
+</details>
+<details><summary>Toshiba</summary>
+<p class="model"><strong>UV23- en UV33-serie (VIDAA)</strong></p>
+<p class="path">Home › Settings › Sound › Speakers › Audio Output</p><p class="note">Alleen voor een soundbar of receiver. Zet Audio Output op ARC of SPDIF Only en pas dan Digital Audio Delay aan. Toshiba zegt niet waar dat in het menu staat en geeft geen bereik.</p>
+</details>
+<details><summary>Vizio</summary>
+<p class="model"><strong>V5-serie en M75-C1</strong></p>
+<p class="path">Menu › Audio › Lip Sync</p><p class="note">Vizio geeft geen bereik en zegt niet welke kant het geluid op gaat. Verander een beetje en meet opnieuw.</p>
+</details>
+<details><summary>Xiaomi</summary>
+<p class="model"><strong>Xiaomi TV P1E 43 en Mi TV Q1 75 (Android TV)</strong></p>
+<p class="path">Settings › Device Preferences › Sound › Digital Output Delay</p><p class="note">Xiaomi geeft geen bereik en zegt niet voor welke uitgang het is.</p>
+<p class="model"><strong>Xiaomi TV A Pro 50 (Google TV)</strong></p>
+<p class="path">Settings › Display &amp; Sound › Audio output › Digital Output Delay</p><p class="note">Xiaomi geeft geen bereik en zegt niet voor welke uitgang het is.</p>
+</details>
+<p class="muted">Staat je merk er niet bij? Dan kun je de vertraging daarop niet zelf instellen. Zet hem op de soundbar of receiver, of in de app die de film afspeelt.</p>
+<h2 id="soundbar">Soundbar</h2>
+<h3>Jouw merk</h3>
+<details><summary>Bose</summary>
+<p class="model"><strong>Smart Soundbar 900</strong></p>
+<p class="path">Bose-app › Audio › Sync &amp; Delay › Audio Delay</p><p class="note">Van 0 (geen vertraging) tot 200 (meeste vertraging).</p>
+<p class="model"><strong>Smart Ultra Soundbar</strong></p>
+<p class="path">Bose-app › Audio › (scrol naar beneden) Audio Delay</p><p class="note">Van 0 (geen vertraging) tot 200 (meeste vertraging). Het kan geluid alleen vertragen.</p>
+</details>
+<details><summary>Harman Kardon</summary>
+<p class="model"><strong>Enchant 800 en Enchant 1300</strong></p>
+<p class="path">Afstandsbediening › AUDIO SYNC - / +</p><p class="note">De toetsen zetten de audiovertraging lager of hoger. Harman Kardon geeft geen bereik.</p>
+<p class="model"><strong>Citation MultiBeam 1100</strong></p>
+<p class="path">Aanraakscherm › Settings › Speaker Setup › Audio Sync › veeg omhoog of omlaag</p><p class="note">Op het aanraakscherm van de soundbar zelf. Kies de audiovertraging die bij het beeld past.</p>
+<p class="model"><strong>Citation MultiBeam 700</strong></p>
+<p class="path">Aanraakscherm › Speaker Setup › Lipsync delay</p><p class="note">Veeg op het aanraakscherm van de soundbar omhoog of omlaag tot je Speaker Setup ziet. Het vertraagt het geluid tot het bij het beeld past.</p>
+</details>
+<details><summary>Hisense</summary>
+<p class="model"><strong>HS312</strong></p>
+<p class="path">Afstandsbediening › houd SURR ingedrukt › “LATENCY SET” › VOL+/-</p><p class="note">Met de soundbar aan. Stappen van 10 ms, tot 200 ms.</p>
+</details>
+<details><summary>JBL</summary>
+<p class="model"><strong>Bar 1000MK2 en Bar 500MK2</strong></p>
+<p class="path">Afstandsbediening › houd TV minimaal 3 seconden ingedrukt en druk dan op + › “SYNC” › druk binnen 5 seconden op + of − om de geluidsvertraging aan te passen</p><p class="note">+ en − zijn de volumeknoppen. Kan ook in de JBL One-app.</p>
+<p class="model"><strong>Bar 500</strong></p>
+<p class="path">Afstandsbediening › houd TV meer dan drie seconden ingedrukt en druk op + › “SYNC” › druk binnen vijf seconden op + of − om de audiovertraging aan te passen</p><p class="note">+ en − zijn de volumeknoppen.</p>
+<p class="model"><strong>Oudere Bar 2.1</strong></p>
+<p class="path">Afstandsbediening › AUDIO SYNC+/– toets</p><p class="note">Het vertraagt het geluid tot het bij het beeld past.</p>
+<p class="note">In de JBL One-app loopt de audiovertraging van 0 tot 250 ms (Bar 300, 500, 700, 800, 1000, 1300 en 1300X). JBL noemt er geen scherm bij.</p>
 </details>
 <details><summary>LG</summary>
 <p class="path">Afstandsbediening soundbar › [AV-synchronisatie]-knop › Links/Rechts pijltjesknoppen</p><p class="note">Kijk naar het display van de soundbar terwijl je bijstelt. Bij sommige modellen kan het ook met de app van LG.</p>
 </details>
-<details><summary>Bose</summary>
-<p class="path">Bose-app › Audio › Sync &amp; Delay › Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Smart Soundbar 900. Van 0 (geen vertraging) tot 200 (meeste vertraging).</p>
-<p class="path">Bose-app › Audio › (scrol naar beneden) Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Smart Ultra Soundbar. Van 0 (geen vertraging) tot 200 (meeste vertraging). Het kan geluid alleen vertragen.</p>
+<details><summary>Nakamichi</summary>
+<p class="model"><strong>Shockwafe Ultra</strong></p>
+<p class="path">Afstandsbediening › Lip Sync +/-</p><p class="note">Werkt voor de ingangen HDMI 1 tot en met 4, Optical en Coaxial. Nakamichi geeft geen bereik.</p>
+</details>
+<details><summary>Philips</summary>
+<p class="model"><strong>HSB2313</strong></p>
+<p class="path">Afstandsbediening › AUDIO SYNC (druk meerdere keren)</p><p class="note">Elke druk kiest de volgende vertraging: van 10 tot 200 ms in stappen van 10.</p>
+</details>
+<details><summary>Polk</summary>
+<p class="model"><strong>MagniFi Max AX SR</strong></p>
+<p class="path">Afstandsbediening › DELAY › + of – › DELAY</p><p class="note">Het gaat in kleine stappen; Polk geeft geen getallen. Het display van de soundbar toont de stand. Zonder de laatste druk sluit het na 10 seconden vanzelf.</p>
+</details>
+<details><summary>Roku</summary>
+<p class="path">Roku-app › Devices › (kies de Streambar, of de Roku-tv waarop de Roku Speakers zijn aangesloten) › Remote › Settings › Adjust Audio Delay</p><p class="note">Voor Roku Streambars en Roku Speakers. De app kan om de camera vragen; volg de stappen.</p>
+</details>
+<details><summary>Samsung</summary>
+<p class="model"><strong>Q-serie (handleiding 2026)</strong></p>
+<p class="path">Afstandsbediening soundbar: knop (Geluidsregeling) › Sync › Omhoog/Omlaag</p><p class="note">Audiovertraging van 0 tot 300 milliseconden. Niet bij elke ingang.</p>
+<p class="model"><strong>Sommige andere modellen</strong></p>
+<p class="path">Afstandsbediening soundbar: knop Audio Sync › Skip Forward/Backward</p><p class="note">Samsung zegt niet welke.</p>
+<p class="model"><strong>Modellen met deze toetsen op de afstandsbediening</strong></p>
+<p class="path">Afstandsbediening soundbar: Audio Sync + / -</p>
+<p class="note">Volgens Samsung werkt Sync niet met bluetooth of usb als bron.</p>
+</details>
+<details><summary>Sennheiser</summary>
+<p class="note">De AMBEO Soundbar Max met AMBEO|OS 2 heeft een lipsync-vertraging tot 250 ms. Sennheiser noemt er geen menu bij.</p>
+</details>
+<details><summary>Sonos</summary>
+<p class="path">Sonos-app › Instellingen › je soundbar (onder Over je systeem) › Home-cinema › TV Dialog Sync</p><p class="note">Schuif naar rechts: geluid later. Het kan geluid alleen vertragen.</p>
+<p class="note">Loopt het geluid achter? Daar heeft Sonos geen schuifregelaar voor. Het raadt aan het geluidsformaat van de tv of het kastje op Stereo of PCM te zetten; je verliest dan surround.</p>
 </details>
 <details><summary>Sony</summary>
-<p class="path">OPTIONS › [SYNC] (display op het voorpaneel) › rechts/bevestigen › omhoog/omlaag › bevestigen</p><p class="note">HT-A5000, terwijl je tv kijkt. Van 0 tot 300 msec in stappen van 25.</p>
-<p class="path">OPTIONS › [A/V sync] › omhoog/omlaag › bevestigen</p><p class="note">HT-A5000, terwijl je naar een ander apparaat op HDMI kijkt; het menu staat op de tv. Van 0 tot 300 msec in stappen van 25.</p>
-<p class="path">Afstandsbedieningsscherm van de app › Instellingen › Geluidsinstellingen › AV-synchronisatie</p><p class="note">HT-S2000, in de app van Sony.</p>
-<p class="path">Setup › Advanced Settings › Bluetooth Settings › Bluetooth Connection Quality › Priority on Stable Connection (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">HT-A5000. Alleen als je via bluetooth naar de soundbar afspeelt. Volgens Sony kan het een geluidsvertraging verbeteren.</p>
+<p class="model"><strong>HT-A5000</strong></p>
+<p class="path">OPTIONS › [SYNC] (display op het voorpaneel) › rechts/bevestigen › omhoog/omlaag › bevestigen</p><p class="note">Terwijl je tv kijkt. Van 0 tot 300 msec in stappen van 25.</p>
+<p class="path">OPTIONS › [A/V sync] › omhoog/omlaag › bevestigen</p><p class="note">Terwijl je naar een ander apparaat op HDMI kijkt; het menu staat op de tv. Van 0 tot 300 msec in stappen van 25.</p>
+<p class="path">Setup › Advanced Settings › Bluetooth Settings › Bluetooth Connection Quality › Priority on Stable Connection</p><p class="note">Alleen als je via bluetooth naar de soundbar afspeelt. Volgens Sony kan het een geluidsvertraging verbeteren.</p>
+<p class="model"><strong>HT-S2000</strong></p>
+<p class="path">Afstandsbedieningsscherm van de app › Instellingen › Geluidsinstellingen › AV-synchronisatie</p><p class="note">In de app van Sony.</p>
 </details>
-<details><summary>JBL</summary>
-<p class="path">Afstandsbediening › houd TV minimaal 3 seconden ingedrukt en druk dan op + › “SYNC” › druk binnen 5 seconden op + of − om de geluidsvertraging aan te passen</p><p class="note">Bar 1000MK2 en Bar 500MK2. + en − zijn de volumeknoppen. Kan ook in de JBL One-app.</p>
-<p class="path">Afstandsbediening › houd TV meer dan drie seconden ingedrukt en druk op + › “SYNC” › druk binnen vijf seconden op + of − om de audiovertraging aan te passen</p><p class="note">Bar 500. + en − zijn de volumeknoppen.</p>
-<p class="path">Afstandsbediening › AUDIO SYNC+/– toets</p><p class="note">Oudere Bar 2.1. Het vertraagt het geluid tot het bij het beeld past.</p>
+<details><summary>Teufel</summary>
+<p class="model"><strong>Cinebar Pro</strong></p>
+<p class="path">Afstandsbediening › LIP SYNC › VOL +/–</p><p class="note">Audiovertraging van 0 tot 250 ms. Dezelfde instelling staat in het menu Settings als LipSync.</p>
 </details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
+<p class="muted">Staat je merk er niet bij? Dan kun je de vertraging daarop niet zelf instellen. Zet hem op de tv.</p>
 <h2 id="receiver">AV-receiver</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>Zoek naar Audio Delay (Audiovertraging), Lip Sync of A/V Sync in het setup- of optiemenu van de receiver.</li><li>De meeste receivers kunnen geluid alleen vertragen, meestal in milliseconden. Dat helpt als het geluid voorloopt.</li><li>Het wordt per ingang bewaard. Stel het in op de ingang waar je naar kijkt.</li><li>Veel receivers hebben ook Auto Lip Sync: de tv vertelt de receiver hoeveel hij moet vertragen. Je kunt daar bovenop bijstellen.</li></ul>
 <h3>Jouw merk</h3>
+<details><summary>Anthem</summary>
+<p class="model"><strong>MRX 540, MRX 740, MRX 1140, AVM 70 en AVM 90</strong></p>
+<p class="path">Setup › Input Setup › Lip-Sync Delay</p><p class="note">Tot 500 ms audiovertraging, voor geluid dat voorloopt.</p>
+<p class="path">Afstandsbediening › LIP-SYNC › omhoog/omlaag</p><p class="note">Terwijl je kijkt. Het verandert de instelling van de ingang waar je op zit en bewaart die.</p>
+</details>
+<details><summary>Arcam</summary>
+<p class="model"><strong>AVR11, AVR21, AVR31 en AV41</strong></p>
+<p class="path">MENU › Input Config. › Lip Sync</p><p class="note">Van 0 tot 250 ms, per ingang bewaard. Het kan geluid alleen vertragen. Arcam zegt: loopt het geluid achter, zet het dan op het minimum.</p>
+</details>
 <details><summary>Denon</summary>
-<p class="path">OPTION › AVR opties… › Audiovertraging › Aanpassen</p><p class="note">AVR-X1800H. Van 0 tot 500 ms, per ingang bewaard. Automatische lipsynchronisatie staat op hetzelfde scherm en staat standaard aan; Aanpassen komt daar bovenop.</p>
+<p class="model"><strong>AVR-X1800H</strong></p>
+<p class="path">OPTION › AVR opties… › Audiovertraging › Aanpassen</p><p class="note">Van 0 tot 500 ms, per ingang bewaard. Automatische lipsynchronisatie staat op hetzelfde scherm en staat standaard aan; Aanpassen komt daar bovenop.</p>
+<p class="model"><strong>AVR-S740H</strong></p>
+<p class="path">Setup › Audio › Audio Delay</p><p class="note">Adjust loopt van 0 tot 500 ms, per ingang bewaard. Auto Lip Sync staat in hetzelfde menu; Adjust komt daar bovenop.</p>
+</details>
+<details><summary>Harman Kardon</summary>
+<p class="model"><strong>AVR 1710, AVR 171, AVR 1610 en AVR 161</strong></p>
+<p class="path">Afstandsbediening › Delay › toetsen links/rechts</p><p class="note">Onder in het tv-beeld verschijnt een balk Lip Sync. Het vertraagt het geluid met hoogstens 180 ms.</p>
 </details>
 <details><summary>Marantz</summary>
-<p class="path">OPTION › AVR opties… › Audiovertraging › Aanpassen</p><p class="note">CINEMA 50. Van 0 tot 500 ms, per ingang bewaard.</p>
+<p class="model"><strong>CINEMA 50</strong></p>
+<p class="path">OPTION › AVR opties… › Audiovertraging › Aanpassen</p><p class="note">Van 0 tot 500 ms, per ingang bewaard.</p>
 <p class="path">OPTION › AVR opties… › Audiovertraging (automatische lipsynchronisatie Aan/Uit)</p><p class="note">Staat standaard aan. Heeft een tv nodig die automatische lipsynchronisatie ondersteunt. Aanpassen komt daar bovenop.</p>
-</details>
-<details><summary>Yamaha</summary>
-<p class="path">Setup › Sound › Lipsync › Adjustment</p><p class="note">RX-A2A en RX-V6A (lijn van 2020). Van 0 ms tot 500 ms.</p>
-<p class="path">Setup › Sound › Lipsync › Select</p><p class="note">Manual of Auto. Auto heeft een tv nodig die automatische lipsync ondersteunt; Adjustment komt daar dan bovenop.</p>
-<p class="path">Option › Lipsync › Lipsync</p><p class="note">On of Off, per ingang. Off betekent dat de Lipsync-aanpassing voor die ingang niet wordt gebruikt.</p>
-</details>
-<details><summary>Sony</summary>
-<p class="path">Startmenu › Setup › Audio Settings › A/V Sync</p><p class="note">STR-AN1000. Van 0 ms tot 300 ms in stappen van 10, of HDMI Auto. Hoger: geluid later. Per ingang bewaard.</p>
-<p class="path">AMP MENU (displaypaneel voorzijde) › &lt;AUDIO&gt; › A/V SYNC</p><p class="note">STR-DH790. Van 0 tot 300 ms in stappen van 10, of AUTO. Hoger: geluid later. Per ingang bewaard.</p>
+<p class="model"><strong>SR5011</strong></p>
+<p class="path">Setup › Audio › Audio Delay</p><p class="note">Van 0 tot 500 ms. Niet als de ingangsmodus 7.1CH IN is.</p>
 </details>
 <details><summary>Onkyo</summary>
-<p class="path">Q (Quick Menu-knop op de afstandsbediening) › HDMI › A/V Sync (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">TX-NR7100.</p>
-<p class="path">Q (Quick Menu) › HDMI › A/V Sync (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">TX-RZ30, TX-NR5100 en TX-NR6100. Het vertraagt het geluid als het beeld achterloopt. Per ingang bewaard. Niet in de luistermodi Pure Audio en Direct.</p>
-<p class="note">Pioneer en Integra zijn niet nagekeken. Gebruik de algemene stappen.</p>
+<p class="model"><strong>TX-NR7100</strong></p>
+<p class="path">Q (Quick Menu-knop op de afstandsbediening) › HDMI › A/V Sync</p>
+<p class="model"><strong>TX-RZ30, TX-NR5100 en TX-NR6100</strong></p>
+<p class="path">Q (Quick Menu) › HDMI › A/V Sync</p><p class="note">Het vertraagt het geluid als het beeld achterloopt. Per ingang bewaard. Niet in de luistermodi Pure Audio en Direct.</p>
+<p class="note">TX-NR6100: Auto Lip Sync staat standaard aan. Met een tv die HDMI Lip Sync ondersteunt, corrigeert de receiver dan zelf.</p>
 </details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
-<h2 id="box">Streamingkastje</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>De meeste streamingkastjes hebben zelf geen audiovertraging. Corrigeer het dan op de tv, soundbar of receiver.</li><li>Een paar hebben er wel een. Sommige kunnen het geluid zelfs vervroegen.</li><li>Het kastje opnieuw opstarten kan helpen als het geluid ineens verschuift.</li></ul>
+<details><summary>Rotel</summary>
+<p class="model"><strong>RAP-1580MKII</strong></p>
+<p class="path">MAIN › INPUT SETUP › AUDIO DELAY</p><p class="note">Van 0 ms tot 500 ms in stappen van 10 ms. Per ingang bewaard.</p>
+</details>
+<details><summary>Sony</summary>
+<p class="model"><strong>STR-AN1000</strong></p>
+<p class="path">Startmenu › Setup › Audio Settings › A/V Sync</p><p class="note">Van 0 ms tot 300 ms in stappen van 10, of HDMI Auto. Hoger: geluid later. Per ingang bewaard.</p>
+<p class="model"><strong>STR-DH790</strong></p>
+<p class="path">AMP MENU (displaypaneel voorzijde) › &lt;AUDIO&gt; › A/V SYNC</p><p class="note">Van 0 tot 300 ms in stappen van 10, of AUTO. Hoger: geluid later. Per ingang bewaard.</p>
+</details>
+<details><summary>Yamaha</summary>
+<p class="model"><strong>RX-A2A en RX-V6A (lijn van 2020)</strong></p>
+<p class="path">Setup › Sound › Lipsync › Adjustment</p><p class="note">Van 0 ms tot 500 ms.</p>
+<p class="path">Setup › Sound › Lipsync › Select</p><p class="note">Manual of Auto. Auto heeft een tv nodig die automatische lipsync ondersteunt; Adjustment komt daar dan bovenop.</p>
+<p class="path">Option › Lipsync › Lipsync</p><p class="note">On of Off, per ingang. Off betekent dat de Lipsync-aanpassing voor die ingang niet wordt gebruikt.</p>
+<p class="model"><strong>RX-V685</strong></p>
+<p class="path">Option › Lipsync › Lipsync</p><p class="note">Hier is het een getal: van 0 ms tot 500 ms in stappen van 1 ms. Werkt alleen als Delay Enable in het menu Setup op Enable staat.</p>
+</details>
+<p class="muted">Staat je merk er niet bij? Dan kun je de vertraging daarop niet zelf instellen. Zet hem op de tv.</p>
+<h2 id="headphones">Bluetooth-koptelefoon</h2>
+<p>Bluetooth voegt altijd vertraging toe, dus het geluid komt te laat.</p>
+<p>Synclipse kan een koptelefoon niet horen. Beoordeel dit op het oog.</p>
 <h3>Jouw merk</h3>
+<details><summary>Panasonic TV</summary>
+<p class="model"><strong>Fire TV-modellen</strong></p>
+<p class="path">Bluetooth Audio Delay</p><p class="note">Alleen voor geluid over bluetooth. Panasonic noemt de instelling, maar niet het menu waar hij in staat, en geeft geen bereik.</p>
+</details>
+<details><summary>Roku</summary>
+<p class="path">Roku-app › Remote › koptelefoon-icoon (Headphone Mode) › tandwiel (Controls) › Adjust audio delay › Get started</p><p class="note">Voor een koptelefoon op je telefoon (Headphone Mode). Het geluid van de tv zelf verandert niet. Nog niet gelijk? Doe het opnieuw en kies Advanced adjustment voor een schuifregelaar.</p>
+</details>
+<details><summary>Sony TV</summary>
+<p class="model"><strong>Sony-tv&#x27;s die met een bluetooth-koptelefoon werken</strong></p>
+<p class="path">Instellingen › Weergave en geluid › Audio-uitgang › A/V-synchronisatie</p><p class="note">Auto of Aan houdt het beeld vast tot het bij het late geluid past.</p>
+<p class="model"><strong>Oudere modellen die met een bluetooth-koptelefoon werken</strong></p>
+<p class="path">Settings › Sound › A/V sync</p><p class="note">De gids van Sony noemt hier de opties niet.</p>
+</details>
+<p class="muted">Staat je merk er niet bij? Dan kun je de vertraging voor een koptelefoon daarop niet zelf instellen. Gebruik een kabel, of de speakers van de tv of de soundbar.</p>
+<h2 id="player">App of kastje</h2>
+<h3>Jouw merk</h3>
+<details><summary>Amazon Fire TV</summary>
+<p class="path">Instellingen › Weergave en geluid › Audio › Tuning van AV-synchronisatie</p><p class="note">Werkt twee kanten op. Een bal stuitert met een flits en een toon. Toon vóór de flits (geluid loopt voor): schuif naar rechts. Toon na de flits (geluid loopt achter): schuif naar links. Niet op alle smart-tv&#x27;s met Fire TV.</p>
+<p class="path">Settings › Display &amp; Sounds › Alexa Home Theater › Lip Sync Tuning</p><p class="note">Alleen als Echo-speakers het geluid van de tv afspelen. Volg de stappen op de tv.</p>
+</details>
 <details><summary>Apple TV 4K</summary>
 <p class="path">Instellingen › Video en audio › Kalibratie › Synchronisatie van draadloze audio</p><p class="note">Geen schuifregelaar: je iPhone luistert en Apple TV zet draadloze speakers gelijk met de speakers van de tv of receiver. Alleen zinvol met draadloze speakers.</p>
 <p class="note">Apple beschrijft geen handmatige audiovertraging voor Apple TV.</p>
 </details>
-<details><summary>Google TV Streamer</summary>
-<p class="note">Google beschrijft geen audiovertraging op het apparaat. Het verwijst naar de tv, receiver of soundbar.</p>
+<details><summary>Infuse</summary>
+<p class="note">Infuse op Apple TV heeft een eigen audiovertraging (sinds versie 7.4.7). De maker geeft geen menupad. Kijk in de audio-opties terwijl de film speelt.</p>
 </details>
-<details><summary>Amazon Fire TV</summary>
-<p class="path">Instellingen › Weergave en geluid › Audio › Tuning van AV-synchronisatie</p><p class="note">Werkt twee kanten op. Een bal stuitert met een flits en een toon. Toon vóór de flits (geluid loopt voor): schuif naar rechts. Toon na de flits (geluid loopt achter): schuif naar links. Niet op alle smart-tv&#x27;s met Fire TV.</p>
-</details>
-<details><summary>Roku</summary>
-<p class="path">Roku-app › Devices › (kies de Streambar, of de Roku-tv waarop de Roku Speakers zijn aangesloten) › Remote › Settings › Adjust Audio Delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Voor Roku Streambars en Roku Speakers. De app kan om de camera vragen; volg de stappen.</p>
-<p class="path">Roku-app › Remote › Settings › Adjust audio delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Voor Roku-tv&#x27;s met een soundbar of receiver. De app meet de vertraging met de camera en microfoon van je telefoon.</p>
-<p class="note">Roku beschrijft geen vertragingsinstelling voor zijn spelers (Express, Streaming Stick, Ultra). Gebruik de tv of soundbar.</p>
+<details><summary>Kodi</summary>
+<p class="path">Tijdens het afspelen: OSD › Settings (tandwiel, rechtsonder) › Audio settings › Audio offset</p><p class="note">Standaarduiterlijk (Estuary). Werkt twee kanten op. Voor de film die speelt; met “Set as default for all videos” blijft het bewaard.</p>
 </details>
 <details><summary>NVIDIA Shield TV</summary>
 <p class="path">Instellingen › Apparaatvoorkeuren › Display en geluid › Geavanceerde instellingen › Audio-videosynchronisatie</p><p class="note">Andersom: deze schuifregelaar kan het geluid alleen vervroegen, tot 1 seconde in stappen van 10 ms. Dat helpt dus als het geluid achterloopt. Alleen voor geluid via HDMI, niet via bluetooth. Loopt het geluid voor? Volgens NVIDIA vertraag je het dan op de receiver.</p>
 </details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
-<h2 id="app">Afspeel-app</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>Sommige afspeel-apps hebben een eigen audiovertraging. Kijk in de audio-opties terwijl een film speelt.</li><li>Het werkt vaak twee kanten op, dus het kan het geluid ook vervroegen.</li><li>Sommige apps bewaren het per film. Kijk het bij de volgende film opnieuw na.</li><li>Streaming-apps zoals Netflix hebben er geen. Corrigeer het op het apparaat dat het geluid afspeelt.</li></ul>
-<h3>Jouw merk</h3>
-<details><summary>Infuse</summary>
-<p class="note">Infuse op Apple TV heeft een eigen audiovertraging (sinds versie 7.4.7). De maker geeft geen menupad. Kijk in de audio-opties terwijl de film speelt, zoals in de algemene stappen.</p>
-</details>
-<details><summary>VLC</summary>
-<p class="path">Tools › Track Synchronization › Synchronization (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">VLC op een computer (versie 3.0). Typ een getal; plus en min kunnen allebei. Of druk op j of k terwijl de film speelt: 50 ms per druk. De handleiding van VLC zegt niet duidelijk welke kant het geluid vervroegt: probeer een kant en meet opnieuw. Op een Mac kan het menu anders heten.</p>
-<p class="path">Options (drie puntjes) › Audio delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">VLC voor Android, terwijl een film speelt. Werkt twee kanten op: de pijlknoppen verschuiven het geluid 50 ms per tik. Met RESET zet je het terug.</p>
-<p class="path">More › Settings › Video › Save audio delay (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">VLC voor Android. Bewaart de vertraging die je instelt, per video.</p>
-<p class="note">Voor iPhone, iPad, Apple TV en Android TV geeft de maker van VLC geen menupad. Kijk in de audio-opties terwijl de film speelt, zoals in de algemene stappen.</p>
-</details>
-<details><summary>Kodi</summary>
-<p class="path">Tijdens het afspelen: OSD › Settings (tandwiel, rechtsonder) › Audio settings › Audio offset (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Standaarduiterlijk (Estuary). Werkt twee kanten op. Voor de film die speelt; met “Set as default for all videos” blijft het bewaard.</p>
-</details>
 <details><summary>Plex</summary>
-<p class="path">Settings › Audio › Fixed Audio Offset (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Alleen in Plex HTPC, de huiskamer-app voor computers.</p>
+<p class="path">Settings › Audio › Fixed Audio Offset</p><p class="note">Alleen in Plex HTPC, de huiskamer-app voor computers.</p>
 <p class="note">Plex beschrijft geen audiovertraging voor zijn apps op Apple TV, Android TV, Roku of telefoons.</p>
 </details>
-<details><summary>Netflix, YouTube, Disney+, Videoland, NPO Start</summary>
-<p class="note">Netflix heeft geen audiovertraging in de app; het zegt dat je het op je apparaat of geluidsapparatuur moet oplossen. Voor de andere apps vonden we geen instelling.</p>
-</details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
-<h2 id="console">Spelcomputer</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>De hulppagina&#x27;s van PlayStation 5 en Xbox Series X|S tonen geen instelling voor audiovertraging.</li><li>Corrigeer het op de tv, soundbar of receiver.</li><li>Sluit de console direct op de tv aan. Zo zie je of een apparaat ertussen de vertraging toevoegt.</li></ul>
-<h3>Jouw merk</h3>
-<details><summary>PlayStation 5</summary>
-<p class="note">De hulppagina&#x27;s van PlayStation tonen geen instelling voor audiovertraging. Ze raden aan de PS5 als test direct op het scherm aan te sluiten.</p>
-</details>
-<details><summary>Xbox Series X|S</summary>
-<p class="note">De hulppagina&#x27;s van Xbox tonen geen instelling voor audiovertraging. Ze verwijzen naar de tv, receiver of soundbar.</p>
-</details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
-<h2 id="headphones">Bluetooth-koptelefoon</h2>
-<h3>Algemene stappen</h3>
-<ul class="plain"><li>Bluetooth voegt altijd vertraging toe, dus het geluid komt te laat.</li><li>De meeste tv&#x27;s hebben geen instelling die dat weghaalt.</li><li>Een paar tv&#x27;s en kastjes houden het beeld even vast, zodat het weer klopt.</li><li>Gebruik anders een kabel, of de speakers van de tv of de soundbar.</li><li>Synclipse kan een koptelefoon niet horen. Beoordeel dit op het oog.</li></ul>
-<h3>Jouw merk</h3>
-<details><summary>Sony TV</summary>
-<p class="path">Instellingen › Weergave en geluid › Audio-uitgang › A/V-synchronisatie</p><p class="note">Sony-tv&#x27;s die met een bluetooth-koptelefoon werken. Auto of Aan houdt het beeld vast tot het bij het late geluid past.</p>
-</details>
 <details><summary>Roku</summary>
-<p class="path">Roku-app › Remote › koptelefoon-icoon (Headphone Mode) › tandwiel (Controls) › Adjust audio delay › Get started (› Advanced adjustment voor een schuifregelaar) (menunamen kunnen in het Nederlands anders zijn)</p><p class="note">Voor een koptelefoon op je telefoon (Headphone Mode). Het geluid van de tv zelf verandert niet.</p>
+<p class="path">Roku-app › Remote › Settings › Adjust audio delay</p><p class="note">Voor Roku-tv&#x27;s met een soundbar of receiver. De app meet de vertraging met de camera en microfoon van je telefoon.</p>
+<p class="note">Roku beschrijft geen vertragingsinstelling voor zijn spelers (Express, Streaming Stick, Ultra). Gebruik de tv of soundbar.</p>
 </details>
-<details><summary>Apple TV 4K</summary>
-<p class="path">Instellingen › Video en audio › Kalibratie › Synchronisatie van draadloze audio</p><p class="note">Apple beschrijft dit voor draadloze speakers. AirPods noemt het niet.</p>
+<details><summary>VLC</summary>
+<p class="model"><strong>VLC op een computer (versie 3.0)</strong></p>
+<p class="path">Tools › Track Synchronization › Synchronization</p><p class="note">Typ een getal; plus en min kunnen allebei. Of druk op j of k terwijl de film speelt: 50 ms per druk. De handleiding van VLC zegt niet duidelijk welke kant het geluid vervroegt: probeer een kant en meet opnieuw. Op een Mac kan het menu anders heten.</p>
+<p class="model"><strong>VLC voor Android</strong></p>
+<p class="path">Options (drie puntjes) › Audio delay</p><p class="note">Terwijl een film speelt. Werkt twee kanten op: de pijlknoppen verschuiven het geluid 50 ms per tik. Met RESET zet je het terug.</p>
+<p class="path">More › Settings › Video › Save audio delay</p><p class="note">Bewaart de vertraging die je instelt, per video.</p>
+<p class="note">Voor iPhone, iPad, Apple TV en Android TV geeft de maker van VLC geen menupad. Kijk in de audio-opties terwijl de film speelt.</p>
 </details>
-<details><summary>Samsung TV</summary>
-<p class="note">Volgens Samsung lost geen enkele instelling de vertraging van bluetooth- of draadloze speakers op. Het raadt een kabel aan.</p>
-</details>
-<details><summary>LG TV</summary>
-<p class="note">Scherm en Geluid matchen van LG werkt niet voor bluetooth.</p>
-</details>
-<p class="muted">Staat het er niet bij? Gebruik de algemene stappen hierboven. Namen kunnen per model en softwareversie verschillen.</p>
+<p class="muted">Staat hij er niet bij? Dan heeft hij geen eigen audiovertraging. Streaming-apps zoals Netflix hebben er geen. Stel de vertraging in op de tv, soundbar of receiver.</p>
 <h2 id="late">Geluid loopt achter en de vertraging staat al op 0?</h2>
 <p>De meeste tv&#x27;s en soundbars kunnen geluid alleen vertragen, niet versnellen. Staat de vertraging overal op 0 en loopt het geluid nog steeds achter? Dan helpt verlagen niet meer. Haal weg wat vertraging toevoegt, of gebruik een app of kastje dat het geluid kan vervroegen.</p>
 <p>Beeldopties uitzetten helpt hier niet: met een sneller beeld loopt het geluid nog verder achter.</p>
@@ -300,7 +381,7 @@
 <h2>Is het ineens begonnen?</h2>
 <p>Zet de tv en de soundbar uit en weer aan. Werk daarna de software van de soundbar bij.</p>
 <a class="badge" href="https://apps.apple.com/app/id6818855875">Download Synclipse in de App Store</a>
-<p class="muted">De menupaden komen uit de handleidingen en hulppagina&#x27;s van de makers zelf, nagekeken in november 2026. Namen kunnen per model en softwareversie verschillen.</p>
+<p class="muted">De menupaden komen uit de handleidingen en hulppagina&#x27;s van de makers zelf, nagekeken in november 2026. Namen kunnen per model en softwareversie verschillen. De menunamen staan zoals de maker ze schrijft. Ze kunnen in het Nederlands, per model en per softwareversie anders zijn.</p>
 <hr>
 <footer class="muted">
   <a href="../">Synclipse</a>
